@@ -204,14 +204,6 @@ CompExpr        <-
                      / N_GE  CompExpr
                      / N_EQ  CompExpr
                      )*
-                 / StrExpr (
-                       S_LEQ StrExpr
-                     / S_NEQ StrExpr
-                     / S_GEQ StrExpr
-                     / S_LE  StrExpr
-                     / S_GE  StrExpr
-                     / S_EQ  StrExpr
-                   )
 
 NotExpr         <- NOT NotExpr
                  / AddExpr
@@ -243,6 +235,7 @@ NegExpr         <- UMINUS NegExpr
                  / UnitExpr
 
 UnitExpr        <- Number
+                 / StrCompExpr
                  / L_PRN NumExpr R_PRN
                  / USR    ParUsrExpr
                  / ASC    ParStrExpr
@@ -283,6 +276,15 @@ UnitExpr        <- Number
                  / ERL
                  / PVarArray ArrayAccess
                  / PVarNum
+
+StrCompExpr     <- StrExpr (
+                     S_LEQ StrExpr
+                   / S_NEQ StrExpr
+                   / S_GEQ StrExpr
+                   / S_LE  StrExpr
+                   / S_GE  StrExpr
+                   / S_EQ  StrExpr
+                   )
 
 ParUsrExpr       <- FN_PRN ( NumExpr ( A_COMMA NumExpr )* R_PRN
                              / < ERROR > { print_error("number (,number)", yytext); } )
