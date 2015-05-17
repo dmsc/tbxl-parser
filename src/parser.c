@@ -63,9 +63,12 @@ void add_data_stmt(const char *str, int len)
     pgm_add_line(parse_get_current_pgm(), line_new_linenum(-1) );
 }
 
-void add_linenum(int num)
+void add_linenum(double num)
 {
-    pgm_add_line(parse_get_current_pgm(), line_new_linenum(num) );
+    if( num < 0 || num > 65535 )
+        print_error("line number out of range","");
+    else
+        pgm_add_line(parse_get_current_pgm(), line_new_linenum( (int)(num+0.5) ) );
 }
 
 void add_number(double n)
