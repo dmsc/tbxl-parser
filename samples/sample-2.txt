@@ -1,0 +1,60 @@
+
+  ' Example program with procs and labels
+  dim name$(20), reply$(1)
+
+  ' Ask your name
+  exec ask_name
+  ? "Hello "; name$
+
+  ? "Think a number from 1 to 100, I will try to guess it."
+  pause 60
+
+  ? "Ready?"
+  pause 60
+
+  low = 1
+  high = 100
+
+  ' Loop guessing numbers until we have no more guesses
+  while high - low > 0
+
+    my_guess = low + (high - low + 1) div 2
+    exec ask_guess
+
+    if reply = 1
+      ? "I'm a genius, this was your number!!!"
+      low = my_guess
+      exit
+    endif
+
+    if reply = 2
+      low = my_guess + 1
+    else
+      high = my_guess - 1
+    endif
+
+  wend
+
+  ' We should have guessed
+  ? "So, your number is "; low
+
+  end
+
+  ' A procedure to ask a name
+proc ask_name
+    name$ = ""
+    repeat
+        input "What is your name"; name$
+    until len(name$) > 1
+endproc
+
+  ' Procedure to guess a number
+proc ask_guess
+    ?
+    ? "My guess is "; my_guess
+    repeat
+        ? "Tell me, your number is"
+        input "Higher, Lower of Equal"; reply$
+        reply = uinstr("EHL", reply$)
+    until reply > 0
+endproc
