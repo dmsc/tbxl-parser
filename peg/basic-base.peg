@@ -40,9 +40,9 @@ Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytex
                  / CLOSE  IOChan?
                  / CLR
                  / CLS    IOChan?
-                 / CLOAD  StrExpr
+                 / CLOAD
                  / CIRCLE NumExpr3
-                 / CSAVE  StrExpr
+                 / CSAVE
                  / DATA   < NotEOL* >       { add_data_stmt(yytext, yyleng); }
                  / DEG
                  / DIM    DimVar (COMMA DimVar)*
