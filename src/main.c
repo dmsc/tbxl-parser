@@ -66,8 +66,9 @@ int main(int argc, char **argv)
         out_binary } out_type = out_short;
     int do_conv_ascii = 0;
     const char *output = 0;
+    int max_line_len = 120;
 
-    while ((opt = getopt(argc, argv, "habvqlco:")) != -1)
+    while ((opt = getopt(argc, argv, "habvqlco:n:")) != -1)
     {
         switch (opt)
         {
@@ -92,9 +93,18 @@ int main(int argc, char **argv)
             case 'o':
                 output = strdup(optarg);
                 break;
+            case 'n':
+                max_line_len = atoi(optarg);
+                if( max_line_len < 16 || max_line_len > 255 )
+                {
+                    fprintf(stderr, "Error, maximum line length (%s) invalid.\n"
+                                    "try %s -h for help.\n", optarg, argv[0]);
+                    exit(EXIT_FAILURE);
+                }
+                break;
             case 'h':
             default:
-                fprintf(stderr, "Usage: %s [-h] [-v] [-l] [-a] [-c] [-o output] filename\n"
+                fprintf(stderr, "Usage: %s [-h] [-v] [-n len] [-l] [-a] [-c] [-o output] filename\n"
                                 "\t-l  Output long (readable) program.\n"
                                 "\t-b  Output binary (.BAS) program.\n"
                                 "\t-a  In long output, convert comments to pure ASCII.\n"
@@ -102,8 +112,9 @@ int main(int argc, char **argv)
                                 "\t-q  Don't show parsing information (quiet mode).\n"
                                 "\t-o  Sets the output file name, instead of default one.\n"
                                 "\t-c  Output to standard output instead of a file.\n"
+                                "\t-n  Sets the max line length before splitting (%d).\n"
                                 "\t-h  Shows help and exit.\n",
-                        argv[0]);
+                        argv[0], max_line_len);
                 exit(EXIT_FAILURE);
         }
     }
@@ -162,7 +173,7 @@ int main(int argc, char **argv)
 
             // Write output
             if( out_type == out_short )
-                lister_list_program_short(outFile, parse_get_current_pgm());
+                lister_list_program_short(outFile, parse_get_current_pgm(), max_line_len);
             else if( out_type == out_long )
                 lister_list_program_long(outFile, parse_get_current_pgm(), do_conv_ascii);
             else if( out_type == out_binary )

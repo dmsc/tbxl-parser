@@ -23,5 +23,5 @@ typedef struct program_struct program;
 
 // List program to a file, in "long" or "short" format
 void lister_list_program_long(FILE *f, program *pgm, int conv_ascii);
-void lister_list_program_short(FILE *f, program *pgm);
+void lister_list_program_short(FILE *f, program *pgm, int max_line_len);
 

@@ -83,6 +83,11 @@ Program Usage
 
 Options:
 
+- `-n nun`  Sets the maximum line length before splitting lines to `num`.
+            Note that if a single statement is longer than this, the line
+            is output anyway.
+            The default is 120 characters (the standard Atari Editor limit)
+
 - `-l`  Output long (readable) listing instead of minimized.
 
 - `-a`  In long output, replace Atari characters in comments with

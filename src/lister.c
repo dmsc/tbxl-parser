@@ -89,7 +89,7 @@ static void ls_write_line(struct ls *ls, int len)
     fputc(0x9b, ls->f);
 }
 
-void lister_list_program_short(FILE *f, program *pgm)
+void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
 {
     struct ls ls;
     ls.max_len = ls.max_num = ls.num_lines = 0;
@@ -139,8 +139,12 @@ void lister_list_program_short(FILE *f, program *pgm)
             sb_delete(sb);
             // If current line is too long or if last statement was a label,
             // we need a new line number.
-            if( (ls.tok_len > 0xFC && last_split) || (ls.out->len >= 120 && last_split) || (!last_skip && stmt_is_label(s)) )
+            if( (ls.tok_len > 0xFC && last_split) ||
+                (ls.out->len >= max_line_len && last_split) ||
+                (!last_skip && stmt_is_label(s)) )
+            {
                 need_line = ls.cur_line + 1;
+            }
             else if( !last_skip )
             {
                 last_split = ls.out->len;
