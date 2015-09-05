@@ -484,6 +484,12 @@ string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int *skip_colon, i
     return b;
 }
 
+string_buf *stmt_print_alone(stmt *s, vars *varl)
+{
+    int indent = 0, skip_colon = 1;
+    return stmt_print_long(s, varl, &indent, &skip_colon, 1);
+}
+
 string_buf *stmt_print_short(stmt *s, vars *varl, int *skip_colon)
 {
     string_buf *b = sb_new();

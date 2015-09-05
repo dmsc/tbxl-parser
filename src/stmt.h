@@ -50,6 +50,7 @@ int stmt_is_label(const stmt *s);
 // Prints the statement to a newly allocated string
 string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int *skip_colon, int conv_ascii);
 string_buf *stmt_print_short(stmt *s, vars *varl, int *skip_colon);
+string_buf *stmt_print_alone(stmt *s, vars *varl);
 
 // Returns the binary "BAS" representation of the statement
 string_buf *stmt_get_bas(stmt *s, vars *varl, int *end_colon);

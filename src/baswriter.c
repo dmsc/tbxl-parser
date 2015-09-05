@@ -205,7 +205,9 @@ int bas_write_program(FILE *f, program *pgm)
             string_buf *sb = stmt_get_bas(s, pgm_get_vars(pgm), &last_colon);
             if( sb->len >= 0xFB )
             {
-                err_print("statement too long at line %d:\n", cur_line);
+                string_buf *prn = stmt_print_alone(s, pgm_get_vars(pgm));
+                err_print("statement too long at line %d:\nerror:  %s\n", cur_line, prn->data);
+                sb_delete(prn);
                 return 1;
             }
             if( sb->len )
