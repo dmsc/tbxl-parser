@@ -70,6 +70,8 @@ struct ls {
     string_buf *out;
     // Current line
     int cur_line;
+    // Tokenized length
+    int tok_len;
     // File
     FILE *f;
 };
@@ -92,10 +94,11 @@ void lister_list_program_short(FILE *f, program *pgm)
     struct ls ls;
     ls.max_len = ls.max_num = ls.num_lines = 0;
     ls.out = sb_new();
+    ls.tok_len = 0;
     ls.f = f;
     ls.cur_line = -1;
     int skip_colon = 1;
-    int last_split = 0, need_line = -1;
+    int last_split = 0, last_tok_len = 0, need_line = -1;
 
     // For each line:
     line **lp;
@@ -121,14 +124,28 @@ void lister_list_program_short(FILE *f, program *pgm)
                 if( !last_skip )
                     sb_put(ls.out, ':');
                 sb_cat(ls.out, sb);
+                // Update the tokenized length by converting to BAS
+                int end_colon = 0;
+                string_buf *tok = stmt_get_bas(s, pgm_get_vars(pgm), &end_colon);
+                ls.tok_len += 1 + tok->len;
+                if( tok->len >= 0xFB )
+                {
+                    string_buf *prn = stmt_print_alone(s, pgm_get_vars(pgm));
+                    err_print("statement too long at line %d:\nerror:  %s\n", ls.cur_line, prn->data);
+                    sb_delete(prn);
+                }
+                sb_delete(tok);
             }
             sb_delete(sb);
             // If current line is too long or if last statement was a label,
             // we need a new line number.
-            if( (ls.out->len >= 120 && last_split) || (!last_skip && stmt_is_label(s)) )
+            if( (ls.tok_len > 0xFC && last_split) || (ls.out->len >= 120 && last_split) || (!last_skip && stmt_is_label(s)) )
                 need_line = ls.cur_line + 1;
             else if( !last_skip )
+            {
                 last_split = ls.out->len;
+                last_tok_len = ls.tok_len;
+            }
         }
         else
         {
@@ -178,8 +195,12 @@ void lister_list_program_short(FILE *f, program *pgm)
             sb_delete(ls.out);
             ls.out = nbuf;
 
+            // Redo size
+            ls.tok_len -= last_tok_len;
+
             need_line = -1;
             last_split = 0;
+            last_tok_len = 0;
         }
     }
     // Output last line
