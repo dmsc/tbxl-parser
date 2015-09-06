@@ -33,7 +33,15 @@ static void put16(FILE *f, unsigned n)
     putc(n>>8, f);
 }
 
-static int bas_add_line(string_buf *prog, int num, int valid, string_buf *tok_line, int replace_colon)
+// Holds bas-writer status
+struct bw {
+    // Summary variables
+    int max_len, max_num, num_lines;
+    // TOK buffer
+    string_buf *toks;
+};
+
+static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line, int replace_colon)
 {
     if( !tok_line->len && !valid )
         return 0; // Skip
@@ -65,15 +73,30 @@ static int bas_add_line(string_buf *prog, int num, int valid, string_buf *tok_li
         err_print("line %d too long\n", num);
         return 1;
     }
-    sb_put(prog, num & 0xFF);
-    sb_put(prog, (num >> 8)&0xFF);
-    sb_put(prog, ln);
-    sb_cat(prog, tok_line);
+    sb_put(bw->toks, num & 0xFF);
+    sb_put(bw->toks, (num >> 8)&0xFF);
+    sb_put(bw->toks, ln);
+    sb_cat(bw->toks, tok_line);
+
+    if( ln > bw->max_len )
+    {
+        bw->max_len = ln;
+        bw->max_num = num;
+    }
+    bw->num_lines ++;
     return 0;
 }
 
 int bas_write_program(FILE *f, program *pgm)
 {
+    // Main program info
+    struct bw bw;
+
+    bw.max_len = 0;
+    bw.max_num = 0;
+    bw.num_lines = 0;
+    bw.toks = sb_new();
+
     // BAS file has 4 parts:
     // 1) HEADER
     // 2) Variable Name Table (VNT)
@@ -161,7 +184,6 @@ int bas_write_program(FILE *f, program *pgm)
     // VNT must terminate with a 0
     sb_put(vnt, 0);
     // Serialize lines (TOKENS)
-    string_buf *toks = sb_new();
     line **lp;
     int cur_line = 0;
     int line_valid = 0;
@@ -175,7 +197,7 @@ int bas_write_program(FILE *f, program *pgm)
         {
             // Append old line
             int old_len = bin_line->len;
-            if( bas_add_line(toks, cur_line, line_valid, bin_line, last_colon) )
+            if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_colon) )
                 return 1;
             sb_delete(bin_line);
             bin_line = sb_new();
@@ -217,7 +239,7 @@ int bas_write_program(FILE *f, program *pgm)
                 {
                     // We can't add this statement to the current line,
                     // write the old line and create a new line
-                    if( bas_add_line(toks, cur_line, line_valid, bin_line, old_last_colon) )
+                    if( bas_add_line(&bw, cur_line, line_valid, bin_line, old_last_colon) )
                         return 1;
                     sb_delete(bin_line);
                     bin_line = sb_new();
@@ -232,19 +254,19 @@ int bas_write_program(FILE *f, program *pgm)
         }
     }
     // Append last line
-    if( bas_add_line(toks, cur_line, line_valid, bin_line, last_colon) )
+    if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_colon) )
         return 1;
     sb_delete(bin_line);
     // Now, adds a standard immediate line: SAVE "D:X"
-    sb_write(toks, (unsigned char *)"\x00\x80\x0b\x0b\x19\x0f\x03\x44\x3a\x58\x16", 11);
+    sb_write(bw.toks, (unsigned char *)"\x00\x80\x0b\x0b\x19\x0f\x03\x44\x3a\x58\x16", 11);
     // Verify sizes
-    if( vvt->len + vnt->len + toks->len > 0x9500 )
+    if( vvt->len + vnt->len + bw.toks->len > 0x9500 )
     {
-        unsigned len = vvt->len + vnt->len + toks->len;
+        unsigned len = vvt->len + vnt->len + bw.toks->len;
         err_print("program too big, %d bytes ($%04X)\n", len, len);
         err_print("VNT SIZE:%u\n", vnt->len);
         err_print("VVT SIZE:%u\n", vvt->len);
-        err_print("TOK SIZE:%u\n", toks->len);
+        err_print("TOK SIZE:%u\n", bw.toks->len);
         return 1;
     }
     // Write
@@ -253,10 +275,25 @@ int bas_write_program(FILE *f, program *pgm)
     put16(f, 0x0FF + vnt->len);
     put16(f, 0x100 + vnt->len);
     put16(f, 0x100 + vnt->len + vvt->len);
-    put16(f, 0x100 + vnt->len + vvt->len + toks->len - 11);
-    put16(f, 0x100 + vnt->len + vvt->len + toks->len);
+    put16(f, 0x100 + vnt->len + vvt->len + bw.toks->len - 11);
+    put16(f, 0x100 + vnt->len + vvt->len + bw.toks->len);
     fwrite( vnt->data, vnt->len, 1, f);
     fwrite( vvt->data, vvt->len, 1, f);
-    fwrite( toks->data, toks->len, 1, f);
+    fwrite( bw.toks->data, bw.toks->len, 1, f);
+
+    // Output summary info
+    if( do_debug )
+    {
+        fprintf(stderr,"Binary Tokenized output information:\n"
+                       " Number of lines written: %d\n"
+                       " Maximum line length: %d bytes at line %d\n"
+                       " VNT (variable name table) : %u bytes\n"
+                       " VVT (variable value table): %u bytes\n"
+                       " TOK (tokenized program)   : %u bytes\n"
+                       " Total program size: %d bytes\n",
+                       bw.num_lines, bw.max_len, bw.max_num,
+                       vnt->len, vvt->len, bw.toks->len,
+                       14 + vnt->len + vvt->len + bw.toks->len);
+    }
     return 0;
 }
