@@ -56,8 +56,11 @@ GENPEG=\
 # Output dirs
 ODIRS=$(B)/src $(B)/obj
 
+# Git version
+GIT_VERSION := $(shell git describe --long --dirty)
+
 # Compressed distribution file, generated with "make dist"
-DISTNAME=basicParser-$(shell date +%Y%m%d)
+DISTNAME=basicParser-$(GIT_VERSION)
 D=$(B)/$(DISTNAME)
 ZIPFILE=$(DISTNAME).zip
 
@@ -105,7 +108,6 @@ $(P_SRC): %_peg.c: %.peg
 	peg -o$@ $<
 
 # Generate version info from GIT
-GIT_VERSION := $(shell git describe --long --dirty)
 .PHONY: $(VERSION_TMP)
 $(VERSION_TMP):
 	echo "#define GIT_VERSION \"$(GIT_VERSION)\"" > $@
@@ -138,6 +140,7 @@ distclean: clean
 # Make distribution ZIP
 .PHONY:
 dist: all
+	rm -rf $(D)
 	mkdir -p $(D)
 	$(CROSS)strip $(TARGET)
 	cp -a $(TARGET) $(D)/
