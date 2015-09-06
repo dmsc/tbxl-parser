@@ -143,6 +143,9 @@ void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 (ls.out->len >= max_line_len && last_split) ||
                 (!last_skip && stmt_is_label(s)) )
             {
+                // Tell the user we split because token length instead of line length:
+                if( ls.tok_len > 0xFC )
+                    info_print("splitting line %d on token length: %d\n", ls.cur_line, ls.tok_len);
                 need_line = ls.cur_line + 1;
             }
             else if( !last_skip )
@@ -162,6 +165,7 @@ void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                     need_line = ls.cur_line + 1;
             }
             last_split = ls.out->len;
+            last_tok_len = ls.tok_len;
         }
 
         // Test if we need to output a new line number
@@ -179,6 +183,7 @@ void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 {
                     err_print("line number %d can not be split to shorter size.\n", ls.cur_line);
                     last_split = ls.out->len;
+                    last_tok_len = ls.tok_len;
                 }
                 // Output the part of the line
                 ls_write_line(&ls, last_split);
