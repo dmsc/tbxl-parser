@@ -186,7 +186,7 @@ StrExpr         <- STRP    ParNumExpr
                  / PVarStr SubStr?
 
 
-ConstString     <- '"' < StrContent? ( '""' StrContent )* > { add_string(yytext, yyleng); } '"' SPC
+ConstString     <- '"' < StrContent? ( '"' '"' StrContent? )* > { add_string(yytext, yyleng); } '"' SPC
 StrContent      <- [^"]+
 
 # Numeric Expressions
