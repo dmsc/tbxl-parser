@@ -22,6 +22,7 @@
 #include "vars.h"
 #include "dbg.h"
 #include "baswriter.h"
+#include "version.h"
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -111,7 +112,10 @@ int main(int argc, char **argv)
                 break;
             case 'h':
             default:
-                fprintf(stderr, "Usage: %s [-h] [-v] [-n len] [-l] [-a] [-c] [-o output] filename\n"
+                fprintf(stderr, "TurboBasic XL parser tool - version " GIT_VERSION "\n"
+                                "https://github.com/dmsc/tbxl-parser\n"
+                                "\n"
+                                "Usage: %s [-h] [-v] [-n len] [-l] [-a] [-c] [-o output] filename\n"
                                 "\t-l  Output long (readable) program.\n"
                                 "\t-b  Output binary (.BAS) program.\n"
                                 "\t-f  Output full (long) variable names in binary output.\n"

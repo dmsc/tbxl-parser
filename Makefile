@@ -67,6 +67,9 @@ W_INC=$(patsubst %.txt, $(B)/src/%.h, $(WORDS))
 W_PEG=$(patsubst %.txt, $(B)/src/%.peg, $(WORDS))
 P_SRC=$(patsubst %.peg, %_peg.c, $(GENPEG))
 
+VERSION_TMP=$(B)/src/version.tmp
+VERSION_H=$(B)/src/version.h
+
 # Compiled object files
 OBJS=$(patsubst %.c, $(B)/obj/%.o, $(notdir $(SOURCES) $(W_SRC)))
 
@@ -88,7 +91,7 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 # Force generating of header files *before* compilation of depending sources
-$(OBJS): $(W_INC) $(P_SRC)
+$(OBJS): $(VERSION_H) $(W_INC) $(P_SRC)
 
 # Compile C source
 $(B)/obj/%.o: src/%.c
@@ -100,6 +103,16 @@ $(B)/obj/%.o: $(B)/src/%.c
 # Generate C source from PEG
 $(P_SRC): %_peg.c: %.peg
 	peg -o$@ $<
+
+# Generate version info from GIT
+GIT_VERSION := $(shell git describe --long --dirty)
+.PHONY: $(VERSION_TMP)
+$(VERSION_TMP):
+	echo "#define GIT_VERSION \"$(GIT_VERSION)\"" > $@
+
+$(VERSION_H): $(VERSION_TMP)
+	cmp -s $@ $< || cp -f $< $@
+	rm -f $<
 
 # Special rules for generated word lists
 $(W_PEG): $(B)/src/%.peg: peg/%.txt peg/gen-%.awk
