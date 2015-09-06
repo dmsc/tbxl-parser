@@ -87,7 +87,7 @@ static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line,
     return 0;
 }
 
-int bas_write_program(FILE *f, program *pgm)
+int bas_write_program(FILE *f, program *pgm, int variables)
 {
     // Main program info
     struct bw bw;
@@ -161,25 +161,32 @@ int bas_write_program(FILE *f, program *pgm)
                 sb_put(vvt, 0);    // -
                 break;
         }
-        // Write NAME
-        const char *name = vars_get_short_name(v, i);
-        while( name[1] )
+        if( variables >= 0 )
         {
-            sb_put(vnt, *name );
-            name++;
+            // Write NAME
+            const char *name;
+            if( !variables )
+                name = vars_get_short_name(v, i);
+            else
+                name = vars_get_long_name(v, i);
+            while( name[1] )
+            {
+                sb_put(vnt, *name );
+                name++;
+            }
+            if( t == vtArray )
+            {
+                sb_put(vnt, *name);
+                sb_put(vnt, '(' | 0x80);
+            }
+            else if( t == vtString )
+            {
+                sb_put(vnt, *name);
+                sb_put(vnt, '$' | 0x80);
+            }
+            else
+                sb_put(vnt, *name | 0x80);
         }
-        if( t == vtArray )
-        {
-            sb_put(vnt, *name);
-            sb_put(vnt, '(' | 0x80);
-        }
-        else if( t == vtString )
-        {
-            sb_put(vnt, *name);
-            sb_put(vnt, '$' | 0x80);
-        }
-        else
-            sb_put(vnt, *name | 0x80);
     }
     // VNT must terminate with a 0
     sb_put(vnt, 0);

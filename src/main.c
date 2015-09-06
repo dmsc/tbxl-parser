@@ -67,8 +67,9 @@ int main(int argc, char **argv)
     int do_conv_ascii = 0;
     const char *output = 0;
     int max_line_len = 120;
+    int bin_variables = 0;
 
-    while ((opt = getopt(argc, argv, "habvqlco:n:")) != -1)
+    while ((opt = getopt(argc, argv, "habvqlco:n:fx")) != -1)
     {
         switch (opt)
         {
@@ -87,6 +88,12 @@ int main(int argc, char **argv)
             case 'a':
                 do_conv_ascii = 1;
                 break;
+            case 'f':
+                bin_variables = 1;
+                break;
+            case 'x':
+                bin_variables = -1;
+                break;
             case 'c':
                 output = "-";
                 break;
@@ -95,7 +102,7 @@ int main(int argc, char **argv)
                 break;
             case 'n':
                 max_line_len = atoi(optarg);
-                if( max_line_len < 16 || max_line_len > 255 )
+                if( max_line_len < 16 || max_line_len > 355 )
                 {
                     fprintf(stderr, "Error, maximum line length (%s) invalid.\n"
                                     "try %s -h for help.\n", optarg, argv[0]);
@@ -107,6 +114,8 @@ int main(int argc, char **argv)
                 fprintf(stderr, "Usage: %s [-h] [-v] [-n len] [-l] [-a] [-c] [-o output] filename\n"
                                 "\t-l  Output long (readable) program.\n"
                                 "\t-b  Output binary (.BAS) program.\n"
+                                "\t-f  Output full (long) variable names in binary output.\n"
+                                "\t-x  Makes binary output protected (un-listable).\n"
                                 "\t-a  In long output, convert comments to pure ASCII.\n"
                                 "\t-v  Shows more parsing information (verbose mode).\n"
                                 "\t-q  Don't show parsing information (quiet mode).\n"
@@ -177,7 +186,7 @@ int main(int argc, char **argv)
             else if( out_type == out_long )
                 lister_list_program_long(outFile, parse_get_current_pgm(), do_conv_ascii);
             else if( out_type == out_binary )
-                bas_write_program(outFile, parse_get_current_pgm());
+                bas_write_program(outFile, parse_get_current_pgm(), bin_variables);
 
             if( outFile != stdout )
                 fclose(outFile);

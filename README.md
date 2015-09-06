@@ -17,9 +17,13 @@ and produces any of three outputs:
   This mode is selected with the `-l` command line switch.
 
 - A tokenized binary file, directly loadable in the original _TurboBasic XL_
-  interpreter.  This mode also replaces variables with single letters.
+  interpreter.  This mode also replaces variables with single letters by
+  default, but with the `-f` option writes the full variable names and
+  with the `-x` option writes invalid variable names, making the program
+  unable to be listed or edited.
 
   This mode is selected with the `-b` command line switch.
+
 
 The input listing format is very flexible:
 
@@ -92,6 +96,12 @@ Options:
 
 - `-b`  Output a binary tokenized file instead of a listing. The  default
   output file name is the same as input with `.bas` extension added.
+
+- `-x`  In binary output mode, writes null variable names, making the program
+  unlistable.
+
+- `-f`  In binary output mode, writes the full variable names, this eases
+  debugging the program.
 
 - `-a`  In long output, replace Atari characters in comments with
   approximating characters.

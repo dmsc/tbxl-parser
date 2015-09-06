@@ -21,7 +21,9 @@
 
 typedef struct program_struct program;
 
-// Saves a program in Turbo Basic XL compatible format
+// Saves a program in Turbo Basic XL compatible format.
+// If 'variables' is 0, write short (one letter) variable names,
+// if it is 1, write full variable names, <0 don't write any name.
 // Returns 0 if OK.
-int bas_write_program(FILE *f, program *pgm);
+int bas_write_program(FILE *f, program *pgm, int variables);
 
