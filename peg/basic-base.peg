@@ -174,7 +174,7 @@ PVarStr         <- < Identifier > { add_ident(yytext, vtString); } '$'          
 PVarNum         <- < Identifier > { add_ident(yytext, vtFloat);  }     ![$(]     SPC
 PVarArray       <- < Identifier > { add_ident(yytext, vtArray);  }     A_L_PRN   SPC
 PDimVarArray    <- < Identifier > { add_ident(yytext, vtArray);  }     D_L_PRN   SPC
-PDimVarStr      <- < Identifier > { add_ident(yytext, vtString); } '$' DS_L_PRN  SPC
+PDimVarStr      <- < Identifier > { add_ident(yytext, vtString); } '$' SPC DS_L_PRN  SPC
 
 # String expressions
 StrExpr         <- STRP    ParNumExpr
