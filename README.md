@@ -90,6 +90,9 @@ Options:
 
 - `-l`  Output long (readable) listing instead of minimized.
 
+- `-b`  Output a binary tokenized file instead of a listing. The  default
+  output file name is the same as input with `.bas` extension added.
+
 - `-a`  In long output, replace Atari characters in comments with
   approximating characters.
 
@@ -98,8 +101,8 @@ Options:
 
 - `-q`  Don't show any parsing output, only errors.  (quiet mode)
 
-- `-o`  Sets the output file name.  By default, the output is the names of the
-  input with ".lst" extension.
+- `-o`  Sets the output file name.  By default, the output is the name of the
+  input with `.lst` (listing) or `.bas` (tokenized) extension.
 
 - `-c`  Output to standard output instead of a file.
 
