@@ -28,6 +28,7 @@ void add_linenum(double);
 void add_number(double);
 void add_hex_number(double);
 void add_string(const char *, int);
+void add_extended_string(const char *, int);
 void add_token(enum enum_tokens);
 void add_stmt(enum enum_statements);
 void add_ident(const char *, enum var_type);

@@ -21,10 +21,12 @@
 #include "tokens.h"
 #include "vars.h"
 #include "sbuf.h"
+#include "dbg.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <limits.h>
+#include <string.h>
 
 static void memory_error()
 {
@@ -188,6 +190,178 @@ void stmt_add_string(stmt *s, const char *data, unsigned len)
         }
     }
     s->last_tok = TOK_LAST_TOKEN;
+}
+
+// Holds a table of names to atascii codes:
+struct
+{
+    const char *name;
+    unsigned char code;
+} atascii_names[] = {
+    { "heart", 0 },
+    { "rbranch", 1 },
+    { "rline", 2 },
+    { "tlcorner", 3 },
+    { "lbranch", 4 },
+    { "blcorner", 5 },
+    { "udiag", 6 },
+    { "ddiag", 7 },
+    { "rtriangle", 8 },
+    { "brblock", 9 },
+    { "ltriangle", 10 },
+    { "trblock", 11 },
+    { "tlblock", 12 },
+    { "tline", 13 },
+    { "bline", 14 },
+    { "blblock", 15 },
+    { "clubs", 16 },
+    { "brcorner", 17 },
+    { "hline", 18 },
+    { "cross", 19 },
+    { "ball", 20 },
+    { "bbar", 21 },
+    { "lline", 22 },
+    { "bbranch", 23 },
+    { "tbranch", 24 },
+    { "lbar", 25 },
+    { "trcorner", 26 },
+    { "esc", 27 },
+    { "up", 28 },
+    { "down", 29 },
+    { "left", 30 },
+    { "right", 31 },
+    { "diamond", 96 },
+    { "spade", 123 },
+    { "vline", 124 },
+    { "clr", 125 },
+    { "del", 126 },
+    { "ins", 127 },
+    { "tbar", 21+128 },
+    { "rbar", 25+128 },
+    { "eol", 155 },
+    { "bell", 253 }
+};
+#define atascii_names_len (sizeof(atascii_names)/sizeof(atascii_names[0]))
+
+int stmt_add_extended_string(stmt *s, const char *data, unsigned len)
+{
+    // Interprets the string:
+    unsigned i, rlen = 0;
+    unsigned char buf[256];
+    int state = 0, inverse = 0, count = 0, nameStart = 0, hex = 0;
+
+    for(i=0; i<len && rlen < 256; i++)
+    {
+        char c = data[i];
+        switch( state )
+        {
+            case 5: // CR
+                if( c != '\n' )
+                {
+                    buf[rlen++] = '\r' ^ inverse;
+                    if( rlen >= 255 )
+                        break;
+                }
+                state = 0;
+                // Fall through to normal character
+            case 0: // Normal characters
+                if( c == '{' )
+                {
+                    state = 1;
+                    count = 0;
+                }
+                else if( c == '~' )
+                    inverse ^= 0x80;
+                else if( c == '\\' )
+                    state = 3;
+                else if( c == '\r' )
+                    state = 5;  // Consume CR before LF
+                else if( c == '\n' )
+                    buf[rlen++] = 0x9B;
+                else
+                    buf[rlen++] = c ^ inverse;
+                break;
+            case 1: // Special character - count
+                if( c >= '0' && c <= '9' )
+                    count = count * 10 + (c - '0');
+                else if( c == '*' )
+                {
+                    state = 2;
+                    nameStart = i + 1;
+                }
+                else
+                {
+                    state = 2;
+                    nameStart = i;
+                }
+                break;
+            case 2:
+                if( c == '}' )
+                {
+                    // End of special character name
+                    unsigned len = i - nameStart;
+                    unsigned j;
+                    if( count == 0 )
+                        count = 1;
+                    for(j=0; j<atascii_names_len; j++)
+                        if( strlen(atascii_names[j].name) == len &&
+                            memcmp(atascii_names[j].name, data+nameStart, len) == 0 )
+                            break;
+                    if( j >= atascii_names_len )
+                    {
+                        err_print("invalid character name inside extended string '%.*s'\n", len, data + nameStart);
+                        return 1;
+                    }
+                    else if( count > 0xFF || count + rlen > 0xFF )
+                    {
+                        err_print("too many characters inside extended string '%.*s'\n", len, data);
+                        return 1;
+                    }
+                    else
+                    {
+                        while( count-- )
+                            buf[rlen++] = atascii_names[j].code ^ inverse;
+                    }
+                    count = 0;
+                    state = 0;
+                }
+                break;
+            case 3: // Escaped character
+                if( (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') )
+                {
+                    hex = c > '9' ? c - 'A' + 10 : c - '0';
+                    state = 4;
+                }
+                else
+                {
+                    buf[rlen++] = c ^ inverse;
+                    state = 0;
+                }
+                break;
+            case 4: // Escaped character hex 2
+                if( (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') )
+                    buf[rlen++] = hex * 16 + (c > '9' ? c - 'A' + 10 : c - '0');
+                else
+                {
+                    err_print("invalid escape ('\\%c') inside extended string\n", c);
+                    return 1;
+                }
+                state = 0;
+                break;
+        }
+    }
+    if( rlen > 255 )
+    {
+        err_print("too many characters inside extended string, truncating '%.*s'\n", len, data);
+        rlen = 255;
+    }
+    // Stores into statement
+    stmt_add_byte(s, 0x0F);
+    stmt_add_byte(s, rlen);
+    for(i=0; i<rlen; i++)
+        stmt_add_byte(s, buf[i]);
+    s->last_tok = TOK_LAST_TOKEN;
+    return 0;
 }
 
 void stmt_add_number(stmt *s, double d)

@@ -183,11 +183,21 @@ StrExpr         <- STRP    ParNumExpr
                  / INKEYP
                  / TIMEP
                  / ConstString
+                 / ExtendedString
                  / PVarStr SubStr?
 
 
 ConstString     <- '"' < StrContent? ( '"' '"' StrContent? )* > { add_string(yytext, yyleng); } '"' SPC
 StrContent      <- [^"]+
+
+ExtStringStart <- '[' '"'
+ExtStringEnd   <- '"' ']'
+
+ExtendedString  <- ExtStringStart < (!ExtStringEnd . )* >
+                 (
+                   ExtStringEnd { add_extended_string(yytext, yyleng); }
+                 / EndOfFile { print_error("end of extended string (\"])", yytext); }
+                 )
 
 # Numeric Expressions
 NumExpr         <- CompExpr (

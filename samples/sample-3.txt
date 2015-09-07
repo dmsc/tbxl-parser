@@ -1,0 +1,17 @@
+  ' Example of extended strings
+
+  ' Note that this example can not be directly converted to LIST format,
+  ' as it uses EOL embedded inside strings.
+  ' Test with "basicParse -b sample-3.txt"
+
+  print ["{clr}
+ {17*bline}
+{rline}~Hello ATARI World~{lline}
+ {17*tline}
+"]
+
+ ' Do some color effects
+ do
+  setcolor 2,peek(20),4
+ loop
+

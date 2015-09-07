@@ -86,6 +86,12 @@ void add_string(const char *str, int len)
     stmt_add_string(get_statement(), str, len);
 }
 
+void add_extended_string(const char *str, int len)
+{
+    if( stmt_add_extended_string(get_statement(), str, len) )
+        print_error("extended string", "invalid");
+}
+
 void add_token(enum enum_tokens tk)
 {
     stmt_add_token(get_statement(), tk);

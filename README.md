@@ -48,6 +48,16 @@ The input listing format is very flexible:
 - The input is case insensitive (uppercase, lowercase and mixed case is
   supported).
 
+- There is support for extended strings, with embedded character names.
+  Start the string with `["` and end the string with `"]`, and include
+  special characters with `{name}` or `{count*name}`, with count a decimal
+  number and name from the list:
+  `heart`, `rbranch`, `rline`, `tlcorner`, `lbranch`, `blcorner`, `udiag`,
+  `ddiag`, `rtriangle`, `brblock`, `ltriangle`, `trblock`, `tlblock`,
+  `tline`, `bline`, `blblock`, `clubs`, `brcorner`, `hline`, `cross`, `ball`,
+  `bbar`, `lline`, `bbranch`, `tbranch`, `lbar`, `trcorner`, `esc`, `up`,
+  `down`, `left`, `right`, `diamond`, `spade`, `vline`, `clr`,
+  `del`, `ins`, `tbar`, `rbar`, `eol`, `bell`.
 
 Example Programs
 ----------------
