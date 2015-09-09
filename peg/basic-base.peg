@@ -74,7 +74,10 @@ Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytex
                  / INPUT  (  IOChan ( COMMA / SEMICOLON )
                            / ConstString ( COMMA / SEMICOLON )
                           )? VariableList
-                 / IF     NumExpr (THEN ( Number / StatementLine ) ENDIF_INVISIBLE )?
+                 / IF     NumExpr (THEN (
+                                          Number ( ':' < NotEOL* > { add_stmt( STMT_REM ); add_comment(yytext, yyleng); } )?
+                                        / StatementLine
+                                        ) ENDIF_INVISIBLE )?
                  / LIST   (StrExpr COMMA)? ( NumExpr ( COMMA NumExpr )? )?
                  / LET    AssignVarStr S_ASGN StrExpr
                  / LET    AssignVarNum F_ASGN NumExpr
