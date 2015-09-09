@@ -664,11 +664,18 @@ string_buf *stmt_print_alone(stmt *s, vars *varl)
     return stmt_print_long(s, varl, &indent, &skip_colon, 1);
 }
 
-string_buf *stmt_print_short(stmt *s, vars *varl, int *skip_colon)
+string_buf *stmt_print_short(stmt *s, vars *varl, int *skip_colon, int *no_split)
 {
     string_buf *b = sb_new();
 
-    if( s->stmt == STMT_REM_ || s->stmt == STMT_REM || s->stmt == STMT_BAS_ERROR )
+    if( s->stmt == STMT_ENDIF_INVISIBLE )
+    {
+        (*no_split) --;
+        if( *no_split == 0 )
+            *no_split = -1; // Force split now!!
+        return b;
+    }
+    else if( s->stmt == STMT_REM_ || s->stmt == STMT_REM || s->stmt == STMT_BAS_ERROR )
         return b;
 
     *skip_colon = 0;
@@ -716,7 +723,10 @@ string_buf *stmt_print_short(stmt *s, vars *varl, int *skip_colon)
             {
                 enum enum_tokens te = tk - 0x10;
                 if( te == TOK_THEN )
+                {
                     *skip_colon = 1;
+                    (*no_split) ++; // Can't split the "THEN" part
+                }
                 const char *t = tokens[te].tok_short;
                 if( add_space && ( (t[0] >= 'A' && t[0] <= 'Z') || t[0] == '_' ) )
                     sb_put(b, ' ');
