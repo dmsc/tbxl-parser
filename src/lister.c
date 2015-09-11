@@ -182,17 +182,15 @@ void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 if( !last_skip )
                     sb_put(ls.out, ':');
                 sb_cat(ls.out, sb);
-                // Update the tokenized length by converting to BAS
-                int end_colon = 0;
-                string_buf *tok = stmt_get_bas(s, pgm_get_vars(pgm), &end_colon);
-                ls.tok_len += 1 + tok->len;
-                if( tok->len >= 0xFB )
+                // Get tokenized length
+                int bas_len = stmt_get_bas_len(s);
+                ls.tok_len += 1 + bas_len;
+                if( bas_len >= 0xFB )
                 {
                     string_buf *prn = stmt_print_alone(s, pgm_get_vars(pgm));
                     err_print("statement too long at line %d:\nerror:  %s\n", ls.cur_line, prn->data);
                     sb_delete(prn);
                 }
-                sb_delete(tok);
             }
             sb_delete(sb);
 

@@ -782,6 +782,21 @@ string_buf *stmt_get_bas(stmt *s, vars *varl, int *end_colon)
     return b;
 }
 
+int stmt_get_bas_len(stmt *s)
+{
+    if( s->stmt == STMT_REM_ || s->stmt == STMT_REM || s->stmt == STMT_BAS_ERROR )
+        return 0;
+    else if( s->stmt == STMT_DATA )
+        return 2 + s->len; // DATA + text + EOL
+    else if( s->stmt == STMT_ENDIF_INVISIBLE )
+        return 0;
+    else
+    {
+        stmt_add_colon(s);
+        return 1 + s->len; // STATEMENT + TOKENS
+    }
+}
+
 int stmt_is_valid(const stmt *s)
 {
     if( !s || s->stmt >= STMT_ENDIF_INVISIBLE )
