@@ -195,6 +195,7 @@ int bas_write_program(FILE *f, program *pgm, int variables)
     int cur_line = 0;
     int line_valid = 0;
     int last_colon = 0;
+    int no_split = 0;
     string_buf *bin_line = sb_new();
     // For each line/statement:
     for( lp = pgm_get_lines(pgm); *lp != 0; ++lp )
@@ -231,7 +232,7 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             // Serialize statement
             stmt *s = line_get_statement(l);
             int old_last_colon = last_colon;
-            string_buf *sb = stmt_get_bas(s, pgm_get_vars(pgm), &last_colon);
+            string_buf *sb = stmt_get_bas(s, pgm_get_vars(pgm), &last_colon, &no_split);
             if( sb->len >= 0xFB )
             {
                 string_buf *prn = stmt_print_alone(s, pgm_get_vars(pgm));
@@ -239,11 +240,19 @@ int bas_write_program(FILE *f, program *pgm, int variables)
                 sb_delete(prn);
                 return 1;
             }
-            if( sb->len )
+            if( sb->len || no_split < 0 )
             {
                 unsigned ln = sb->len + bin_line->len + 4;
-                if( ln > 0xFF || (stmt_is_label(s) && bin_line->len>0) )
+                if( ln > 0xFF || no_split < 0 || (stmt_is_label(s) && bin_line->len>0) )
                 {
+                    if( no_split > 0 )
+                    {
+                        fprintf(stderr,"ERROR: forcing splitting of line %d will produce invalid code.\n"
+                                       "ERROR: please, retry after manually inserting a line.\n",
+                                cur_line);
+                    }
+                    else if( no_split < 0 )
+                        no_split = 0;
                     // We can't add this statement to the current line,
                     // write the old line and create a new line
                     if( bas_add_line(&bw, cur_line, line_valid, bin_line, old_last_colon) )
@@ -254,8 +263,11 @@ int bas_write_program(FILE *f, program *pgm, int variables)
                     line_valid = 0;
                     ln = sb->len + bin_line->len + 4;
                 }
-                sb_put(bin_line, ln);
-                sb_cat(bin_line, sb);
+                if( sb->len )
+                {
+                    sb_put(bin_line, ln);
+                    sb_cat(bin_line, sb);
+                }
             }
             sb_delete(sb);
         }

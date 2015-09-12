@@ -54,7 +54,7 @@ string_buf *stmt_print_short(stmt *s, vars *varl, int *skip_colon, int *no_split
 string_buf *stmt_print_alone(stmt *s, vars *varl);
 
 // Returns the binary "BAS" representation of the statement
-string_buf *stmt_get_bas(stmt *s, vars *varl, int *end_colon);
+string_buf *stmt_get_bas(stmt *s, vars *varl, int *end_colon, int *no_split);
 
 // Returns the length of the binary "BAS" representation of the statement
 int stmt_get_bas_len(stmt *s);

@@ -757,7 +757,7 @@ string_buf *stmt_print_short(stmt *s, vars *varl, int *skip_colon, int *no_split
     return b;
 }
 
-string_buf *stmt_get_bas(stmt *s, vars *varl, int *end_colon)
+string_buf *stmt_get_bas(stmt *s, vars *varl, int *end_colon, int *no_split)
 {
     string_buf *b = sb_new();
 
@@ -774,7 +774,53 @@ string_buf *stmt_get_bas(stmt *s, vars *varl, int *end_colon)
         return b;
     }
     else if( s->stmt == STMT_ENDIF_INVISIBLE )
+    {
+        (*no_split) --;
+        if( *no_split == 0 )
+            *no_split = -1; // Force split now!!
         return b;
+    }
+    else if( s->stmt == STMT_IF && s->last_tok == TOK_THEN )
+    {
+        // Sadly, the only way to check if there is a THEN somewhere
+        // is to check all tokens:
+        int l = s->len;
+        uint8_t *d = s->data;
+        for( ; l>0 ; --l, ++d)
+        {
+            int tk = *d;
+            if( tk == 0x0D || tk == 0x0E )
+            {
+                // number
+                d += 6;
+                l -= 6;
+            }
+            else if( tk == 0x0F )
+            {
+                l -= d[1]+1;
+                d += d[1]+1;
+            }
+            else if( tk >= 0x10 && tk < 0x10 + TOK_LAST_TOKEN )
+            {
+                if( tk - 0x10 == TOK_THEN )
+                    (*no_split) ++; // Can't split the "THEN" part
+            }
+            else if( !tk )
+            {
+                // Variable > 127
+                l --;
+                d ++;
+            }
+            else if( tk > 127 )
+            {
+                // Variable < 128
+            }
+            else
+            {
+                // Unknown token!!
+            }
+        }
+    }
 
     *end_colon = stmt_add_colon(s);
     sb_put(b, s->stmt);
