@@ -114,6 +114,8 @@ static void ls_write_line(struct ls *ls, int len, int tok_len)
     // Write line to output
     fprintf(ls->f, "%d",ls->cur_line);
     fwrite(ls->out->data, len, 1, ls->f);
+    if( !len )
+        fputc('.', ls->f); // Write a REM in an otherwise empty line
     fputc(0x9b, ls->f);
 
     // Delete from buffer and unset line number
