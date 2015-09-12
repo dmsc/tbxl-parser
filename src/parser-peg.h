@@ -24,6 +24,7 @@ enum var_type;
 
 void add_comment(const char *, int);
 void add_data_stmt(const char *, int);
+void add_force_line(void);
 void add_linenum(double);
 void add_number(double);
 void add_hex_number(double);

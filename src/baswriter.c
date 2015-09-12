@@ -240,10 +240,10 @@ int bas_write_program(FILE *f, program *pgm, int variables)
                 sb_delete(prn);
                 return 1;
             }
-            if( sb->len || no_split < 0 )
+            if( sb->len )
             {
                 unsigned ln = sb->len + bin_line->len + 4;
-                if( ln > 0xFF || no_split < 0 || (stmt_is_label(s) && bin_line->len>0) )
+                if( ln > 0xFF || (stmt_is_label(s) && bin_line->len>0) )
                 {
                     if( no_split > 0 )
                     {
@@ -251,8 +251,6 @@ int bas_write_program(FILE *f, program *pgm, int variables)
                                        "ERROR: please, retry after manually inserting a line.\n",
                                 cur_line);
                     }
-                    else if( no_split < 0 )
-                        no_split = 0;
                     // We can't add this statement to the current line,
                     // write the old line and create a new line
                     if( bas_add_line(&bw, cur_line, line_valid, bin_line, old_last_colon) )

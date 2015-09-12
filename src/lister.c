@@ -68,25 +68,68 @@ struct ls {
     int max_len, max_num, num_lines;
     // Out buffer
     string_buf *out;
-    // Current line
+    // Current line number
     int cur_line;
+    // Current line number length
+    int num_len;
+    // Current line number is user defined
+    int user_num;
+    // We added a ':' at the end
+    int last_colon;
     // Tokenized length
     int tok_len;
     // File
     FILE *f;
 };
 
-static void ls_write_line(struct ls *ls, int len)
+static void ls_set_linenum(struct ls *ls, int num)
 {
-    // Update summary info
-    if( len > ls->max_len )
+    ls->cur_line = num;
+    ls->num_len  = num > 9999 ? 5 :
+                   num >  999 ? 4 :
+                   num >   99 ? 3 :
+                   num >    9 ? 2 : 1;
+}
+
+static void ls_write_line(struct ls *ls, int len, int tok_len)
+{
+    if( len < 0 )
     {
-        ls->max_len = len;
+        // Full line
+        len = ls->out->len;
+        if( len && ls->last_colon )
+            len --;
+    }
+    if( ! len && !ls->user_num )
+        return;
+
+    // Update summary info
+    if( len + ls->num_len > ls->max_len )
+    {
+        ls->max_len = len + ls->num_len;
         ls->max_num = ls->cur_line;
     }
     ls->num_lines++;
+
+    // Write line to output
+    fprintf(ls->f, "%d",ls->cur_line);
     fwrite(ls->out->data, len, 1, ls->f);
     fputc(0x9b, ls->f);
+
+    // Delete from buffer and unset line number
+    if( ls->out->len - len > 1 )
+    {
+        memmove(ls->out->data, ls->out->data + len + 1, ls->out->len - len - 1);
+        ls->out->len -= (len + 1);
+    }
+    else
+        ls->out->len = 0;
+    ls_set_linenum(ls, ls->cur_line + 1);
+    ls->user_num = 0;
+    ls->last_colon = 0;
+    ls->tok_len -= tok_len;
+    if( ls->tok_len < 0 )
+        ls->tok_len = 0;
 }
 
 void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
@@ -94,11 +137,14 @@ void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
     struct ls ls;
     ls.max_len = ls.max_num = ls.num_lines = 0;
     ls.out = sb_new();
+    ls.num_len = 0;
     ls.tok_len = 0;
     ls.f = f;
     ls.cur_line = -1;
-    int skip_colon = 1, no_split = 0;
-    int last_split = 0, last_tok_len = 0, need_line = -1;
+    ls.last_colon = 0;
+    ls.user_num = 0;
+    int no_split = 0;
+    int last_split = 0, last_tok_len = 0;
 
     // For each line:
     line **lp;
@@ -107,121 +153,78 @@ void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
         line *l = *lp;
 
         // Adds a new statement (if any)
-        if( line_is_num(l) )
+        if( !line_is_num(l) )
         {
-            need_line = line_get_num(l);
-            if( need_line == -1 )
-            {
-                // This is a "fake" line, added because we had a DATA statement.
-                // We simply advance the line counter if the next statement is not a line number
-                if( lp[1] && !line_is_num(lp[1]) )
-                    need_line = ls.cur_line + 1;
-            }
-            last_split = ls.out->len;
-            last_tok_len = ls.tok_len;
-        }
-        else
-        {
-            // Test if we need to output a new line number
-            if( need_line >= 0 || no_split < 0 )
-            {
-                // Check if needed line number is valid
-                if( need_line <= ls.cur_line )
-                {
-                    err_print("line number %d is already used at %d.\n", need_line, ls.cur_line);
-                    need_line = ls.cur_line +1;
-                }
-                if( ls.out->len )
-                {
-                    if( !last_split )
-                    {
-                        err_print("line number %d can not be split to shorter size.\n", ls.cur_line);
-                        last_split = ls.out->len;
-                        last_tok_len = ls.tok_len;
-                    }
-                    // Output the part of the line
-                    ls_write_line(&ls, last_split);
-                }
-
-                // Go to next line
-                ls.cur_line = need_line;
-                string_buf *nbuf = sb_new();
-                sb_put_dec(nbuf, ls.cur_line);
-
-                // Copy the last part of last line here
-                if( ls.out->len - last_split > 1 )
-                    sb_write(nbuf, (unsigned char *)ls.out->data + last_split + 1, ls.out->len - last_split - 1);
-                else
-                    skip_colon = 1;
-
-                // Replace with new line
-                sb_delete(ls.out);
-                ls.out = nbuf;
-
-                // Redo size
-                ls.tok_len -= last_tok_len;
-
-                need_line = -1;
-                last_split = 0;
-                last_tok_len = 0;
-            }
-
             // Statement
-            int last_skip = skip_colon;
             stmt *s = line_get_statement(l);
+            int skip_colon = 0;
             string_buf *sb = stmt_print_short(s, pgm_get_vars(pgm), &skip_colon, &no_split);
             if( sb->len )
             {
-
                 // If we have statements before any line, start at '0'
                 if( ls.cur_line < 0 )
                 {
-                    ls.cur_line = 0;
-                    sb_put(ls.out,'0');
+                    ls_set_linenum(&ls, 0);
+                    ls.user_num = 1;
                 }
-                if( !last_skip )
-                    sb_put(ls.out, ':');
-                sb_cat(ls.out, sb);
+
+                if( !skip_colon )
+                    sb_put(sb, ':');
+
                 // Get tokenized length
                 int bas_len = stmt_get_bas_len(s);
-                ls.tok_len += 1 + bas_len;
                 if( bas_len >= 0xFB )
                 {
                     string_buf *prn = stmt_print_alone(s, pgm_get_vars(pgm));
                     err_print("statement too long at line %d:\nerror:  %s\n", ls.cur_line, prn->data);
                     sb_delete(prn);
                 }
+
+                // Split before a label (write full curren line)
+                if( stmt_is_label(s) && ls.out->len )
+                    ls_write_line(&ls, -1, ls.tok_len);
+                // See if line is too big to join with last line
+                else if( ((ls.tok_len + 1 + bas_len) > 0xFC) ||
+                         ((ls.out->len + ls.num_len - !skip_colon + sb->len) > max_line_len) )
+                {
+                    if( !last_split )
+                    {
+                        err_print("line number %d can not be split to shorter size (current len %d).\n", ls.cur_line, ls.out->len + sb->len);
+                    }
+                    else
+                        ls_write_line(&ls, last_split, last_tok_len);
+                }
+                // Add statement
+                sb_cat(ls.out, sb);
+                ls.tok_len += 1 + bas_len;
+                ls.last_colon = !skip_colon;
+                if( !no_split )
+                {
+                    last_split = ls.out->len - ls.last_colon;
+                    last_tok_len = ls.tok_len;
+                }
             }
             sb_delete(sb);
-
-            if( no_split < 0 )
-            {
-                no_split = 0;
-                need_line = ls.cur_line + 1;
-            }
-
-            // If current line is too long or if last statement was a label,
-            // we need a new line number.
-            if( (ls.tok_len > 0xFC && last_split) ||
-                (ls.out->len >= max_line_len && last_split) ||
-                (!last_skip && stmt_is_label(s)) )
-            {
-                // Tell the user we split because token length instead of line length:
-                if( ls.tok_len > 0xFC )
-                    info_print("splitting line %d on token length: %d\n", ls.cur_line, ls.tok_len);
-                need_line = ls.cur_line + 1;
-            }
-            else if( !no_split )
-            {
-                last_split = ls.out->len;
-                last_tok_len = ls.tok_len;
-            }
         }
-
+        else
+        {
+            // A line break, (full) output current line
+            ls_write_line(&ls, -1, ls.tok_len);
+            // Get new line number
+            int need_line = line_get_num(l);
+            if( need_line >= 0 )
+            {
+                ls_set_linenum( &ls, need_line );
+                ls.user_num = 1;
+            }
+            // Set split point to current position
+            last_split = ls.out->len;
+            last_tok_len = ls.tok_len;
+        }
     }
     // Output last line
-    if( ls.out->len )
-        ls_write_line(&ls, ls.out->len);
+    if( ls.out->len || ls.user_num )
+        ls_write_line(&ls, -1, ls.tok_len);
 
     sb_delete(ls.out);
     // Output summary info

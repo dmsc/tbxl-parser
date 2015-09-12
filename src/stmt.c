@@ -480,7 +480,6 @@ static int check_add_indent(enum enum_statements s)
         case STMT_FOR:
         case STMT_IF_MULTILINE:
         case STMT_IF_THEN:
-        case STMT_IF_NUMBER:
         case STMT_PROC:
         case STMT_REPEAT:
         case STMT_WHILE:
@@ -673,8 +672,6 @@ string_buf *stmt_print_short(stmt *s, vars *varl, int *skip_colon, int *no_split
     if( s->stmt == STMT_ENDIF_INVISIBLE )
     {
         (*no_split) --;
-        if( *no_split == 0 )
-            *no_split = -1; // Force split now!!
         return b;
     }
     else if( s->stmt == STMT_REM_ || s->stmt == STMT_REM || s->stmt == STMT_BAS_ERROR )
@@ -693,7 +690,7 @@ string_buf *stmt_print_short(stmt *s, vars *varl, int *skip_colon, int *no_split
         else
             sb_puts(b, statements[s->stmt].stm_short);
         // Check if it is an IF/THEN, can't be split:
-        if( s->stmt == STMT_IF_THEN || s->stmt == STMT_IF_NUMBER )
+        if( s->stmt == STMT_IF_THEN )
         {
             *skip_colon = 1;
             (*no_split) ++; // Can't split the "THEN" part
@@ -779,8 +776,6 @@ string_buf *stmt_get_bas(stmt *s, vars *varl, int *end_colon, int *no_split)
     else if( s->stmt == STMT_ENDIF_INVISIBLE )
     {
         (*no_split) --;
-        if( *no_split == 0 )
-            *no_split = -1; // Force split now!!
         return b;
     }
     else if( s->stmt == STMT_IF_THEN )

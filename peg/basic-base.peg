@@ -43,7 +43,7 @@ Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytex
                  / CLOAD
                  / CIRCLE NumExpr3
                  / CSAVE
-                 / DATA   < NotEOL* >       { add_data_stmt(yytext, yyleng); }
+                 / DATA   < NotEOL* >  { add_data_stmt(yytext, yyleng); } ForceLine
                  / DEG
                  / DIM    DimVar (COMMA DimVar)*
                  / DOS
@@ -78,9 +78,8 @@ Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytex
                                  (
                                   ':' < NotEOL* >
                                   { add_stmt( STMT_REM ); add_comment(yytext, yyleng); }
-                                 )?
-                                ENDIF_INVISIBLE
-                 / IF_THEN      NumExpr THEN StatementLine ENDIF_INVISIBLE
+                                 )? ForceLine
+                 / IF_THEN      NumExpr THEN StatementLine ENDIF_INVISIBLE ForceLine
                  / IF_MULTILINE NumExpr
                  / LIST   (StrExpr COMMA)? ( NumExpr ( COMMA NumExpr )? )?
                  / LET    AssignVarStr S_ASGN StrExpr
@@ -336,4 +335,7 @@ Number          <- '$' < [a-fA-F0-9]+ > SPC                    { add_hex_number(
 NumExp          <- ( 'e' / 'E' ) ( '+' / '-' )? [0-9] [0-9]?
 
 REM_C           <- "'" SPC { add_stmt( STMT_REM ); }
+
+# Use to force newlines after DATA or IF/THEN
+ForceLine       <- { add_force_line(); }
 

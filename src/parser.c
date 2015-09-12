@@ -59,8 +59,12 @@ void add_comment(const char *str, int len)
 void add_data_stmt(const char *str, int len)
 {
     stmt_add_data(get_statement(), str, len);
-    // Adds a "fake" line number, as DATA statements always terminate lines
-    pgm_add_line(parse_get_current_pgm(), line_new_linenum(-1) );
+}
+
+void add_force_line()
+{
+    if( !line_is_num(pgm_get_current_line(parse_get_current_pgm())) )
+        pgm_add_line(parse_get_current_pgm(), line_new_linenum(-1) );
 }
 
 void add_linenum(double num)
