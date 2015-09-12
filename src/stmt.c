@@ -478,7 +478,9 @@ static int check_add_indent(enum enum_statements s)
         case STMT_DO:
         case STMT_ELSE:
         case STMT_FOR:
-        case STMT_IF:
+        case STMT_IF_MULTILINE:
+        case STMT_IF_THEN:
+        case STMT_IF_NUMBER:
         case STMT_PROC:
         case STMT_REPEAT:
         case STMT_WHILE:
@@ -690,6 +692,12 @@ string_buf *stmt_print_short(stmt *s, vars *varl, int *skip_colon, int *no_split
             sb_put(b, '?');
         else
             sb_puts(b, statements[s->stmt].stm_short);
+        // Check if it is an IF/THEN, can't be split:
+        if( s->stmt == STMT_IF_THEN || s->stmt == STMT_IF_NUMBER )
+        {
+            *skip_colon = 1;
+            (*no_split) ++; // Can't split the "THEN" part
+        }
         int add_space = 0;
         int l = s->len;
         uint8_t *d = s->data;
@@ -722,11 +730,6 @@ string_buf *stmt_print_short(stmt *s, vars *varl, int *skip_colon, int *no_split
             else if( tk >= 0x10 && tk < 0x10 + TOK_LAST_TOKEN )
             {
                 enum enum_tokens te = tk - 0x10;
-                if( te == TOK_THEN )
-                {
-                    *skip_colon = 1;
-                    (*no_split) ++; // Can't split the "THEN" part
-                }
                 const char *t = tokens[te].tok_short;
                 if( add_space && ( (t[0] >= 'A' && t[0] <= 'Z') || t[0] == '_' ) )
                     sb_put(b, ' ');
@@ -780,50 +783,17 @@ string_buf *stmt_get_bas(stmt *s, vars *varl, int *end_colon, int *no_split)
             *no_split = -1; // Force split now!!
         return b;
     }
-    else if( s->stmt == STMT_IF && s->last_tok == TOK_THEN )
+    else if( s->stmt == STMT_IF_THEN )
     {
-        // Sadly, the only way to check if there is a THEN somewhere
-        // is to check all tokens:
-        int l = s->len;
-        uint8_t *d = s->data;
-        for( ; l>0 ; --l, ++d)
-        {
-            int tk = *d;
-            if( tk == 0x0D || tk == 0x0E )
-            {
-                // number
-                d += 6;
-                l -= 6;
-            }
-            else if( tk == 0x0F )
-            {
-                l -= d[1]+1;
-                d += d[1]+1;
-            }
-            else if( tk >= 0x10 && tk < 0x10 + TOK_LAST_TOKEN )
-            {
-                if( tk - 0x10 == TOK_THEN )
-                    (*no_split) ++; // Can't split the "THEN" part
-            }
-            else if( !tk )
-            {
-                // Variable > 127
-                l --;
-                d ++;
-            }
-            else if( tk > 127 )
-            {
-                // Variable < 128
-            }
-            else
-            {
-                // Unknown token!!
-            }
-        }
+        (*no_split) ++; // Can't split the "THEN" part
     }
 
     *end_colon = stmt_add_colon(s);
-    sb_put(b, s->stmt);
+    if( s->stmt == STMT_IF_THEN || s->stmt == STMT_IF_MULTILINE || s->stmt == STMT_IF_NUMBER )
+        sb_put(b, STMT_IF);
+    else
+        sb_put(b, s->stmt);
+
     sb_write(b, s->data, s->len);
     return b;
 }
