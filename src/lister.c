@@ -31,7 +31,6 @@ typedef struct lister {
 void lister_list_program_long(FILE *f, program *pgm, int conv_ascii)
 {
     int indent = 0;
-    int skip_colon = 1;
     line **lp;
     // For each line:
     for( lp = pgm_get_lines(pgm); *lp != 0; ++lp )
@@ -43,14 +42,12 @@ void lister_list_program_long(FILE *f, program *pgm, int conv_ascii)
             // Number
             if( line_get_num(l) >= 0 )
                 fprintf(f, "%d\n", line_get_num(l) );
-            skip_colon = 1;
         }
         else
         {
             // Statement
-            skip_colon = 0;
             stmt *s = line_get_statement(l);
-            string_buf *sb = stmt_print_long(s, pgm_get_vars(pgm), &indent, &skip_colon, conv_ascii);
+            string_buf *sb = stmt_print_long(s, pgm_get_vars(pgm), &indent, conv_ascii);
             if( sb && sb->len )
             {
                 putc('\t', f);

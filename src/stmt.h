@@ -49,7 +49,7 @@ int stmt_is_text(const stmt *s);
 int stmt_is_label(const stmt *s);
 
 // Prints the statement to a newly allocated string
-string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int *skip_colon, int conv_ascii);
+string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int conv_ascii);
 string_buf *stmt_print_short(stmt *s, vars *varl, int *skip_colon, int *no_split);
 string_buf *stmt_print_alone(stmt *s, vars *varl);
 

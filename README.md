@@ -12,7 +12,12 @@ and produces any of three outputs:
 - A pretty printed expanded listing, with one statement per line and
   indentation, and standard ASCII line endings.
 
-  Note that this format can be read back again.
+  Note that this format can be read back again, but some statements are
+  transformed in the process, this can lead to problems in non-standard
+  IF/THEN constructs.
+
+  Currently, `IF`/`THEN` with statements after the `THEN` are converted to
+  multi-line `IF`/`ENDIF` statements.
 
   This mode is selected with the `-l` command line switch.
 

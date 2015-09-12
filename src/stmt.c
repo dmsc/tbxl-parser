@@ -558,7 +558,7 @@ static void print_comment_ascii(string_buf *b, const uint8_t *txt, unsigned len)
     print_comment(b, (uint8_t *)tmp->data, tmp->len);
 }
 
-string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int *skip_colon, int conv_ascii)
+string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int conv_ascii)
 {
     string_buf *b = sb_new();
 
@@ -569,16 +569,12 @@ string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int *skip_colon, i
 
     *indent += check_add_indent(s->stmt);
 
-    if( s->stmt == STMT_ENDIF_INVISIBLE )
-        return b;
-
     print_indent(b, pind);
     if( s->stmt == STMT_REM_ )
     {
         int i;
         for(i=0; i<30; i++)
             sb_put(b, '-');
-        *skip_colon = 1;
     }
     else if( s->stmt == STMT_REM )
     {
@@ -586,7 +582,6 @@ string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int *skip_colon, i
             print_comment_ascii(b, s->data, s->len);
         else
             print_comment(b, s->data, s->len);
-        *skip_colon = 1;
     }
     else if( s->stmt == STMT_DATA )
     {
@@ -608,6 +603,8 @@ string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int *skip_colon, i
     else
     {
         const char *st = statements[s->stmt].stm_long;
+        if( s->stmt == STMT_ENDIF_INVISIBLE )
+            st = "ENDIF";
         sb_puts_lcase(b, st);
         if( *st )
             sb_put(b, ' ');
@@ -646,9 +643,9 @@ string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int *skip_colon, i
             else if( tk >= 0x10 && tk < 0x10 + TOK_LAST_TOKEN )
             {
                 enum enum_tokens te = tk - 0x10;
-                if( te == TOK_THEN )
-                    *skip_colon = 1;
-                sb_puts(b, tokens[te].tok_long);
+                // Skip THEN if converting an IF/THEN
+                if( s->stmt != STMT_IF_THEN || te != TOK_THEN )
+                    sb_puts(b, tokens[te].tok_long);
             }
             else if( !tk )
             {
@@ -676,8 +673,8 @@ string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int *skip_colon, i
 
 string_buf *stmt_print_alone(stmt *s, vars *varl)
 {
-    int indent = 0, skip_colon = 1;
-    return stmt_print_long(s, varl, &indent, &skip_colon, 1);
+    int indent = 0;
+    return stmt_print_long(s, varl, &indent, 1);
 }
 
 string_buf *stmt_print_short(stmt *s, vars *varl, int *skip_colon, int *no_split)
