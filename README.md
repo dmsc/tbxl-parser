@@ -133,6 +133,50 @@ Options:
 
 - `-h`  Shows help and exit.
 
+Limitations
+-----------
+
+There are some incompatibilities in the way the source is interpreted with the
+standard TurboBasic XL and Atari Basic parsers:
+
+- As the ASCII LF character (hexadecimal $10) is interpreted as end of line in
+  addition to the ATASCI EOL (hexadecimal $9B). This means that in string constants
+  and comments the LF character is not accepted.
+
+- The parsing of special characters inside strings means that a valid hexadecimal
+  sequence (`\**`, wirg `*` an hexadecimal number in uppercase) are interpreted
+  differently.
+
+- Extra statements after an `IF`/`THEN`/`LineNumber` are converted to a comment.
+  In the original, those statements are never executed, so this is not a problem
+  with proper code.
+
+- In long format listing output, `IF`/`THEN` are converted to `IF`/`ENDIF`
+  statements. This introduces an incompatibility with the following code:
+
+```
+    FOR A = 0 TO 2
+      ? "A="; A; " - ";
+      IF A <> 0
+        ? "1";
+        IF A = 1 THEN ELSE
+        ? "2";
+      ENDIF
+      ? " -"
+    NEXT A
+```
+
+  This code should produce the following at output:
+
+```
+    A=0 - 2 -
+    A=1 - 1 -
+    A=2 - 12 -
+```
+
+  After conversion, the `ELSE` is associated with the second `IF` instead
+  of the first, giving the wrong result.
+
 
 Compilation
 -----------
