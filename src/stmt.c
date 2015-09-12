@@ -513,9 +513,22 @@ static void print_indent(string_buf *s, int i)
         sb_put(s, '\t');
 }
 
-// Print comment converting to ASCII
-static void print_comment(const uint8_t *txt, unsigned len, string_buf *b)
+// Prints a comment to the string_buf
+static void print_comment(string_buf *b, const uint8_t *txt, unsigned len)
 {
+    // See if the text already has a "REM" or "'":
+    if( ( !len  || (txt[0] != '\'' && txt[0] != '.') ) &&
+        ( len<2 || strncasecmp("r.", (const char *)txt, 2) ) &&
+        ( len<3 || strncasecmp("rem", (const char *)txt, 3) ) )
+        sb_puts(b, "rem ");
+    sb_write(b, txt, len);
+}
+
+// Print comment converting to ASCII
+static void print_comment_ascii(string_buf *b, const uint8_t *txt, unsigned len)
+{
+    // First, convert to ASCII
+    string_buf *tmp = sb_new();
     for( ; len > 0; txt++, len--)
     {
         // Conversion table for values 0x00 to 0x1F
@@ -539,8 +552,10 @@ static void print_comment(const uint8_t *txt, unsigned len, string_buf *b)
             c = '<'; // Delete
         else if( c == 0x7f )
             c = '>'; // Insert
-        sb_put(b, c);
+        sb_put(tmp, c);
     }
+    // Print
+    print_comment(b, (uint8_t *)tmp->data, tmp->len);
 }
 
 string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int *skip_colon, int conv_ascii)
@@ -568,9 +583,9 @@ string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int *skip_colon, i
     else if( s->stmt == STMT_REM )
     {
         if( conv_ascii )
-            print_comment(s->data, s->len, b);
+            print_comment_ascii(b, s->data, s->len);
         else
-            sb_write(b, s->data, s->len);
+            print_comment(b, s->data, s->len);
         *skip_colon = 1;
     }
     else if( s->stmt == STMT_DATA )

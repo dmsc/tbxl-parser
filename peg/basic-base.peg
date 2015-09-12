@@ -76,7 +76,7 @@ Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytex
                           )? VariableList
                  / IF_NUMBER    NumExpr THEN Number
                                  (
-                                  ':' < NotEOL* >
+                                  ':' SPC < NotEOL* >
                                   { add_stmt( STMT_REM ); add_comment(yytext, yyleng); }
                                  )? ForceLine
                  / IF_THEN      NumExpr THEN StatementLine ENDIF_INVISIBLE ForceLine
