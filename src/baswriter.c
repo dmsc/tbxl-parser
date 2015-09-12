@@ -212,7 +212,8 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             if( line_get_num(l) < 0 )
             {
                 // This is a fake DATA line.
-                cur_line ++;
+                if( line_valid || old_len )
+                    cur_line ++;
                 line_valid = 0;
             }
             else if( (old_len || line_valid) && line_get_num(l) <= cur_line )
