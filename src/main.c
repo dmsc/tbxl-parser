@@ -166,8 +166,15 @@ int main(int argc, char **argv)
         // Write output if parse was ok or if writing long output
         if( ok || out_type == out_long )
         {
-            if( do_debug )
-                fprintf(stderr, "Parsing of file '%s' complete.\n", inFname);
+            if( !ok )
+            {
+                fprintf(stderr,"\n"
+                               "%s: errors detected but generating long list anyway,\n"
+                               "%s: the output listing will contain errors.\n",
+                               inFname, inFname);
+            }
+            else if( do_debug )
+                fprintf(stderr, "%s: parsing file complete.\n", inFname);
 
             // Open output file
             if( strcmp( outFname, "-" ) )
