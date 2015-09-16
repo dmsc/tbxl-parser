@@ -16,7 +16,7 @@
 #  with this program.  If not, see <http://www.gnu.org/licenses/>
 #
 
-Program  <-  ProgramLine+ EndOfFile
+Program  <- UnicodeBOM? ProgramLine+ EndOfFile
 
 ProgramLine     <- !EndOfFile (
                       SPC ( LineNumber / ':' )? SPC ( EndOfLine / StatementLine EndOfLine )
@@ -319,6 +319,7 @@ SPC             <- [ \t]*
 EndOfLine       <- ( '\012' / '\233' / '\015\012' / '\015' / !.) { inc_file_line(); }
 NotEOL          <- [^\n\233\r]
 EndOfFile       <- !.
+UnicodeBOM      <- '\357' '\273' '\277'
 
 # Line Numbers
 LineNumber      <-(   < '-'? [0-9]+ ( '.' [0-9]+ )? NumExp? > SPC
