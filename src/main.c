@@ -144,6 +144,7 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    int all_ok = 1;
     for( ; optind<argc; optind++)
     {
         const char *inFname = argv[optind];
@@ -163,6 +164,10 @@ int main(int argc, char **argv)
 
         // Parse input file
         int ok = parse_file(inFname);
+
+        // Update "all_ok" variable
+        all_ok = ok ? all_ok : 0;
+
         // Write output if parse was ok or if writing long output
         if( ok || out_type == out_long )
         {
@@ -210,6 +215,6 @@ int main(int argc, char **argv)
             fprintf(stderr, "\n");
     }
 
-    return 0;
+    return all_ok ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
