@@ -218,7 +218,8 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             }
             else if( (old_len || line_valid) && line_get_num(l) <= cur_line )
             {
-                err_print("line number %d repeated\n", cur_line);
+                err_print("line number %d already in use, current free number is %d\n",
+                          line_get_num(l), 1 + cur_line);
                 return 1;
             }
             else
