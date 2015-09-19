@@ -197,12 +197,16 @@ int main(int argc, char **argv)
                 show_vars_stats();
 
             // Write output
+            int err = 0;
             if( out_type == out_short )
-                lister_list_program_short(outFile, parse_get_current_pgm(), max_line_len);
+                err = lister_list_program_short(outFile, parse_get_current_pgm(), max_line_len);
             else if( out_type == out_long )
-                lister_list_program_long(outFile, parse_get_current_pgm(), do_conv_ascii);
+                err = lister_list_program_long(outFile, parse_get_current_pgm(), do_conv_ascii);
             else if( out_type == out_binary )
-                bas_write_program(outFile, parse_get_current_pgm(), bin_variables);
+                err = bas_write_program(outFile, parse_get_current_pgm(), bin_variables);
+
+            // Remember if there was an error:
+            all_ok = err ? 0 : all_ok;
 
             if( outFile != stdout )
                 fclose(outFile);
