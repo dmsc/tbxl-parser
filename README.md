@@ -44,8 +44,11 @@ The input listing format is very flexible:
   Also, line numbers can appear alone in a line, for better readability.
 
 - Inside strings, special characters can be specified by using a backslash
-  followed by am hexadecimal number, (i.e., `"\00\A0"`), this allows editing on
-  any ASCII editor.
+  followed by an hexadecimal number in upper-case, (i.e., `"\00\A0"` produces
+  a string with a "hearth" and an inverse space), this allows editing special
+  characters on any ASCII editor. Note that to force a backslash before a
+  valid hex number, you can use two backslashes (i.e., ``"123\\456"`` produces
+  ``123\456``).
 
 - Comments can be started by `'` in addition to the _TurboBasic_ `.`, `--` or
   `rem`.
@@ -144,8 +147,8 @@ standard TurboBasic XL and Atari Basic parsers:
   and comments the LF character is not accepted.
 
 - The parsing of special characters inside strings means that a valid hexadecimal
-  sequence (`\**`, wirg `*` an hexadecimal number in uppercase) are interpreted
-  differently.
+  sequence (`\**`, with `*` an hexadecimal number in uppercase) or two backslashes
+  are interpreted differently.
 
 - Extra statements after an `IF`/`THEN`/`LineNumber` are converted to a comment.
   In the original, those statements are never executed, so this is not a problem
