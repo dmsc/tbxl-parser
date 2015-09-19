@@ -114,7 +114,7 @@ Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytex
                  / PAINT  NumExpr2
                  / RAD
                  / READ   VariableList
-                 / RESTORE NumExpr?
+                 / RESTORE ( SHARP Label / NumExpr )?
                  / RETURN
                  / RUN    StrExpr?
                  / REPEAT
