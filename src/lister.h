@@ -21,7 +21,13 @@
 
 typedef struct program_struct program;
 
-// List program to a file, in "long" or "short" format
-void lister_list_program_long(FILE *f, program *pgm, int conv_ascii);
-void lister_list_program_short(FILE *f, program *pgm, int max_line_len);
+// List program to a file, in "long" format
+// if cont_ascii is != 0, convert comments to ASCII.
+// Returns 0 if OK.
+int lister_list_program_long(FILE *f, program *pgm, int conv_ascii);
+
+// List program to a file, in "short" format
+// max_line_len is the maximum character in the output lines, excluding the EOL
+// Returns 0 if OK.
+int lister_list_program_short(FILE *f, program *pgm, int max_line_len);
 

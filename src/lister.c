@@ -28,7 +28,7 @@ typedef struct lister {
     int indent;
 } lister;
 
-void lister_list_program_long(FILE *f, program *pgm, int conv_ascii)
+int lister_list_program_long(FILE *f, program *pgm, int conv_ascii)
 {
     int indent = 0;
     line **lp;
@@ -57,6 +57,7 @@ void lister_list_program_long(FILE *f, program *pgm, int conv_ascii)
             sb_delete(sb);
         }
     }
+    return 0;
 }
 
 // Holds short-lister status
@@ -79,13 +80,19 @@ struct ls {
     FILE *f;
 };
 
-static void ls_set_linenum(struct ls *ls, int num)
+static int ls_set_linenum(struct ls *ls, int num)
 {
+    if( num < ls->cur_line )
+    {
+        err_print("line number %d already in use, current free number is %d\n", num, ls->cur_line);
+        return 1;
+    }
     ls->cur_line = num;
     ls->num_len  = num > 9999 ? 5 :
                    num >  999 ? 4 :
                    num >   99 ? 3 :
                    num >    9 ? 2 : 1;
+    return 0;
 }
 
 static void ls_write_line(struct ls *ls, int len, int tok_len)
@@ -131,7 +138,7 @@ static void ls_write_line(struct ls *ls, int len, int tok_len)
         ls->tok_len = 0;
 }
 
-void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
+int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
 {
     struct ls ls;
     ls.max_len = ls.max_num = ls.num_lines = 0;
@@ -144,6 +151,7 @@ void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
     ls.user_num = 0;
     int no_split = 0;
     int last_split = 0, last_tok_len = 0;
+    int return_error = 0;
 
     // For each line:
     line **lp;
@@ -177,6 +185,7 @@ void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                     string_buf *prn = stmt_print_alone(s, pgm_get_vars(pgm));
                     err_print("statement too long at line %d:\nerror:  %s\n", ls.cur_line, prn->data);
                     sb_delete(prn);
+                    return_error = 1;
                 }
 
                 // Split before a label (write full curren line)
@@ -189,6 +198,7 @@ void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                     if( !last_split )
                     {
                         err_print("line number %d can not be split to shorter size (current len %d).\n", ls.cur_line, ls.out->len + sb->len);
+                        return_error = 1;
                     }
                     else
                         ls_write_line(&ls, last_split, last_tok_len);
@@ -213,7 +223,8 @@ void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
             int need_line = line_get_num(l);
             if( need_line >= 0 )
             {
-                ls_set_linenum( &ls, need_line );
+                if( ls_set_linenum( &ls, need_line ) )
+                    return_error = 1;
                 ls.user_num = 1;
             }
             // Set split point to current position
@@ -234,4 +245,5 @@ void lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                        " Maximum line length: %d bytes at line %d\n",
                        ls.num_lines, ls.max_len, ls.max_num );
     }
+    return return_error;
 }
