@@ -182,6 +182,12 @@ void stmt_add_string(stmt *s, const char *data, unsigned len)
             data += 3;
             len  -= 3;
         }
+        else if( len>1 && data[0] == '\\' && data[1] == '\\' )
+        {
+            stmt_add_byte(s, '\\');
+            data += 2;
+            len  -= 2;
+        }
         else
         {
             stmt_add_byte(s, *data);
