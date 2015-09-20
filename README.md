@@ -197,6 +197,9 @@ standard TurboBasic XL and Atari Basic parsers:
   After conversion, the `ELSE` is associated with the second `IF` instead
   of the first, giving the wrong result.
 
+- Parsing of `TIME$=` statement allows a space between `TIME$` and the equals
+  sign, but in TurboBasic XL this gives an error.
+
 
 Compilation
 -----------

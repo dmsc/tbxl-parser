@@ -29,6 +29,8 @@ StatementLine   <- Statement (   ':' SPC Statement
                              )*
 
 Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytext, yyleng); }
+                 / TIME_S StrExpr
+                 / &{ testToken( TOK_TIMEP ) } SPC '=' SPC { add_stmt( STMT_TIME_S ); } StrExpr
                  / LET_INV AssignVarStr S_ASGN StrExpr
                  / LET_INV AssignVarNum F_ASGN NumExpr
                  / BYE
@@ -128,7 +130,6 @@ Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytex
                  / SETCOLOR NumExpr3
                  / SOUND  NumExpr4?
                  / TRAP   ( SHARP Label / NumExpr )
-                 / TIME_S StrExpr
                  / TRACE
                  / TEXT   NumExpr2 COMMA StrExpr
                  / UNTIL  NumExpr
