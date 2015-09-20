@@ -136,8 +136,8 @@ Options:
 
 - `-h`  Shows help and exit.
 
-Limitations
------------
+Limitations and Incompatibilities
+---------------------------------
 
 There are some incompatibilities in the way the source is interpreted with the
 standard TurboBasic XL and Atari Basic parsers:
@@ -153,6 +153,23 @@ standard TurboBasic XL and Atari Basic parsers:
 - Extra statements after an `IF`/`THEN`/`LineNumber` are converted to a comment.
   In the original, those statements are never executed, so this is not a problem
   with proper code.
+
+- Any string is accepted as a variable name, even if it is already an statement,
+  function name or operator.
+
+  The following code is valid:
+
+```
+    PRINTED = 0     : ' Invalid in Atari Basic, as starts with "PRINT"
+    DONE = 3        : ' Invalid in TurboBasic XL, as starts with "DO"
+```
+
+  This relaxed handling of variable naming creates an incompatibility, as the
+  first example above is parsed differently as the standard Atari Basic,
+  where it means "`PRINT (ED = 0)`" instead of "`LET PRINTED = 0`".
+
+  Note that currently, even full statements are accepted as variable names,
+  but avoid using them as they could produce hard to understand errors.
 
 - In long format listing output, `IF`/`THEN` are converted to `IF`/`ENDIF`
   statements. This introduces an incompatibility with the following code:
