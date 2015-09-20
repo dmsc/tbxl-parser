@@ -29,6 +29,8 @@ StatementLine   <- Statement (   ':' SPC Statement
                              )*
 
 Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytext, yyleng); }
+                 / LET_INV AssignVarStr S_ASGN StrExpr
+                 / LET_INV AssignVarNum F_ASGN NumExpr
                  / BYE
                  / BPUT   IOChan COMMA NumExpr2
                  / BGET   IOChan COMMA NumExpr2
@@ -140,8 +142,6 @@ Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytex
                  / P_PUT  (IOChan COMMA)? NumExpr (COMMA NumExpr)*
                  / P_GET  (IOChan COMMA)? PVarNum (COMMA PVarNum)*
                  / LBL_S  Label
-                 / LET_INV AssignVarStr S_ASGN StrExpr
-                 / LET_INV AssignVarNum F_ASGN NumExpr
                  / < BAS_ERROR ERROR > { print_error("statement", yytext);
                                          add_comment(yytext,yyleng); }
                  / < ERROR > { add_stmt( STMT_BAS_ERROR );
