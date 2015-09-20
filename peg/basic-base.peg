@@ -16,23 +16,33 @@
 #  with this program.  If not, see <http://www.gnu.org/licenses/>
 #
 
+# Full program: starts with an optional unicode BOM and follows zero or more lines.
 Program  <- UnicodeBOM? ProgramLine* EndOfFile
 
+# One program line
 ProgramLine     <- !EndOfFile (
                       SPC ( LineNumber / ':' )? SPC ( EndOfLine / StatementLine EndOfLine )
                     / < ERROR > EndOfLine { print_error("unexpected input", yytext); }
                   )
 
+# One statement line, with multiple statements separated by ':'
 StatementLine   <- Statement (   ':' SPC Statement
                                / ':' SPC EndOfLine { print_error("statement", yytext); }
                                / < ERROR > { print_error("end of line", yytext); }
                              )*
 
+# One statement
 Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytext, yyleng); }
+                 # Special case: TIME$= is a statement, but has an '=' sign, so must
+                 # test before testing variables.
                  / TIME_S StrExpr
+                 # Allows a space after TIME$, this makes parser less confusing.
                  / &{ testToken( TOK_TIMEP ) } SPC '=' SPC { add_stmt( STMT_TIME_S ); } StrExpr
+                 # Test variable assignment, this fails (and goes to the rest of
+                 # statements if there is no '=' sign after the variable name.
                  / LET_INV AssignVarStr S_ASGN StrExpr
                  / LET_INV AssignVarNum F_ASGN NumExpr
+                 # Follows the standard statements, listed here in alphabetical order
                  / BYE
                  / BPUT   IOChan COMMA NumExpr2
                  / BGET   IOChan COMMA NumExpr2
@@ -78,12 +88,17 @@ Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytex
                  / INPUT  (  IOChan ( COMMA / SEMICOLON )
                            / ConstString ( COMMA / SEMICOLON )
                           )? VariableList
+                 # We split the IF into three cases:
+                 # 1- IF/THEN followed by a number, forcing a line-break.
                  / IF_NUMBER    NumExpr THEN Number
                                  (
                                   ':' SPC < NotEOL* >
                                   { add_stmt( STMT_REM ); add_comment(yytext, yyleng); }
                                  )? ForceLine
+                 # 2- IF/THEN followed by statements, adding an invisible ENDIF at
+                 # the end of the statements and forcing a line-break.
                  / IF_THEN      NumExpr THEN StatementLine ENDIF_INVISIBLE ForceLine
+                 # 3- A multi-line IF
                  / IF_MULTILINE NumExpr
                  / LIST   (StrExpr COMMA)? ( NumExpr ( COMMA NumExpr )? )?
                  / LET    AssignVarStr S_ASGN StrExpr
@@ -143,8 +158,10 @@ Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytex
                  / P_PUT  (IOChan COMMA)? NumExpr (COMMA NumExpr)*
                  / P_GET  (IOChan COMMA)? PVarNum (COMMA PVarNum)*
                  / LBL_S  Label
+                 # A basic ERROR- line, parsed for compatibility
                  / < BAS_ERROR ERROR > { print_error("statement", yytext);
                                          add_comment(yytext,yyleng); }
+                 # And, if not any of the above, we declare a parsing error
                  / < ERROR > { add_stmt( STMT_BAS_ERROR );
                                add_comment(yytext,yyleng);
                                print_error("statement", yytext); }
@@ -193,13 +210,13 @@ StrExpr         <- STRP    ParNumExpr
                  / ExtendedString
                  / PVarStr SubStr?
 
-
+# Constant string, enclosed in ""
 ConstString     <- '"' < StrContent? ( '"' '"' StrContent? )* > { add_string(yytext, yyleng); } '"' SPC
 StrContent      <- [^"]+
 
+# Extended string, enclosed in [" "]
 ExtStringStart <- '[' '"'
 ExtStringEnd   <- '"' ']'
-
 ExtendedString  <- ExtStringStart < (!ExtStringEnd . )* >
                  (
                    ExtStringEnd { add_extended_string(yytext, yyleng); }
@@ -294,6 +311,7 @@ UnitExpr        <- Number
                  / PVarArray ArrayAccess
                  / PVarNum
 
+# String comparisons is a type of numeric expresion
 StrCompExpr     <- StrExpr (
                      S_LEQ StrExpr
                    / S_NEQ StrExpr
@@ -303,15 +321,20 @@ StrCompExpr     <- StrExpr (
                    / S_EQ  StrExpr
                    )
 
+# Parameters to an USR function, one or more numeric expressions in parenthesis
 ParUsrExpr       <- FN_PRN ( NumExpr ( A_COMMA NumExpr )* R_PRN
                              / < ERROR > { print_error("number (,number)", yytext); } )
 
+# Parameters to functions with one numeric expression in parenthesis
 ParNumExpr       <- FN_PRN ( NumExpr R_PRN
                              / < ERROR > { print_error("numeric expression", yytext); } )
 
+# Parameters to INSTR/UINSTR functions, two string expressions and optionally one numeric
+# expression, all in parenthesis
 ParInstrExpr     <- FN_PRN ( StrExpr A_COMMA StrExpr ( A_COMMA NumExpr )? R_PRN
                              / < ERROR > { print_error("string,string (,number)", yytext); } )
 
+# Parameters to functions with one string expression in parenthesis
 ParStrExpr       <- FN_PRN ( StrExpr R_PRN
                              / < ERROR > { print_error("string expression", yytext); } )
 
@@ -322,7 +345,7 @@ NotEOL          <- [^\n\233\r]
 EndOfFile       <- !.
 UnicodeBOM      <- '\357' '\273' '\277'
 
-# Line Numbers
+# Line Numbers - accept any floating point number and check later for validity
 LineNumber      <-(   < '-'? [0-9]+ ( '.' [0-9]+ )? NumExp? > SPC
                     / < '-'? '.' [0-9]+ NumExp? > SPC             ) { add_linenum( strtod(yytext,0) ); }
 
@@ -333,9 +356,10 @@ Identifier      <- [a-zA-Z_] [a-zA-Z0-9_]*
 Number          <- '$' < [a-fA-F0-9]+ > SPC                    { add_hex_number( strtol(yytext,0,16) ); }
                  / < '-'? [0-9]+ ( '.' [0-9]* )? NumExp? > SPC { add_number( strtod(yytext,0) ); }
                  / < '-'? '.' [0-9]+ NumExp? > SPC             { add_number( strtod(yytext,0) ); }
-
+# The exponent of a floating point number
 NumExp          <- ( 'e' / 'E' ) ( '+' / '-' )? [0-9] [0-9]?
 
+# Parse special REMs
 REM_C           <- "'" SPC { add_stmt( STMT_REM ); }
 
 # Use to force newlines after DATA or IF/THEN
