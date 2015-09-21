@@ -206,11 +206,14 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 {
                     if( !last_split )
                     {
-                        err_print(ls.fname, ls.file_line, "line number %d can not be split to shorter size (current len %d).\n", ls.cur_line, ls.out->len + sb->len);
+                        err_print(ls.fname, ls.file_line, "can't split line %d to shorter size (current len %d chars, %d bytes)\n", ls.cur_line, ls.out->len + sb->len, ls.tok_len + 1 + bas_len);
                         return_error = 1;
                     }
                     else
+                    {
                         ls_write_line(&ls, last_split, last_tok_len);
+                        last_split = 0;
+                    }
                 }
                 // Add statement
                 sb_cat(ls.out, sb);
