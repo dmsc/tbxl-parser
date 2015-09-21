@@ -32,7 +32,7 @@ void stmt_delete(stmt *s);
 void stmt_add_token(stmt *s, enum enum_tokens tok);
 void stmt_add_var(stmt *s, int id);
 void stmt_add_string(stmt *s, const char *data, unsigned len);
-int  stmt_add_extended_string(stmt *s, const char *data, unsigned len);
+int  stmt_add_extended_string(stmt *s, const char *data, unsigned len, const char *fname, int file_line);
 void stmt_add_number(stmt *s, double d);
 void stmt_add_hex_number(stmt *s, double d);
 void stmt_add_data(stmt *s, const char *txt, unsigned len);

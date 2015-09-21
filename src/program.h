@@ -21,11 +21,11 @@ typedef struct program_struct program;
 typedef struct line_struct line;
 typedef struct vars_struct vars;
 
-program *program_new();
+program *program_new(const char *fname);
 void program_delete(program *p);
 
 line *pgm_get_current_line(program *p);
 void pgm_add_line(program *p, line *l);
 vars *pgm_get_vars(program *p);
 line **pgm_get_lines(program *p);
-
+const char *pgm_get_file_name(program *p);

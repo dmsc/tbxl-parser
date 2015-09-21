@@ -64,7 +64,7 @@ void add_data_stmt(const char *str, int len)
 void add_force_line()
 {
     if( !line_is_num(pgm_get_current_line(parse_get_current_pgm())) )
-        pgm_add_line(parse_get_current_pgm(), line_new_linenum(-1) );
+        pgm_add_line(parse_get_current_pgm(), line_new_linenum(-1, file_line) );
 }
 
 void add_linenum(double num)
@@ -72,7 +72,7 @@ void add_linenum(double num)
     if( num < 0 || num > 65535 )
         print_error("line number out of range","");
     else
-        pgm_add_line(parse_get_current_pgm(), line_new_linenum( (int)(num+0.5) ) );
+        pgm_add_line(parse_get_current_pgm(), line_new_linenum( (int)(num+0.5), file_line ) );
 }
 
 void add_number(double n)
@@ -92,7 +92,7 @@ void add_string(const char *str, int len)
 
 void add_extended_string(const char *str, int len)
 {
-    if( stmt_add_extended_string(get_statement(), str, len) )
+    if( stmt_add_extended_string(get_statement(), str, len, file_name, file_line) )
         print_error("extended string", "invalid");
 }
 
@@ -103,7 +103,7 @@ void add_token(enum enum_tokens tk)
 
 void add_stmt(enum enum_statements st)
 {
-    pgm_add_line(parse_get_current_pgm(), line_new_statement(st));
+    pgm_add_line(parse_get_current_pgm(), line_new_statement(st, file_line));
 }
 
 void add_ident(const char *name, enum var_type type)
@@ -116,16 +116,15 @@ void add_ident(const char *name, enum var_type type)
         id = vars_new_var(v, name, type);
         if( id < 0 )
             return print_error("too many variables", name);
-        info_print("renaming %s var '%s' -> '%s'\n", var_type_name(type), name,
-                vars_get_short_name(v, id));
+        info_print(file_name, file_line, "renaming %s var '%s' -> '%s'\n",
+                   var_type_name(type), name, vars_get_short_name(v, id));
     }
     stmt_add_var(get_statement(), id);
 }
 
 void print_error(const char *msg, const char *pos)
 {
-    err_print("%s(%d): expected %s, got '%s'\n",
-              file_name, file_line, msg, pos);
+    err_print(file_name, file_line, "expected %s, got '%s'\n", msg, pos);
     parse_error++;
 }
 
@@ -139,7 +138,7 @@ void parse_init(const char *fname)
     parse_error = 0;
     file_line = 1;
     file_name = fname;
-    set_current_pgm( program_new() );
+    set_current_pgm( program_new(fname) );
 }
 
 int get_parse_errors(void)

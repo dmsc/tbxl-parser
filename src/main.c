@@ -154,13 +154,13 @@ int main(int argc, char **argv)
                                            (out_type == out_binary) ? ".bas" : ".lst" );
         if( !strcmp(inFname, outFname) )
         {
-            err_print("%s:%s: output file is the same as input.\n", inFname, outFname);
+            err_print(inFname, 0, "output file '%s' is the same as input.\n", outFname);
             exit(EXIT_FAILURE);
         }
         if( output && strcmp( output, "-" ) )
             output = 0;  // Only use on first file
 
-        info_print("parse file '%s' to '%s'\n", inFname, outFname);
+        info_print(inFname, 0, "parsing to '%s'\n", outFname);
 
         // Parse input file
         int ok = parse_file(inFname);
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 
             if( !outFile )
             {
-                err_print("%s: error %s\n", outFname, strerror(errno));
+                fprintf(stderr,"%s: error %s\n", outFname, strerror(errno));
                 exit(EXIT_FAILURE);
             }
 

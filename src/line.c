@@ -27,30 +27,32 @@
 
 ///////////////////////////////////////////////////////////////////////
 // LINE
-
 struct line_struct {
     enum {
         lt_linenum,
         lt_statement
     } type;
+    int file_line; // line in the input file - used for error reporting
     union {
         int linenum;
         stmt *statement;
     };
 };
 
-line *line_new_linenum(int num)
+line *line_new_linenum(int num, int file_line)
 {
     line *l = malloc(sizeof(line));
     l->type = lt_linenum;
+    l->file_line = file_line;
     l->linenum = num;
     return l;
 }
 
-line *line_new_statement(enum enum_statements s)
+line *line_new_statement(enum enum_statements s, int file_line)
 {
     line *l = malloc(sizeof(line));
     l->type = lt_statement;
+    l->file_line = file_line;
     l->statement = stmt_new(s);
     return l;
 }
@@ -76,6 +78,11 @@ int  line_get_num(const line *l)
         fprintf(stderr,"INTERNAL ERROR: not a line number\n");
         abort();
     }
+}
+
+int  line_get_file_line(const line *l)
+{
+    return l->file_line;
 }
 
 stmt *line_get_statement(const line *l)

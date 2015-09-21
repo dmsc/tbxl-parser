@@ -41,7 +41,8 @@ struct bw {
     string_buf *toks;
 };
 
-static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line, int replace_colon)
+static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line, int replace_colon,
+                        const char *fname, int file_line)
 {
     if( !tok_line->len && !valid )
         return 0; // Skip
@@ -49,7 +50,7 @@ static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line,
     // Verify line number
     if( num < 0 || num >= 32768 )
     {
-        err_print("line number %d invalid\n", num);
+        err_print(fname, file_line, "line number %d invalid\n", num);
         return 1;
     }
 
@@ -70,7 +71,7 @@ static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line,
     unsigned ln = tok_line->len + 3;
     if( ln > 0xFF )
     {
-        err_print("line %d too long\n", num);
+        err_print(fname, file_line, "line %d too long\n", num);
         return 1;
     }
     sb_put(bw->toks, num & 0xFF);
@@ -89,6 +90,9 @@ static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line,
 
 int bas_write_program(FILE *f, program *pgm, int variables)
 {
+    // Input file name, used for debugging
+    const char *fname = pgm_get_file_name(pgm);
+
     // Main program info
     struct bw bw;
 
@@ -196,6 +200,7 @@ int bas_write_program(FILE *f, program *pgm, int variables)
     int line_valid = 0;
     int last_colon = 0;
     int no_split = 0;
+    int file_line = 0;
     string_buf *bin_line = sb_new();
     // For each line/statement:
     for( lp = pgm_get_lines(pgm); *lp != 0; ++lp )
@@ -205,9 +210,10 @@ int bas_write_program(FILE *f, program *pgm, int variables)
         {
             // Append old line
             int old_len = bin_line->len;
-            if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_colon) )
+            if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_colon, fname, file_line) )
                 return 1;
             sb_delete(bin_line);
+            file_line = line_get_file_line(l);
             bin_line = sb_new();
             if( line_get_num(l) < 0 )
             {
@@ -218,7 +224,8 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             }
             else if( (old_len || line_valid) && line_get_num(l) <= cur_line )
             {
-                err_print("line number %d already in use, current free number is %d\n",
+                err_print(fname, line_get_file_line(l),
+                          "line number %d already in use, current free number is %d\n",
                           line_get_num(l), 1 + cur_line);
                 return 1;
             }
@@ -238,7 +245,8 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             if( sb->len >= 0xFB )
             {
                 string_buf *prn = stmt_print_alone(s, pgm_get_vars(pgm));
-                err_print("statement too long at line %d:\nerror:  %s\n", cur_line, prn->data);
+                err_print(fname, line_get_file_line(l), "statement too long at line %d:\n", cur_line);
+                err_print(fname, line_get_file_line(l), "'%s'\n", prn->data);
                 sb_delete(prn);
                 return 1;
             }
@@ -249,15 +257,16 @@ int bas_write_program(FILE *f, program *pgm, int variables)
                 {
                     if( no_split > 0 )
                     {
-                        fprintf(stderr,"ERROR: forcing splitting of line %d will produce invalid code.\n"
-                                       "ERROR: please, retry after manually inserting a line.\n",
-                                cur_line);
+                        err_print(fname, line_get_file_line(l), "forcing splitting of line %d will produce invalid code.\n",
+                                  cur_line);
+                        err_print(fname, line_get_file_line(l), "please, retry after manually inserting a line.\n");
                     }
                     // We can't add this statement to the current line,
                     // write the old line and create a new line
-                    if( bas_add_line(&bw, cur_line, line_valid, bin_line, old_last_colon) )
+                    if( bas_add_line(&bw, cur_line, line_valid, bin_line, old_last_colon, fname, file_line) )
                         return 1;
                     sb_delete(bin_line);
+                    file_line = line_get_file_line(l);
                     bin_line = sb_new();
                     cur_line = cur_line + 1;
                     line_valid = 0;
@@ -273,7 +282,7 @@ int bas_write_program(FILE *f, program *pgm, int variables)
         }
     }
     // Append last line
-    if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_colon) )
+    if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_colon, fname, file_line) )
         return 1;
     sb_delete(bin_line);
     // Now, adds a standard immediate line: SAVE "D:X"
@@ -282,10 +291,10 @@ int bas_write_program(FILE *f, program *pgm, int variables)
     if( vvt->len + vnt->len + bw.toks->len > 0x9500 )
     {
         unsigned len = vvt->len + vnt->len + bw.toks->len;
-        err_print("program too big, %d bytes ($%04X)\n", len, len);
-        err_print("VNT SIZE:%u\n", vnt->len);
-        err_print("VVT SIZE:%u\n", vvt->len);
-        err_print("TOK SIZE:%u\n", bw.toks->len);
+        err_print(fname, 0, "program too big, %d bytes ($%04X)\n", len, len);
+        err_print(fname, 0, "VNT SIZE:%u\n", vnt->len);
+        err_print(fname, 0, "VVT SIZE:%u\n", vvt->len);
+        err_print(fname, 0, "TOK SIZE:%u\n", bw.toks->len);
         return 1;
     }
     // Write

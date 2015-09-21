@@ -249,7 +249,7 @@ struct
 };
 #define atascii_names_len (sizeof(atascii_names)/sizeof(atascii_names[0]))
 
-int stmt_add_extended_string(stmt *s, const char *data, unsigned len)
+int stmt_add_extended_string(stmt *s, const char *data, unsigned len, const char *fname, int file_line)
 {
     // Interprets the string:
     unsigned i, rlen = 0;
@@ -315,12 +315,14 @@ int stmt_add_extended_string(stmt *s, const char *data, unsigned len)
                             break;
                     if( j >= atascii_names_len )
                     {
-                        err_print("invalid character name inside extended string '%.*s'\n", len, data + nameStart);
+                        err_print(fname, file_line, "invalid character name inside extended string '%.*s'\n",
+                                  len, data + nameStart);
                         return 1;
                     }
                     else if( count > 0xFF || count + rlen > 0xFF )
                     {
-                        err_print("too many characters inside extended string '%.*s'\n", len, data);
+                        err_print(fname, file_line, "too many characters inside extended string '%.*s'\n",
+                                  len, data);
                         return 1;
                     }
                     else
@@ -349,7 +351,7 @@ int stmt_add_extended_string(stmt *s, const char *data, unsigned len)
                     buf[rlen++] = hex * 16 + (c > '9' ? c - 'A' + 10 : c - '0');
                 else
                 {
-                    err_print("invalid escape ('\\%c') inside extended string\n", c);
+                    err_print(fname, file_line, "invalid escape ('\\%c') inside extended string\n", c);
                     return 1;
                 }
                 state = 0;
@@ -358,7 +360,7 @@ int stmt_add_extended_string(stmt *s, const char *data, unsigned len)
     }
     if( rlen > 255 )
     {
-        err_print("too many characters inside extended string, truncating '%.*s'\n", len, data);
+        err_print(fname, file_line, "too many characters inside extended string, truncating '%.*s'\n", len, data);
         rlen = 255;
     }
     // Stores into statement

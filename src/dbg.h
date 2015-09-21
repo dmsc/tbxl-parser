@@ -22,7 +22,8 @@ extern int do_debug;
 
 #define dprintf(n, ...) if( do_debug > n ) fprintf(stderr, __VA_ARGS__ )
 
-#define err_print(...)  fprintf(stderr,"error: " __VA_ARGS__ )
-#define warn_print(...) if( do_debug > 0 ) fprintf(stderr, "warning: " __VA_ARGS__ )
-#define info_print(...) if( do_debug > 1 ) fprintf(stderr, "info: " __VA_ARGS__ )
+#define debug_print(err, file, line, msg, ...) fprintf(stderr, err ": %s(%d): " msg, file, line, ## __VA_ARGS__ )
+#define err_print(file, line, ...)  debug_print("error", file, line, __VA_ARGS__ )
+#define warn_print(file, line, ...) if( do_debug > 0 ) debug_print("warning", file, line, __VA_ARGS__ )
+#define info_print(file, line, ...) if( do_debug > 1 ) debug_print("info", file, line, __VA_ARGS__ )
 

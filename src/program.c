@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include <string.h>
 
 static void memory_error()
 {
@@ -35,9 +36,10 @@ struct program_struct {
     int len;         // Number of lines
     line **lines;    // Array of lines
     unsigned size;   // Available lines
+    char *file_name; // Input file name
 };
 
-program *program_new()
+program *program_new(const char *file_name)
 {
     program *p;
     p = malloc(sizeof(program));
@@ -45,6 +47,7 @@ program *program_new()
     p->lines = malloc(64 * sizeof(line*));
     p->size  = 64;
     p->variables = vars_new();
+    p->file_name = strdup(file_name);
     return p;
 }
 
@@ -55,6 +58,7 @@ void program_delete(program *p)
         line_delete(p->lines[i]);
     free( p->lines );
     vars_delete( p->variables );
+    free( p->file_name );
     free( p );
 }
 
@@ -101,4 +105,9 @@ line **pgm_get_lines(program *p)
     check_lines_size(p);
     p->lines[p->len] = 0;
     return p->lines;
+}
+
+const char *pgm_get_file_name(program *p)
+{
+    return p->file_name;
 }

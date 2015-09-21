@@ -27,8 +27,8 @@ typedef struct stmt_struct stmt;
 typedef struct line_struct line;
 
 // Create a new line
-line *line_new_linenum(int num);
-line *line_new_statement(enum enum_statements s);
+line *line_new_linenum(int num, int file_line);
+line *line_new_statement(enum enum_statements s, int file_line);
 
 // Check line type
 int line_is_num(const line *l);
@@ -36,6 +36,7 @@ int line_is_statement(const line *l);
 
 // Get content
 int   line_get_num(const line *l);
+int   line_get_file_line(const line *l);
 stmt *line_get_statement(const line *l);
 
 // Delete line

@@ -76,6 +76,10 @@ struct ls {
     int last_colon;
     // Tokenized length
     int tok_len;
+    // Original file name
+    const char *fname;
+    // Original file line
+    int file_line;
     // File
     FILE *f;
 };
@@ -84,7 +88,8 @@ static int ls_set_linenum(struct ls *ls, int num)
 {
     if( num < ls->cur_line )
     {
-        err_print("line number %d already in use, current free number is %d\n", num, ls->cur_line);
+        err_print(ls->fname, ls->file_line,
+                  "line number %d already in use, current free number is %d\n", num, ls->cur_line);
         return 1;
     }
     ls->cur_line = num;
@@ -149,6 +154,8 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
     ls.cur_line = -1;
     ls.last_colon = 0;
     ls.user_num = 0;
+    ls.fname = pgm_get_file_name(pgm);
+    ls.file_line = 0;
     int no_split = 0;
     int last_split = 0, last_tok_len = 0;
     int return_error = 0;
@@ -178,12 +185,14 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 if( !skip_colon )
                     sb_put(sb, ':');
 
+                ls.file_line = line_get_file_line(l);
                 // Get tokenized length
                 int bas_len = stmt_get_bas_len(s);
                 if( bas_len >= 0xFB )
                 {
                     string_buf *prn = stmt_print_alone(s, pgm_get_vars(pgm));
-                    err_print("statement too long at line %d:\nerror:  %s\n", ls.cur_line, prn->data);
+                    err_print(ls.fname, ls.file_line, "statement too long at line %d:\n", ls.cur_line);
+                    err_print(ls.fname, ls.file_line, "'%s'\n", prn->data);
                     sb_delete(prn);
                     return_error = 1;
                 }
@@ -197,7 +206,7 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 {
                     if( !last_split )
                     {
-                        err_print("line number %d can not be split to shorter size (current len %d).\n", ls.cur_line, ls.out->len + sb->len);
+                        err_print(ls.fname, ls.file_line, "line number %d can not be split to shorter size (current len %d).\n", ls.cur_line, ls.out->len + sb->len);
                         return_error = 1;
                     }
                     else
@@ -219,6 +228,8 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
         {
             // A line break, (full) output current line
             ls_write_line(&ls, -1, ls.tok_len);
+            // Update file line
+            ls.file_line = line_get_file_line(l);
             // Get new line number
             int need_line = line_get_num(l);
             if( need_line >= 0 )

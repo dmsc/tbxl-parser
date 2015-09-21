@@ -121,7 +121,7 @@ int parse_file(const char *fname)
     inFile = fopen(fname, "rb");
     if( !inFile )
     {
-        err_print("%s: %s\n", fname, strerror(errno));
+        err_print(fname, 0, "%s\n", strerror(errno));
         return 0;
     }
     int e = yyparse();
@@ -129,7 +129,7 @@ int parse_file(const char *fname)
     fclose(inFile);
     inFile = 0;
     if( !e )
-        err_print("%s: failed to parse input.\n", fname);
+        err_print(fname, 0, "failed to parse input.\n");
     return e && !get_parse_errors();
 }
 
