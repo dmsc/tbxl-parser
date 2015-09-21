@@ -65,6 +65,11 @@ static int case_name_cmp(const char *a, const char *b)
 
 static char *get_short_name(int n)
 {
+    if( n > 1020 )
+    {
+        // Error, too many variables!
+        return 0;
+    }
     if( n < 27 )
     {
         char *out = malloc(2);
@@ -74,6 +79,14 @@ static char *get_short_name(int n)
     }
     if( n > 161 )
         n++;     // Skip 161 - "DO"
+    if( n > 337 )
+        n++;     // Skip 337 - "IF"
+    if( n > 567 )
+        n++;     // Skip 567 - "ON"
+    if( n > 571 )
+        n++;     // Skip 571 - "OR"
+    if( n > 753 )
+        n++;     // Skip 753 - "TO"
     int c1 = (n-27) / 37;
     int c2 = (n-27) % 37;
     char *out = malloc(3);
@@ -99,11 +112,13 @@ int vars_new_var(vars *v, const char *name, enum var_type type)
         if( v->vlist[i].type == type && !case_name_cmp(name, v->vlist[i].name) )
             return i;
 
-    if( i == maxVars )
+    char *sname = get_short_name( v->num[type] );
+
+    if( i == maxVars || !sname )
         return -1;
 
     v->vlist[i].name = strdup(name);
-    v->vlist[i].sname = get_short_name( v->num[type] );
+    v->vlist[i].sname = sname;
     v->vlist[i].type = type;
     v->num[type] ++;
 
