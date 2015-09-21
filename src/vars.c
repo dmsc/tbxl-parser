@@ -16,6 +16,9 @@
  *  with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 #include "vars.h"
+#include "tokens.h"
+#include "statements.h"
+#include "dbg.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -63,6 +66,20 @@ static int case_name_cmp(const char *a, const char *b)
     return *b != 0;
 }
 
+// Compare a variable name without the "$" to a name *with* the "$"
+static int case_name_cmp_str(const char *a, const char *b)
+{
+    for( ; *a ; ++a, ++b )
+    {
+        char ca = *a & 0x7F, cb = *b & 0x7F;
+        ca = (ca>='a' && ca<='z') ? ca+'A'-'a' : ca;
+        cb = (cb>='a' && cb<='z') ? cb+'A'-'a' : cb;
+        if( ca != cb )
+            return 1;
+    }
+    return *b != '$';
+}
+
 static char *get_short_name(int n)
 {
     if( n > 1020 )
@@ -105,9 +122,11 @@ int vars_search(vars *v, const char *name, enum var_type type)
     return -1;
 }
 
-int vars_new_var(vars *v, const char *name, enum var_type type)
+int vars_new_var(vars *v, const char *name, enum var_type type, const char *file_name, int file_line)
 {
     int i;
+
+    // Search in available variables
     for(i=0; i<maxVars && v->vlist[i].name; i++)
         if( v->vlist[i].type == type && !case_name_cmp(name, v->vlist[i].name) )
             return i;
@@ -121,6 +140,34 @@ int vars_new_var(vars *v, const char *name, enum var_type type)
     v->vlist[i].sname = sname;
     v->vlist[i].type = type;
     v->num[type] ++;
+
+    // Search in token list, to avoid defining variables identical to tokens
+    if( type == vtFloat || type == vtArray )
+    {
+        int j;
+        for(j=0; j<TOK_LAST_TOKEN; j++)
+            if( !case_name_cmp(name, tokens[j].tok_in) )
+            {
+                warn_print(file_name, file_line, "variable name '%s' is a token\n", name);
+                break;
+            }
+        for(j=0; j<STMT_ENDIF_INVISIBLE; j++)
+            if( !case_name_cmp(name, statements[j].stm_long) )
+            {
+                warn_print(file_name, file_line, "variable name '%s' is a statement\n", name);
+                break;
+            }
+    }
+    else if( type == vtString )
+    {
+        int j;
+        for(j=0; j<TOK_LAST_TOKEN; j++)
+            if( !case_name_cmp_str(name, tokens[j].tok_in) )
+            {
+                warn_print(file_name, file_line, "variable name '%s$' is a token\n", name);
+                break;
+            }
+    }
 
     return i;
 }

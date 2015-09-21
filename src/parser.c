@@ -113,9 +113,12 @@ void add_ident(const char *name, enum var_type type)
     int id = vars_search(v, name, type);
     if( id < 0 )
     {
-        id = vars_new_var(v, name, type);
+        id = vars_new_var(v, name, type, file_name, file_line);
         if( id < 0 )
-            return print_error("too many variables", name);
+        {
+            err_print(file_name, file_line, "too many variables, got '%s'\n", name);
+            return;
+        }
         info_print(file_name, file_line, "renaming %s var '%s' -> '%s'\n",
                    var_type_name(type), name, vars_get_short_name(v, id));
     }

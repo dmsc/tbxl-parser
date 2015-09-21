@@ -36,7 +36,7 @@ void vars_delete(vars *v);
 int vars_search(vars *v, const char *name, enum var_type type);
 // Creates a new variable named "name" of type "type", or if already exists,
 // returns the ID of the existing variable.
-int vars_new_var(vars *v, const char *name, enum var_type type);
+int vars_new_var(vars *v, const char *name, enum var_type type, const char *file_name, int file_line);
 
 // Gets the number of variables of type
 int vars_get_count(vars *v, enum var_type type);
