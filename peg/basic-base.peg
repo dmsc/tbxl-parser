@@ -39,25 +39,25 @@ StatementLine   <- Statement (   ':' SPC Statement
 Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytext, yyleng); }
                  # Special case: TIME$= is a statement, but has an '=' sign, so must
                  # test before testing variables.
-                 / TIME_S StrExpr
+                 / TIME_S StrExprErr
                  # Allows a space after TIME$, this makes parser less confusing.
-                 / &{ testToken( TOK_TIMEP ) } SPC '=' SPC { add_stmt( STMT_TIME_S ); } StrExpr
+                 / &{ testToken( TOK_TIMEP ) } SPC '=' SPC { add_stmt( STMT_TIME_S ); } StrExprErr
                  # Test variable assignment, this fails (and goes to the rest of
                  # statements if there is no '=' sign after the variable name.
-                 / LET_INV AssignVarStr S_ASGN StrExpr
-                 / LET_INV AssignVarNum F_ASGN NumExpr
+                 / LET_INV AssignVarStr S_ASGN StrExprErr
+                 / LET_INV AssignVarNum F_ASGN NumExprErr
                  # Follows the standard statements, listed here in alphabetical order
                  / BYE
-                 / BPUT   IOChan COMMA NumExpr2
-                 / BGET   IOChan COMMA NumExpr2
-                 / BLOAD  StrExpr
-                 / BRUN   StrExpr
-                 / COLOR  NumExpr
+                 / BPUT   IOChanErr COMMA NumExpr2
+                 / BGET   IOChanErr COMMA NumExpr2
+                 / BLOAD  StrExprErr
+                 / BRUN   StrExprErr
+                 / COLOR  NumExprErr
                  / CONT
                  / COM    DimVar (COMMA DimVar)*
-                 / CLOSE  IOChan?
+                 / CLOSE  IOChanErr?
                  / CLR
-                 / CLS    IOChan?
+                 / CLS    IOChanErr?
                  / CLOAD
                  / CIRCLE NumExpr3
                  / CSAVE
@@ -68,99 +68,102 @@ Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytex
                  / DRAWTO NumExpr2
                  / DPOKE  NumExpr2
                  / DO
-                 / DIR    StrExpr?
-                 / DELETE StrExpr
+                 / DIR    StrExprErr?
+                 / DELETE StrExprErr
                  / DEL    NumExpr2
                  / DUMP   StrExpr?
                  / DSOUND NumExpr4?
-                 / ENTER  StrExpr
+                 / ENTER  StrExprErr
                  / ELSE
                  / ENDIF
-                 / EXIT   NumExpr?
+                 / EXIT   NumExprErr?
                  / EXEC   Label
                  / ENDPROC
                  / END
-                 / FOR    PVarNum F_ASGN NumExpr FOR_TO NumExpr (STEP NumExpr)?
+                 / FOR    PVarNum F_ASGN NumExprErr FOR_TO NumExprErr (STEP NumExprErr)?
                  / FILLTO NumExpr2
-                 / FCOLOR NumExpr
-                 / GOTO   NumExpr
-                 / GO_TO  NumExpr
-                 / GOSUB  NumExpr
-                 / GET    (IOChan COMMA)? PVarNum (COMMA PVarNum)*
-                 / GRAPHICS NumExpr
+                 / FCOLOR NumExprErr
+                 / GOTO   NumExprErr
+                 / GO_TO  NumExprErr
+                 / GOSUB  NumExprErr
+                 / GET    (IOChanErr COMMA)? PVarNum (COMMA PVarNum)*
+                 / GRAPHICS NumExprErr
                  / GO_S   Label
                  / INPUT  (  IOChan ( COMMA / SEMICOLON )
                            / ConstString ( COMMA / SEMICOLON )
                           )? VariableList
                  # We split the IF into three cases:
                  # 1- IF/THEN followed by a number, forcing a line-break.
-                 / IF_NUMBER    NumExpr THEN Number
+                 / IF_NUMBER    NumExprErr THEN Number
                                  (
                                   ':' SPC < NotEOL* >
                                   { add_stmt( STMT_REM ); add_comment(yytext, yyleng); }
                                  )? ForceLine
                  # 2- IF/THEN followed by statements, adding an invisible ENDIF at
                  # the end of the statements and forcing a line-break.
-                 / IF_THEN      NumExpr THEN StatementLine ENDIF_INVISIBLE ForceLine
+                 / IF_THEN      NumExprErr THEN StatementLine ENDIF_INVISIBLE ForceLine
                  # 3- A multi-line IF
-                 / IF_MULTILINE NumExpr
-                 / LIST   (StrExpr COMMA)? ( NumExpr ( COMMA NumExpr )? )?
-                 / LET    AssignVarStr S_ASGN StrExpr
-                 / LET    AssignVarNum F_ASGN NumExpr
-                 / LOAD   StrExpr
+                 / IF_MULTILINE NumExprErr
+                 / LIST   (StrExpr COMMA)? ( NumExprErr ( COMMA NumExprErr )? )?
+                 / LET    AssignVarStr S_ASGN StrExprErr
+                 / LET    AssignVarNum F_ASGN NumExprErr
+                 / LOAD   StrExprErr
                  / LOCATE NumExpr2 COMMA PVarNum
                  / LPRINT PrintExpr
                  / LOOP
-                 / LOCK   StrExpr
+                 / LOCK   StrExprErr
                  / MOVE   NumExpr3
                  / N_MOVE NumExpr3
                  / NEXT   PVarNum
                  / NEW
-                 / NOTE   IOChan COMMA PVarNum COMMA PVarNum
-                 / OPEN   IOChan COMMA NumExpr2 COMMA StrExpr
-                 / ON     NumExpr (
-                                     ON_GOTO    NumExpr (COMMA NumExpr)*
-                                   / ON_GOSUB   NumExpr (COMMA NumExpr)*
+                 / NOTE   IOChanErr COMMA PVarNum COMMA PVarNum
+                 / OPEN   IOChanErr COMMA NumExpr2 COMMA StrExprErr
+                 / ON     NumExprErr (
+                                     ON_GOTO    NumExprErr (COMMA NumExprErr)*
+                                   / ON_GOSUB   NumExprErr (COMMA NumExprErr)*
                                    / ON_GOSHARP Label (COMMA Label)*
                                    / ON_EXEC    Label (COMMA Label)*
+                                   / < ERROR >  { add_stmt( STMT_BAS_ERROR );
+                                                  add_comment(yytext,yyleng);
+                                                  print_error("on goto/gosub/go#/exec", yytext); }
                                   )
-                 / POINT  IOChan COMMA NumExpr2
+                 / POINT  IOChanErr COMMA NumExpr2
                  / POKE   NumExpr2
                  / PRINT  ( IOChan ((COMMA / SEMICOLON) PrintExpr)? / PrintExpr )
                  / PRINT_ ( IOChan ((COMMA / SEMICOLON) PrintExpr)? / PrintExpr )
                  / POP
-                 / PUT    (IOChan COMMA)? NumExpr (COMMA NumExpr)*
+                 / PUT    (IOChanErr COMMA)? NumExprErr (COMMA NumExprErr)*
                  / PLOT   NumExpr2
                  / POSITION NumExpr2
-                 / PAUSE  NumExpr
+                 / PAUSE  NumExprErr
                  / PROC   Label
                  / PAINT  NumExpr2
                  / RAD
                  / READ   VariableList
-                 / RESTORE ( SHARP Label / NumExpr )?
+                 / RESTORE ( SHARP Label / NumExprErr )?
                  / RETURN
                  / RUN    StrExpr?
                  / REPEAT
-                 / RENAME StrExpr
+                 / RENAME StrExprErr
                  / RENUM  NumExpr3
-                 / SAVE   StrExpr
-                 / STATUS IOChan COMMA PVarNum
+                 / SAVE   StrExprErr
+                 / STATUS IOChanErr COMMA PVarNum
                  / STOP
                  / SETCOLOR NumExpr3
                  / SOUND  NumExpr4?
-                 / TRAP   ( SHARP Label / NumExpr )
+                 / TRAP   ( SHARP Label / NumExprErr )
                  / TRACE
-                 / TEXT   NumExpr2 COMMA StrExpr
-                 / UNTIL  NumExpr
-                 / UNLOCK StrExpr
-                 / WHILE  NumExpr
+                 / TEXT   NumExpr2 COMMA StrExprErr
+                 / UNTIL  NumExprErr
+                 / UNLOCK StrExprErr
+                 / WHILE  NumExprErr
                  / WEND
-                 / XIO    NumExpr COMMA IOChan COMMA NumExpr2 COMMA StrExpr
+                 / XIO    NumExprErr COMMA IOChanErr COMMA NumExpr2 COMMA StrExprErr
                  / F_F
                  / F_L
                  / F_B
-                 / P_PUT  (IOChan COMMA)? NumExpr (COMMA NumExpr)*
-                 / P_GET  (IOChan COMMA)? PVarNum (COMMA PVarNum)*
+                 / P_PUT  (IOChanErr COMMA)? NumExprErr (COMMA NumExprErr)*
+                 / P_GET  (IOChanErr COMMA)? PVarNum (COMMA PVarNum)*
                  / LBL_S  Label
                  # A basic ERROR- line, parsed for compatibility
                  / < BAS_ERROR ERROR > { print_error("statement", yytext);
@@ -172,12 +175,17 @@ Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytex
 
 # Catches errors and skips to end of statement
 ERROR           <- [^:\233\015\n\t ][^:\015\n\233]*
+# Catches errors and skips to end of expression
+ERROREXP        <- [^:\233\015\n\t ][^,:\015\n\233]*
 
 # Expressions
-NumExpr2        <- NumExpr COMMA NumExpr
-NumExpr3        <- NumExpr2 COMMA NumExpr
-NumExpr4        <- NumExpr3 COMMA NumExpr
-IOChan          <- SHARP NumExpr
+NumExpr2        <- NumExprErr COMMA NumExprErr
+                  / < ERROR > { print_error("2 numeric expressions", yytext); }
+NumExpr3        <- NumExpr2 COMMA NumExprErr
+                  / < ERROR > { print_error("3 numeric expressions", yytext); }
+NumExpr4        <- NumExpr3 COMMA NumExprErr
+                  / < ERROR > { print_error("4 numeric expressions", yytext); }
+IOChan          <- SHARP NumExprErr
 AnyExpr         <- NumExpr / StrExpr
 PrintSep        <- COMMA / SEMICOLON
 PrintExpr       <- AnyExpr? ( PrintSep AnyExpr? )*
@@ -191,11 +199,12 @@ AssignVarNum    <- PVarArray ArrayAccess
                  / PVarNum
 AssignVarStr    <- PVarStr SubStr?
 
-ArrayAccess     <- NumExpr ( A_COMMA NumExpr )? R_PRN
+ArrayAccess     <- NumExprErr ( A_COMMA NumExprErr )? R_PRN
 SubStr          <- S_L_PRN ArrayAccess
 
 DimVar          <- PDimVarArray NumExpr ( A_COMMA NumExpr )? R_PRN
                  / PDimVarStr NumExpr R_PRN
+                 / < ERROREXP > { print_error("DIM string/array", yytext); }
 
 Label           <- < Identifier > { add_ident(yytext, vtLabel);  }               SPC
 PVarStr         <- < Identifier > { add_ident(yytext, vtString); } '$'           SPC
@@ -203,6 +212,14 @@ PVarNum         <- < Identifier > { add_ident(yytext, vtFloat);  }     ![$(]    
 PVarArray       <- < Identifier > { add_ident(yytext, vtArray);  }     A_L_PRN   SPC
 PDimVarArray    <- < Identifier > { add_ident(yytext, vtArray);  }     D_L_PRN   SPC
 PDimVarStr      <- < Identifier > { add_ident(yytext, vtString); } '$' SPC DS_L_PRN  SPC
+
+# Those constructs produce errors if not matched
+NumExprErr      <- NumExpr
+                  / < ERROREXP > { print_error("numeric expression", yytext); }
+StrExprErr      <- StrExpr
+                  / < ERROREXP > { print_error("string expression", yytext); }
+IOChanErr       <- SHARP NumExprErr
+                  / < ERROREXP > { print_error("I/O channel (#)", yytext); }
 
 # String expressions
 StrExpr         <- STRP    ParNumExpr
@@ -317,30 +334,30 @@ UnitExpr        <- Number
 
 # String comparisons is a type of numeric expresion
 StrCompExpr     <- StrExpr (
-                     S_LEQ StrExpr
-                   / S_NEQ StrExpr
-                   / S_GEQ StrExpr
-                   / S_LE  StrExpr
-                   / S_GE  StrExpr
-                   / S_EQ  StrExpr
+                     S_LEQ StrExprErr
+                   / S_NEQ StrExprErr
+                   / S_GEQ StrExprErr
+                   / S_LE  StrExprErr
+                   / S_GE  StrExprErr
+                   / S_EQ  StrExprErr
                    )
 
 # Parameters to an USR function, one or more numeric expressions in parenthesis
-ParUsrExpr       <- FN_PRN ( NumExpr ( A_COMMA NumExpr )* R_PRN
-                             / < ERROR > { print_error("number (,number)", yytext); } )
+ParUsrExpr       <- FN_PRN ( NumExprErr ( A_COMMA NumExprErr )* R_PRN
+                             / < ERROREXP > { print_error("numeric (,numeric) expressions", yytext); } )
 
 # Parameters to functions with one numeric expression in parenthesis
 ParNumExpr       <- FN_PRN ( NumExpr R_PRN
-                             / < ERROR > { print_error("numeric expression", yytext); } )
+                             / < ERROREXP > { print_error("numeric expression in parenthesis", yytext); }
+                           )
 
 # Parameters to INSTR/UINSTR functions, two string expressions and optionally one numeric
 # expression, all in parenthesis
 ParInstrExpr     <- FN_PRN ( StrExpr A_COMMA StrExpr ( A_COMMA NumExpr )? R_PRN
-                             / < ERROR > { print_error("string,string (,number)", yytext); } )
+                             / < ERROREXP > { print_error("string, string (,numeric) expressions", yytext); } )
 
 # Parameters to functions with one string expression in parenthesis
-ParStrExpr       <- FN_PRN ( StrExpr R_PRN
-                             / < ERROR > { print_error("string expression", yytext); } )
+ParStrExpr       <- FN_PRN StrExprErr R_PRN
 
 # Spacing...
 SPC             <- [ \t]*
