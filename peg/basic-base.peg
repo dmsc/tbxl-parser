@@ -19,16 +19,20 @@
 # Full program: starts with an optional unicode BOM and follows zero or more lines.
 Program  <- UnicodeBOM? ProgramLine* EndOfFile
 
-# One program line
-ProgramLine     <- !EndOfFile (
-                      SPC ( LineNumber / ':' )? SPC ( EndOfLine / StatementLine EndOfLine )
-                    / < ERROR > EndOfLine { print_error("unexpected input", yytext); }
+# One program line, can be:
+ProgramLine     <- !EndOfFile SPC (
+                       EndOfLine                              # An empty line
+                    /  ':' SPC StatementLine EndOfLine        # A line with statements after a ':'
+                    /  LineNumber EndOfLine                   # A line-number alone
+                    /  LineNumber SPC StatementLine EndOfLine # A line-number and statements
+                    /  StatementLine EndOfLine                # Only statements
+                    / < ERROR > EndOfLine   { print_error("input line", yytext); }
                   )
 
 # One statement line, with multiple statements separated by ':'
 StatementLine   <- Statement (   ':' SPC Statement
                                / ':' SPC EndOfLine { print_error("statement", yytext); }
-                               / < ERROR > { print_error("end of line", yytext); }
+                               / < ERROR > { print_error("end of line/statement", yytext); }
                              )*
 
 # One statement
