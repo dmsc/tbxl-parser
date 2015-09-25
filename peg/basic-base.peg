@@ -16,8 +16,10 @@
 #  with this program.  If not, see <http://www.gnu.org/licenses/>
 #
 
-# Full program: starts with an optional unicode BOM and follows zero or more lines.
-Program  <- UnicodeBOM? ProgramLine* EndOfFile
+# Full program
+Program  <- UnicodeBOM?    # Optional Unicode BOM
+            ProgramLine*   # Zero or more lines
+            EndOfFile      # End of file
 
 # One program line, can be:
 ProgramLine     <- !EndOfFile SPC (
@@ -361,10 +363,11 @@ ParStrExpr       <- FN_PRN StrExprErr R_PRN
 
 # Spacing...
 SPC             <- [ \t]*
-EndOfLine       <- ( '\012' / '\233' / '\015\012' / '\015' / !.) { inc_file_line(); }
+EndOfLine       <- ( '\n' / '\233' / "\r\n" / '\r' / EndOfFile ) { inc_file_line(); }
 NotEOL          <- [^\n\233\r]
 EndOfFile       <- !.
-UnicodeBOM      <- '\357' '\273' '\277'
+UnicodeBOM      <- "\357\273\277"
+
 
 # Line Numbers - accept any floating point number and check later for validity
 LineNumber      <-(   < '-'? [0-9]+ ( '.' [0-9]+ )? NumExp? > SPC
