@@ -47,7 +47,8 @@ WORDS=\
 
 # Source PEG file, in "peg" directory
 PEGS=\
-  basic-base.peg
+ peg/basic-base.peg\
+ peg/directives.peg\
 
 # Generated PEG file
 GENPEG=\
@@ -125,7 +126,7 @@ $(W_SRC): $(B)/src/%.c: peg/%.txt peg/gen-%.awk
 	awk -f peg/gen-$*.awk $< $(B)/src/
 
 # Concatenation of all peg files
-$(B)/src/basic.peg: peg/basic-base.peg $(B)/src/statements.peg $(B)/src/tokens.peg
+$(B)/src/basic.peg: $(PEGS) $(B)/src/statements.peg $(B)/src/tokens.peg
 	cat $^ > $@
 
 .PHONY:

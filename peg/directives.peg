@@ -1,0 +1,29 @@
+#
+# This file defines the parsing rules for parser directives, that affect the
+# parser and output.
+#
+# Note that directives always begin with spaces and a '$', this is removed in
+# the main parser.
+
+DirectiveLine <- OptionsDirective
+               / < ERROR >               { print_error("parser directive", yytext); }
+
+# ------ Parser Options ------
+OptionsDirective <- 'options' SPC OptionList EndOfLine
+OptionList       <- ParserOption ( ',' SPC ParserOption
+                                 / < ERROREXP > { print_error("',' or end of line", yytext); }
+                                 )*
+
+ParserOption <-
+    'mode' SPC (
+                '=' SPC ParserOptionMode
+               / < ERROREXP >            { print_error("'=' and parsing mode", yytext); }
+               )
+  / < ( '-' / '+' )? > 'optimize' SPC   &{ parser_set_optimize(yytext[0] != '-') , 1 }
+  / < ERROREXP >                         { print_error("parsing option name", yytext); }
+
+ParserOptionMode <- 'default'           &{ parser_set_mode(parser_mode_default), 1 }
+                  / 'compatible'        &{ parser_set_mode(parser_mode_compatible), 1 }
+                  / 'extended'          &{ parser_set_mode(parser_mode_extended), 1 }
+                  / < ERROREXP >         { print_error("parsing mode", yytext); }
+

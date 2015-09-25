@@ -30,6 +30,8 @@ static int parse_error;
 static const char *file_name;
 static int file_line;
 static program *cur_program;
+static enum parser_mode parser_mode;
+static int parser_optimize;
 
 program *parse_get_current_pgm()
 {
@@ -141,10 +143,37 @@ void parse_init(const char *fname)
     parse_error = 0;
     file_line = 1;
     file_name = fname;
+    parser_mode = parser_mode_default;
+    parser_optimize = 0;
     set_current_pgm( program_new(fname) );
 }
 
 int get_parse_errors(void)
 {
     return parse_error;
+}
+
+enum parser_mode parser_get_mode(void)
+{
+    return parser_mode;
+}
+
+void parser_set_mode(enum parser_mode mode)
+{
+    info_print(file_name,file_line,"setting parsing mode to %s\n",
+               mode==parser_mode_default ? "default" :
+               mode==parser_mode_compatible ? "compatible" :
+               mode==parser_mode_extended ? "extended" : "unknown");
+    parser_mode = mode;
+}
+
+void parser_set_optimize(int opt)
+{
+    info_print(file_name,file_line,"%s optimizations\n", opt ? "enabling" : "disabling");
+    parser_optimize = opt;
+}
+
+int parser_get_optimize(void)
+{
+    return parser_optimize;
 }

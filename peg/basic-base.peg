@@ -24,6 +24,7 @@ Program  <- UnicodeBOM?    # Optional Unicode BOM
 # One program line, can be:
 ProgramLine     <- !EndOfFile SPC (
                        EndOfLine                              # An empty line
+                    /  '$' SPC DirectiveLine                  # A parser directive
                     /  ':' SPC StatementLine EndOfLine        # A line with statements after a ':'
                     /  LineNumber EndOfLine                   # A line-number alone
                     /  LineNumber SPC StatementLine EndOfLine # A line-number and statements
@@ -374,7 +375,9 @@ LineNumber      <-(   < '-'? [0-9]+ ( '.' [0-9]+ )? NumExp? > SPC
                     / < '-'? '.' [0-9]+ NumExp? > SPC             ) { add_linenum( strtod(yytext,0) ); }
 
 # Identifiers (labels / variables)
-Identifier      <- [a-zA-Z_] [a-zA-Z0-9_]*
+IdentifierInit   <- [a-zA-Z_]
+IdentifierChar   <- [a-zA-Z0-9_]
+Identifier       <- IdentifierInit IdentifierChar*
 
 # Numbers
 Number          <- '$' < [a-fA-F0-9]+ > SPC                    { add_hex_number( strtol(yytext,0,16) ); }
