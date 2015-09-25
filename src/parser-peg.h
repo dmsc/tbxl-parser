@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "parser.h"
+
 // Called from PEG
 enum enum_statements;
 enum enum_tokens;

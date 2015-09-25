@@ -22,3 +22,16 @@ typedef struct program_struct program;
 int parse_file(const char *fname);
 program *parse_get_current_pgm();
 
+// Parser modes
+enum parser_mode {
+    parser_mode_default,
+    parser_mode_compatible,
+    parser_mode_extended
+};
+
+// Set parser options
+enum parser_mode parser_get_mode(void);
+void parser_set_mode(enum parser_mode mode);
+int parser_get_optimize(void);
+void parser_set_optimize(int);
+

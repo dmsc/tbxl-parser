@@ -71,6 +71,7 @@ static int testStatement(enum enum_statements e)
     int i;
     yycontext *yy = yyctx;
     int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
+    enum parser_mode mode = parser_get_mode();
 
     // Special case PRINT:
     if( e == STMT_PRINT && yymatchChar(yy, '?') )
@@ -81,10 +82,21 @@ static int testStatement(enum enum_statements e)
     {
         // If enough characters are already tested and input is a dot, accept
         if( i>=s->min && yymatchChar(yy, '.') )
-            break;
+            return 1;
         // Else, if not the correct character, return no match
         if( !matchIgnoreCase(yy, s->stm_long[i]) )
         {
+            yy->__pos = yypos0;
+            yy->__thunkpos = yythunkpos0;
+            return 0;
+        }
+    }
+    // If mode is "extended", we ensure that the identifier ended
+    if( mode == parser_mode_extended )
+    {
+        if( yy_IdentifierChar(yy) )
+        {
+            // Don't accept
             yy->__pos = yypos0;
             yy->__thunkpos = yythunkpos0;
             return 0;
@@ -100,12 +112,26 @@ static int testToken(enum enum_tokens e)
     int i;
     yycontext *yy = yyctx;
     int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
+    enum parser_mode mode = parser_get_mode();
 
     // Check each character
     for(i=0; 0 != t->tok_in[i]; i++)
     {
         if( !matchIgnoreCase(yy, t->tok_in[i]) )
         {
+            yy->__pos = yypos0;
+            yy->__thunkpos = yythunkpos0;
+            return 0;
+        }
+    }
+
+    // If mode is "extended", we ensure that the identifier ended
+    if( mode == parser_mode_extended && i )
+    {
+        char c = t->tok_in[i-1];
+        if( c>='A' && c<='Z' && yy_IdentifierChar(yy) )
+        {
+            // Don't accept
             yy->__pos = yypos0;
             yy->__thunkpos = yythunkpos0;
             return 0;
