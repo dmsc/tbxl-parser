@@ -56,6 +56,9 @@ The input listing format is very flexible:
 - The input is case insensitive (uppercase, lowercase and mixed case is
   supported).
 
+- There are parsing *directives* added, that consist on lines starting with a
+  dollar sign `$`. A list of available directives documented bellow.
+
 - There is support for extended strings, with embedded character names.
   Start the string with `["` and end the string with `"]`, and include
   special characters with `{name}` or `{count*name}`, with count a decimal
@@ -135,6 +138,41 @@ Options:
 - `-c`  Output to standard output instead of a file.
 
 - `-h`  Shows help and exit.
+
+Parser directives
+-----------------
+
+Directives add extra features to the parser, much like C and C++. Directives
+start with a dollar as the first non blank character on a line, and continue
+up to the end of the line.
+
+Bellow is a description of available directives.
+
+### `$options` directive.
+
+The options directive alter the way the parsing is done, accepting a list of
+comma separated options, valid for the current file. Valid options:
+- `mode=compatible`: Disable features to be more compatible with the
+  _TurboBasic XL_ parser.
+- `mode=extended`: Makes the parser to accept more extended features.
+- `mode=default`: Returns the parser to the default mode.
+- `optimize` or `+optimize`: Allows the parser to optimize the output to
+  produce smaller or faster code.
+- `-optimize`: Disable the optimizations.
+
+Note that options can be changed at any place in the file, this is an example
+of changing the parser mode in the middle of the file:
+
+```
+  ' Example program using directives
+  $ options optimize, mode=default
+  error1 = 2
+  ? error1   : ' This is parsed like TurboBasic XL, as ? ERR OR 1
+  
+  $options mode = extended
+  ? error1   : ' This is parsed as ? error1
+  Printa     : ' This is a parsing error.
+```
 
 Limitations and Incompatibilities
 ---------------------------------
