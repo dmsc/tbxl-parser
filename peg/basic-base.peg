@@ -39,7 +39,10 @@ StatementLine   <- Statement (   ':' SPC Statement
                              )*
 
 # One statement
-Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytext, yyleng); }
+Statement       <-
+                 # Start with comments, *except* REM, as we try to support variable
+                 # names starting with "rem".
+                   < (REM_C / REM_)  NotEOL* >             { add_comment(yytext, yyleng); }
                  # Special case: TIME$= is a statement, but has an '=' sign, so must
                  # test before testing variables.
                  / TIME_S StrExprErr
@@ -49,6 +52,8 @@ Statement       <- < (REM / REM_C / REM_)  NotEOL* >         { add_comment(yytex
                  # statements if there is no '=' sign after the variable name.
                  / LET_INV AssignVarStr S_ASGN StrExprErr
                  / LET_INV AssignVarNum F_ASGN NumExprErr
+                 # Standard REM comments
+                 / < REM  NotEOL* >                        { add_comment(yytext, yyleng); }
                  # Follows the standard statements, listed here in alphabetical order
                  / BYE
                  / BPUT   IOChanErr COMMA NumExpr2
