@@ -197,10 +197,10 @@ standard TurboBasic XL and Atari Basic parsers:
 
   The following code is valid:
 
-```
+  ```
     PRINTED = 0     : ' Invalid in Atari Basic, as starts with "PRINT"
     DONE = 3        : ' Invalid in TurboBasic XL, as starts with "DO"
-```
+  ```
 
   This relaxed handling of variable naming creates an incompatibility, as the
   first example above is parsed differently as the standard Atari Basic,
@@ -212,7 +212,7 @@ standard TurboBasic XL and Atari Basic parsers:
 - In long format listing output, `IF`/`THEN` are converted to `IF`/`ENDIF`
   statements. This introduces an incompatibility with the following code:
 
-```
+  ```
     FOR A = 0 TO 2
       ? "A="; A; " - ";
       IF A <> 0
@@ -222,15 +222,15 @@ standard TurboBasic XL and Atari Basic parsers:
       ENDIF
       ? " -"
     NEXT A
-```
+  ```
 
   This code should produce the following at output:
 
-```
+  ```
     A=0 - 2 -
     A=1 - 1 -
     A=2 - 12 -
-```
+  ```
 
   After conversion, the `ELSE` is associated with the second `IF` instead
   of the first, giving the wrong result.
