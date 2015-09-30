@@ -141,6 +141,10 @@ int vars_new_var(vars *v, const char *name, enum var_type type, const char *file
     v->vlist[i].type = type;
     v->num[type] ++;
 
+    // End if called from outside program, don't check name.
+    if( file_line < 0 )
+        return i;
+
     // Search in token list, to avoid defining variables identical to tokens
     if( type == vtFloat || type == vtArray )
     {
