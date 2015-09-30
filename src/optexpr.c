@@ -24,31 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct expr_struct expr;
-
-enum enum_etype {
-    et_c_number,
-    et_c_hexnumber,
-    et_c_string,
-    et_var_number,
-    et_var_string,
-    et_var_array,
-    et_var_label,
-    et_tok,
-    et_void
-};
-
-struct expr_struct {
-    enum enum_etype type;
-    expr *lft; // Left child
-    expr *rgt; // Right child
-    double num;
-    unsigned var;
-    uint8_t *str;
-    unsigned slen;
-    enum enum_tokens tok;
-};
-
 void expr_free(expr *n)
 {
     if( n->lft )

@@ -18,11 +18,34 @@
 #pragma once
 
 #include <stdint.h>
+#include "tokens.h"
 
-enum enum_tokens;
 typedef struct expr_struct expr;
 typedef struct program_struct program;
 typedef struct stmt_struct stmt;
+
+enum enum_etype {
+    et_c_number,
+    et_c_hexnumber,
+    et_c_string,
+    et_var_number,
+    et_var_string,
+    et_var_array,
+    et_var_label,
+    et_tok,
+    et_void
+};
+
+struct expr_struct {
+    enum enum_etype type;
+    expr *lft; // Left child
+    expr *rgt; // Right child
+    double num;
+    unsigned var;
+    uint8_t *str;
+    unsigned slen;
+    enum enum_tokens tok;
+};
 
 void expr_free(expr *n);
 expr *expr_new_void(program *pgm);
