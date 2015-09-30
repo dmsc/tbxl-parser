@@ -50,10 +50,15 @@ line *line_new_linenum(int num, int file_line)
 
 line *line_new_statement(enum enum_statements s, int file_line)
 {
+    return line_new_from_stmt(stmt_new(s), file_line);
+}
+
+line *line_new_from_stmt(stmt *s, int file_line)
+{
     line *l = malloc(sizeof(line));
     l->type = lt_statement;
     l->file_line = file_line;
-    l->statement = stmt_new(s);
+    l->statement = s;
     return l;
 }
 

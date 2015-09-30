@@ -29,6 +29,7 @@ typedef struct line_struct line;
 // Create a new line
 line *line_new_linenum(int num, int file_line);
 line *line_new_statement(enum enum_statements s, int file_line);
+line *line_new_from_stmt(stmt *s, int file_line);
 
 // Check line type
 int line_is_num(const line *l);
