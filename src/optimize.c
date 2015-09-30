@@ -19,6 +19,7 @@
 #include "optimize.h"
 #include "optexpr.h"
 #include "optparse.h"
+#include "optconst.h"
 #include "vars.h"
 #include "line.h"
 #include "program.h"
@@ -43,6 +44,8 @@ static stmt * optimize_statement(program *pgm, stmt *s, int fline)
 
     if( ex )
     {
+        opt_constprop(ex);
+        opt_convert_tok(ex);
         expr_to_tokens(ex, ret);
 #if 0
         enum enum_statements sn = stmt_get_statement(s);

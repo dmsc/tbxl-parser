@@ -21,7 +21,7 @@ CC=$(CROSS)gcc
 CFLAGS=-Wall -O2 -g -Wstrict-prototypes -Wmissing-prototypes
 DEPFLAGS=-MMD -MP
 LDFLAGS=
-LDLIBS=
+LDLIBS=-lm
 PEGOPTS=
 
 B=build
@@ -34,6 +34,7 @@ SOURCES=\
  line.c\
  lister.c\
  main.c\
+ optconst.c\
  optexpr.c\
  optimize.c\
  optparse.c\
