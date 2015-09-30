@@ -38,6 +38,11 @@ program *parse_get_current_pgm(void)
     return cur_program;
 }
 
+void parser_set_current_pgm(program *p)
+{
+    cur_program = p;
+}
+
 static line *current_line(void)
 {
     return pgm_get_current_line( parse_get_current_pgm() );
