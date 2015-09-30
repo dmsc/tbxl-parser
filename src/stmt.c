@@ -97,6 +97,21 @@ int stmt_can_skip(const stmt *s)
         return 0;
 }
 
+enum enum_statements stmt_get_statement(const stmt *s)
+{
+    return s->stmt;
+}
+
+unsigned stmt_get_token_len(const stmt *s)
+{
+    return s->len;
+}
+
+uint8_t *stmt_get_token_data(const stmt *s)
+{
+    return s->data;
+}
+
 void stmt_add_token(stmt *s, enum enum_tokens tok)
 {
     // Don't add tokens to REMs or DATAs

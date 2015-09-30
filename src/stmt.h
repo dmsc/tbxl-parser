@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include <stdint.h>
+
 enum enum_statements;
 enum enum_tokens;
 typedef struct vars_struct vars;
@@ -47,6 +49,13 @@ int stmt_is_text(const stmt *s);
 // Returns 1 if the statement is a label so it needs to be at the start of a line
 // (those are #label and PROC)
 int stmt_is_label(const stmt *s);
+
+// Gets the statement value
+enum enum_statements stmt_get_statement(const stmt *s);
+// Gets the length of the token area
+unsigned stmt_get_token_len(const stmt *s);
+// Gets the token area
+uint8_t *stmt_get_token_data(const stmt *s);
 
 // Prints the statement to a newly allocated string
 string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int conv_ascii);
