@@ -28,6 +28,9 @@ typedef struct {
 // Converts a double to an Atari BCD representation
 atari_bcd atari_bcd_from_double(double x);
 
+// Converts an Atari BCD representation to double
+double atari_bcd_to_double(atari_bcd n);
+
 // Prints a double in a format suitable for BASIC input
 void atari_bcd_print(atari_bcd n, string_buf *sb);
 
