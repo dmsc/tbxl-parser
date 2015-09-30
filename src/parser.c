@@ -149,7 +149,6 @@ void parse_init(const char *fname)
     file_line = 1;
     file_name = fname;
     parser_mode = parser_mode_default;
-    parser_optimize = 0;
     set_current_pgm( program_new(fname) );
 }
 

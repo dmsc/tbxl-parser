@@ -34,6 +34,9 @@ SOURCES=\
  line.c\
  lister.c\
  main.c\
+ optexpr.c\
+ optimize.c\
+ optparse.c\
  parser.c\
  program.c\
  sbuf.c\

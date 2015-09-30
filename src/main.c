@@ -23,6 +23,7 @@
 #include "dbg.h"
 #include "baswriter.h"
 #include "version.h"
+#include "optimize.h"
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -60,6 +61,7 @@ static char *get_out_filename(const char *inFname, const char *output, const cha
 int main(int argc, char **argv)
 {
     FILE *outFile;
+    int do_optimize = 0;
     int opt;
     enum {
         out_short,
@@ -70,7 +72,7 @@ int main(int argc, char **argv)
     int max_line_len = 120;
     int bin_variables = 0;
 
-    while ((opt = getopt(argc, argv, "habvqlco:n:fx")) != -1)
+    while ((opt = getopt(argc, argv, "habvqlco:n:fxO")) != -1)
     {
         switch (opt)
         {
@@ -101,6 +103,9 @@ int main(int argc, char **argv)
             case 'o':
                 output = strdup(optarg);
                 break;
+            case 'O':
+                do_optimize = 1;
+                break;
             case 'n':
                 max_line_len = atoi(optarg);
                 if( max_line_len < 16 || max_line_len > 355 )
@@ -126,6 +131,7 @@ int main(int argc, char **argv)
                                 "\t-o  Sets the output file name, instead of default one.\n"
                                 "\t-c  Output to standard output instead of a file.\n"
                                 "\t-n  Sets the max line length before splitting (%d).\n"
+                                "\t-O  Defaults to run the optimizer in the parsed program.\n"
                                 "\t-h  Shows help and exit.\n",
                         argv[0], max_line_len);
                 exit(EXIT_FAILURE);
@@ -163,6 +169,7 @@ int main(int argc, char **argv)
         info_print(inFname, 0, "parsing to '%s'\n", outFname);
 
         // Parse input file
+        parser_set_optimize(do_optimize);
         int ok = parse_file(inFname);
 
         // Update "all_ok" variable
@@ -191,6 +198,21 @@ int main(int argc, char **argv)
             {
                 fprintf(stderr,"%s: error %s\n", outFname, strerror(errno));
                 exit(EXIT_FAILURE);
+            }
+
+            // Run the optimizer if specified by the user
+            if( parser_get_optimize() )
+            {
+                program * opt = optimize_program(parse_get_current_pgm(),parser_get_optimize());
+                if( opt )
+                {
+                    program_delete( parse_get_current_pgm() );
+                    parser_set_current_pgm(opt);
+                }
+                else
+                {
+                    fprintf(stderr,"%s: optimizer error\n", outFname);
+                }
             }
 
             if( do_debug )
