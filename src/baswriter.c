@@ -246,7 +246,7 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             {
                 string_buf *prn = stmt_print_alone(s, pgm_get_vars(pgm));
                 err_print(fname, line_get_file_line(l), "statement too long at line %d:\n", cur_line);
-                err_print(fname, line_get_file_line(l), "'%s'\n", prn->data);
+                err_print(fname, line_get_file_line(l), "'%.*s'\n", prn->len, prn->data);
                 sb_delete(prn);
                 return 1;
             }

@@ -192,7 +192,7 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 {
                     string_buf *prn = stmt_print_alone(s, pgm_get_vars(pgm));
                     err_print(ls.fname, ls.file_line, "statement too long at line %d:\n", ls.cur_line);
-                    err_print(ls.fname, ls.file_line, "'%s'\n", prn->data);
+                    err_print(ls.fname, ls.file_line, "'%.*s'\n", prn->len, prn->data);
                     sb_delete(prn);
                     return_error = 1;
                 }
