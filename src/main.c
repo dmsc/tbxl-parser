@@ -30,7 +30,7 @@
 
 int do_debug = 1;
 
-static void show_vars_stats()
+static void show_vars_stats(void)
 {
     unsigned i;
     fprintf(stderr,"Variables information:\n");

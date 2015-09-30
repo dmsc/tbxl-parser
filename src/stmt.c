@@ -28,7 +28,7 @@
 #include <limits.h>
 #include <string.h>
 
-static void memory_error()
+static void memory_error(void)
 {
     fprintf(stderr,"INTERNAL ERROR: memory allocation failure.\n");
     abort();

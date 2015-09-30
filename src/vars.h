@@ -29,7 +29,7 @@ enum var_type {
     vtMaxType
 };
 
-vars * vars_new();
+vars * vars_new(void);
 void vars_delete(vars *v);
 
 // Returns ID of variable named "name" of type "type", or -1 if not found.

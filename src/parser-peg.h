@@ -38,7 +38,7 @@ void add_ident(const char *, enum var_type);
 void print_error(const char *, const char *);
 
 // Used to keep current input file line number
-void inc_file_line();
+void inc_file_line(void);
 
 void parse_init(const char *fname);
 int get_parse_errors(void);

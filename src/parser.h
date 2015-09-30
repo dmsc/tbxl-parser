@@ -20,7 +20,7 @@
 typedef struct program_struct program;
 
 int parse_file(const char *fname);
-program *parse_get_current_pgm();
+program *parse_get_current_pgm(void);
 
 // Parser modes
 enum parser_mode {

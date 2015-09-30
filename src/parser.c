@@ -33,17 +33,17 @@ static program *cur_program;
 static enum parser_mode parser_mode;
 static int parser_optimize;
 
-program *parse_get_current_pgm()
+program *parse_get_current_pgm(void)
 {
     return cur_program;
 }
 
-static line *current_line()
+static line *current_line(void)
 {
     return pgm_get_current_line( parse_get_current_pgm() );
 }
 
-static stmt *get_statement()
+static stmt *get_statement(void)
 {
     return line_get_statement(current_line());
 }
