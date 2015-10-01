@@ -62,9 +62,13 @@ expr *expr_new_var_str(expr_mngr *, int vn);
 expr *expr_new_var_array(expr_mngr *, int vn);
 expr *expr_new_label(expr_mngr *, int vn);
 void expr_to_tokens(expr *e, stmt *s);
+const char *expr_get_file_name(expr *e);
+int expr_get_file_line(expr *e);
 
 
 // Expression Manager manages the "expr" tree, allowing to free all memory
 expr_mngr *expr_mngr_new(program *pgm);
+void expr_mngr_set_file_name(expr_mngr *, const char *fname);
+void expr_mngr_set_file_line(expr_mngr *, int fline);
 void expr_mngr_delete(expr_mngr *);
 

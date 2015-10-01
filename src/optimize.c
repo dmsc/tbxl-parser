@@ -41,6 +41,8 @@ static stmt * optimize_statement(program *pgm, stmt *s, int fline)
 
     // Parse statement tokens:
     expr_mngr *mngr = expr_mngr_new(pgm);
+    expr_mngr_set_file_name(mngr, pgm_get_file_name(pgm));
+    expr_mngr_set_file_line(mngr, fline);
     expr *ex = opt_parse_statement(pgm, mngr, s, fline);
 
     if( ex )

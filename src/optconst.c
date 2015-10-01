@@ -18,9 +18,14 @@
 
 #include "optconst.h"
 #include "optexpr.h"
+#include "dbg.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+
+// Simplify printing warnings
+#define warn(...) \
+    do { warn_print(expr_get_file_name(ex), expr_get_file_line(ex), __VA_ARGS__); } while(0)
 
 static int set_number(expr *e, double x)
 {
@@ -159,19 +164,34 @@ static int do_constprop(expr *ex)
             return x;
         case TOK_SLASH:
             if( l_inum && r_inum )
+            {
+                if( ex->rgt->num == 0 )
+                    warn("at '/', integer division by 0\n");
                 return set_number(ex, ex->lft->num / ex->rgt->num);
+            }
             return x;
         case TOK_DIV:
             if( l_inum && r_inum )
+            {
+                if( ex->rgt->num == 0 )
+                    warn("at 'DIV', integer division by 0\n");
                 return set_number(ex, trunc(ex->lft->num / ex->rgt->num));
+            }
             return x;
         case TOK_MOD:
             if( l_inum && r_inum )
+            {
+                if( ex->rgt->num == 0 )
+                    warn("at 'MOD', integer division by 0\n");
                 return set_number(ex, ex->lft->num - ex->rgt->num * trunc(ex->lft->num / ex->rgt->num));
+            }
             return x;
         case TOK_ANDPER:
             if( (l_inum && chk_int(ex->lft)) || (r_inum && chk_int(ex->rgt)) )
-                return 0; // TODO: warning, out of range
+            {
+                warn("operands to '&' out of range\n");
+                return 0;
+            }
             if( (l_inum && ex->lft->num < 0.5) || (r_inum && ex->rgt->num < 0.5) )
                 return set_number(ex,0.0);
             else if( l_inum && r_inum )
@@ -179,7 +199,10 @@ static int do_constprop(expr *ex)
             return x;
         case TOK_EXCLAM:
             if( (l_inum && chk_int(ex->lft)) || (r_inum && chk_int(ex->rgt)) )
-                return 0; // TODO: warning, out of range
+            {
+                warn("operands to '!' out of range\n");
+                return 0;
+            }
             if( (l_inum && ex->lft->num >= 65534.5) || (r_inum && ex->rgt->num >= 65534.5) )
                 return set_number(ex,1.0);
             else if( l_inum && r_inum )
@@ -187,7 +210,10 @@ static int do_constprop(expr *ex)
             return x;
         case TOK_EXOR:
             if( (l_inum && chk_int(ex->lft)) || (r_inum && chk_int(ex->rgt)) )
-                return 0; // TODO: warning, out of range
+            {
+                warn("operands to 'EXOR' out of range\n");
+                return 0;
+            }
             if( l_inum && r_inum )
                 return set_number(ex, lrint(ex->lft->num) ^ lrint(ex->rgt->num) );
             return x;
@@ -224,15 +250,30 @@ static int do_constprop(expr *ex)
             return x;
         case TOK_LOG:
             if( r_inum )
-                return set_number(ex, log(ex->rgt->num));
+            {
+                if( ex->rgt->num <= 0 )
+                    warn("at 'LOG', argument <= 0\n");
+                else
+                    return set_number(ex, log(ex->rgt->num));
+            }
             return x;
         case TOK_CLOG:
             if( r_inum )
-                return set_number(ex, log10(ex->rgt->num));
+            {
+                if( ex->rgt->num <= 0 )
+                    warn("at 'CLOG', argument <= 0\n");
+                else
+                    return set_number(ex, log10(ex->rgt->num));
+            }
             return x;
         case TOK_SQR:
             if( r_inum )
-                return set_number(ex, sqrt(ex->rgt->num));
+            {
+                if( ex->rgt->num < 0 )
+                    warn("at 'SQR', argument < 0\n");
+                else
+                    return set_number(ex, sqrt(ex->rgt->num));
+            }
             return x;
         case TOK_SGN:
             if( r_inum )

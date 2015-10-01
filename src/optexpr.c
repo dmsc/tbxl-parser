@@ -28,6 +28,8 @@
 typedef struct expr_mngr_struct {
     program *pgm;
     expr *data;
+    const char *file_name;
+    unsigned file_line;
     unsigned len;
     unsigned size;
 } expr_mngr;
@@ -382,6 +384,16 @@ void expr_to_tokens(expr *e, stmt *s)
     }
 }
 
+const char *expr_get_file_name(expr *e)
+{
+    return e->mngr->file_name;
+}
+
+int expr_get_file_line(expr *e)
+{
+    return e->mngr->file_line;
+}
+
 ///////////////////////////////////////////////////////////////////////
 
 static expr *expr_new(expr_mngr *m)
@@ -389,17 +401,18 @@ static expr *expr_new(expr_mngr *m)
     if( m->len == m->size )
     {
         // TODO: compact our expr list removing unused entries
-        unsigned old_size = m->size;
         m->size *= 2;
         if( !m->size )
             memory_error();
         m->data = realloc(m->data, sizeof(expr) * m->size);
         if( !m->data )
             memory_error();
-        memset(m->data + old_size, 0, sizeof(expr) * (m->size - old_size));
     }
+    expr *e = &(m->data[m->len]);
+    memset(e, 0, sizeof(expr));
     m->len++;
-    return &(m->data[m->len-1]);
+    e->mngr = m;
+    return e;
 }
 
 expr_mngr *expr_mngr_new(program *pgm)
@@ -424,3 +437,12 @@ void expr_mngr_delete(expr_mngr *m)
     free(m);
 }
 
+void expr_mngr_set_file_name(expr_mngr *m, const char *fname)
+{
+    m->file_name = fname;
+}
+
+void expr_mngr_set_file_line(expr_mngr *m, int fline)
+{
+    m->file_line = fline;
+}
