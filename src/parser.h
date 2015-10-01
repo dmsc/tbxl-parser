@@ -35,4 +35,5 @@ enum parser_mode parser_get_mode(void);
 void parser_set_mode(enum parser_mode mode);
 int parser_get_optimize(void);
 void parser_set_optimize(int);
+void parser_add_optimize(int level, int set);
 

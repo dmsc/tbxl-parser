@@ -174,7 +174,16 @@ void parser_set_mode(enum parser_mode mode)
 void parser_set_optimize(int opt)
 {
     info_print(file_name,file_line,"%s optimizations\n", opt ? "enabling" : "disabling");
-    parser_optimize = opt;
+    parser_optimize = opt ? -1 : 0;
+}
+
+void parser_add_optimize(int level, int set)
+{
+    info_print(file_name,file_line,"%s optimization %d\n", set ? "enable" : "disable", level);
+    if( set )
+        parser_optimize |= level;
+    else
+        parser_optimize &= ~level;
 }
 
 int parser_get_optimize(void)

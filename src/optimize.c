@@ -27,7 +27,7 @@
 #include "statements.h"
 #include <stdio.h>
 
-static stmt * optimize_statement(program *pgm, stmt *s, int fline)
+static stmt * optimize_statement(program *pgm, stmt *s, int fline, int level)
 {
     // Create output statement
     stmt *ret = stmt_new(stmt_get_statement(s));
@@ -47,8 +47,11 @@ static stmt * optimize_statement(program *pgm, stmt *s, int fline)
 
     if( ex )
     {
-        opt_constprop(ex);
-        opt_convert_tok(ex);
+        if( level & OPT_CONST_FOLD )
+            opt_constprop(ex);
+        if( level & OPT_NUMBER_TOK )
+            opt_convert_tok(ex);
+
         expr_to_tokens(ex, ret);
 #if 0
         enum enum_statements sn = stmt_get_statement(s);
@@ -96,7 +99,7 @@ program *optimize_program(program *pgm, int level)
             // Serialize statement
             int fl = line_get_file_line(l);
             stmt *s = line_get_statement(l);
-            stmt *ns = optimize_statement(pgm, s, fl);
+            stmt *ns = optimize_statement(pgm, s, fl, level);
             line * nl = line_new_from_stmt(ns, fl);
             pgm_add_line(ret,nl);
         }

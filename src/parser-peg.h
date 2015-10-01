@@ -18,6 +18,7 @@
 #pragma once
 
 #include "parser.h"
+#include "optimize.h"
 
 // Called from PEG
 enum enum_statements;

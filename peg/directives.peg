@@ -19,6 +19,7 @@ ParserOption <-
                 '=' SPC ParserOptionMode
                / < ERROREXP >            { print_error("'=' and parsing mode", yytext); }
                )
+  / 'optimize' SPC  '=' SPC OptimizeSuboptions
   / < ( '-' / '+' )? > 'optimize' SPC   &{ parser_set_optimize(yytext[0] != '-') , 1 }
   / < ERROREXP >                         { print_error("parsing option name", yytext); }
 
@@ -27,3 +28,8 @@ ParserOptionMode <- 'default'           &{ parser_set_mode(parser_mode_default),
                   / 'extended'          &{ parser_set_mode(parser_mode_extended), 1 }
                   / < ERROREXP >         { print_error("parsing mode", yytext); }
 
+OptimizeSuboptions  <- ( < '+' / '-' >
+          (
+            'const_folding'   &{ parser_add_optimize( OPT_CONST_FOLD, yytext[0] == '+' ) , 1 }
+          / 'convert_percent' &{ parser_add_optimize( OPT_NUMBER_TOK, yytext[0] == '+' ) , 1 }
+          ) )+

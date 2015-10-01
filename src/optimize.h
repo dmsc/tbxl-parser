@@ -19,6 +19,11 @@
 
 typedef struct program_struct program;
 
+enum optimize_levels {
+    OPT_CONST_FOLD = 1,
+    OPT_NUMBER_TOK = 2
+};
+
 // Generates a new, optimized, program
 program *optimize_program(program *pgm, int level);
 
