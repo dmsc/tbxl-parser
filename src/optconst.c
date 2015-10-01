@@ -24,8 +24,8 @@
 
 static int set_number(expr *e, double x)
 {
-    if( e->lft ) expr_free( e->lft );
-    if( e->rgt ) expr_free( e->rgt );
+    if( e->lft ) expr_delete( e->lft );
+    if( e->rgt ) expr_delete( e->rgt );
     if( e->str ) free(e->str);
     e->lft = 0;
     e->rgt = 0;
@@ -36,8 +36,8 @@ static int set_number(expr *e, double x)
 
 static int set_tok(expr *e, enum enum_tokens x)
 {
-    if( e->lft ) expr_free( e->lft );
-    if( e->rgt ) expr_free( e->rgt );
+    if( e->lft ) expr_delete( e->lft );
+    if( e->rgt ) expr_delete( e->rgt );
     if( e->str ) free(e->str);
     e->lft = 0;
     e->rgt = 0;
@@ -48,8 +48,8 @@ static int set_tok(expr *e, enum enum_tokens x)
 
 static int set_string(expr *e, char *buf, unsigned len)
 {
-    if( e->lft ) expr_free( e->lft );
-    if( e->rgt ) expr_free( e->rgt );
+    if( e->lft ) expr_delete( e->lft );
+    if( e->rgt ) expr_delete( e->rgt );
     if( e->str ) free(e->str);
     e->lft = 0;
     e->rgt = 0;

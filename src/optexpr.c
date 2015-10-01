@@ -22,37 +22,47 @@
 #include "tokens.h"
 #include "statements.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
-void expr_free(expr *n)
+typedef struct expr_mngr_struct {
+    program *pgm;
+    expr *data;
+    unsigned len;
+    unsigned size;
+} expr_mngr;
+
+static void memory_error(void)
+{
+    fprintf(stderr,"INTERNAL ERROR: memory allocation failure.\n");
+    abort();
+}
+
+void expr_delete(expr *n)
 {
     if( n->lft )
-        expr_free(n->lft);
+        expr_delete(n->lft);
     if( n->rgt )
-        expr_free(n->rgt);
-    n->lft = 0;
-    n->rgt = 0;
+        expr_delete(n->rgt);
     if( n->str )
         free(n->str);
-    free(n);
+    n->lft = 0;
+    n->rgt = 0;
+    n->str = 0;
 }
 
-static expr *expr_new(program *pgm)
-{
-    expr *n = calloc(1, sizeof(expr));
-    return n;
-}
+static expr *expr_new(expr_mngr *);
 
-expr *expr_new_void(program *pgm)
+expr *expr_new_void(expr_mngr *mngr)
 {
     expr *n = calloc(1, sizeof(expr));
     n->type = et_void;
     return n;
 }
 
-expr *expr_new_bin(program *pgm, expr *l, expr *r, enum enum_tokens tk)
+expr *expr_new_bin(expr_mngr *mngr, expr *l, expr *r, enum enum_tokens tk)
 {
-    expr *n = expr_new(pgm);
+    expr *n = expr_new(mngr);
     n->lft = l;
     n->rgt = r;
     n->tok = tk;
@@ -60,74 +70,74 @@ expr *expr_new_bin(program *pgm, expr *l, expr *r, enum enum_tokens tk)
     return n;
 }
 
-expr *expr_new_uni(program *pgm, expr *r, enum enum_tokens tk)
+expr *expr_new_uni(expr_mngr *mngr, expr *r, enum enum_tokens tk)
 {
-    expr *n = expr_new(pgm);
+    expr *n = expr_new(mngr);
     n->rgt = r;
     n->tok = tk;
     n->type = et_tok;
     return n;
 }
 
-expr *expr_new_tok(program *pgm, enum enum_tokens tk)
+expr *expr_new_tok(expr_mngr *mngr, enum enum_tokens tk)
 {
-    expr *n = expr_new(pgm);
+    expr *n = expr_new(mngr);
     n->tok = tk;
     n->type = et_tok;
     return n;
 }
 
-expr *expr_new_var_num(program *pgm, int vn)
+expr *expr_new_var_num(expr_mngr *mngr, int vn)
 {
-    expr *n = expr_new(pgm);
+    expr *n = expr_new(mngr);
     n->type = et_var_number;
     n->var = vn;
     return n;
 }
 
-expr *expr_new_var_str(program *pgm, int vn)
+expr *expr_new_var_str(expr_mngr *mngr, int vn)
 {
-    expr *n = expr_new(pgm);
+    expr *n = expr_new(mngr);
     n->type = et_var_string;
     n->var = vn;
     return n;
 }
 
-expr *expr_new_var_array(program *pgm, int vn)
+expr *expr_new_var_array(expr_mngr *mngr, int vn)
 {
-    expr *n = expr_new(pgm);
+    expr *n = expr_new(mngr);
     n->type = et_var_array;
     n->var = vn;
     return n;
 }
 
-expr *expr_new_label(program *pgm, int vn)
+expr *expr_new_label(expr_mngr *mngr, int vn)
 {
-    expr *n = expr_new(pgm);
+    expr *n = expr_new(mngr);
     n->type = et_var_label;
     n->var = vn;
     return n;
 }
 
-expr *expr_new_number(program *pgm, double x)
+expr *expr_new_number(expr_mngr *mngr, double x)
 {
-    expr *n = expr_new(pgm);
+    expr *n = expr_new(mngr);
     n->num = x;
     n->type = et_c_number;
     return n;
 }
 
-expr *expr_new_hexnumber(program *pgm, double x)
+expr *expr_new_hexnumber(expr_mngr *mngr, double x)
 {
-    expr *n = expr_new(pgm);
+    expr *n = expr_new(mngr);
     n->num = x;
     n->type = et_c_hexnumber;
     return n;
 }
 
-expr *expr_new_string(program *pgm, uint8_t *str, unsigned len)
+expr *expr_new_string(expr_mngr *mngr, uint8_t *str, unsigned len)
 {
-    expr *n = expr_new(pgm);
+    expr *n = expr_new(mngr);
     n->type = et_c_string;
     n->str = malloc(len);
     n->slen = len;
@@ -370,5 +380,47 @@ void expr_to_tokens(expr *e, stmt *s)
         if( use_r_parens )
             stmt_add_token(s, TOK_R_PRN);
     }
+}
+
+///////////////////////////////////////////////////////////////////////
+
+static expr *expr_new(expr_mngr *m)
+{
+    if( m->len == m->size )
+    {
+        // TODO: compact our expr list removing unused entries
+        unsigned old_size = m->size;
+        m->size *= 2;
+        if( !m->size )
+            memory_error();
+        m->data = realloc(m->data, sizeof(expr) * m->size);
+        if( !m->data )
+            memory_error();
+        memset(m->data + old_size, 0, sizeof(expr) * (m->size - old_size));
+    }
+    m->len++;
+    return &(m->data[m->len-1]);
+}
+
+expr_mngr *expr_mngr_new(program *pgm)
+{
+    expr_mngr *m = malloc(sizeof(expr_mngr));
+    if( !m )
+        memory_error();
+    m->len  = 0;
+    m->size = 256;
+    m->data = calloc(sizeof(expr), 256);
+    if( !m->data )
+        memory_error();
+    return m;
+}
+
+void expr_mngr_delete(expr_mngr *m)
+{
+    // Free all associated expressions
+    for(unsigned i=0; i < m->len; i++)
+        expr_delete( &(m->data[i]) );
+    free(m->data);
+    free(m);
 }
 

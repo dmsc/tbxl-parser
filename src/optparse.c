@@ -30,7 +30,7 @@
 typedef struct pstate {
     uint8_t *pos;
     uint8_t *end;
-    program *pgm;
+    expr_mngr *mngr;
     vars *vrs;
 } pstate;
 
@@ -59,11 +59,11 @@ static int act(int val)
 // Execute action
 #define ACT(a) act(0 != (a))
 // Parse any expression of the type " TOK_BINARY exp "
-#define TOK_EXP2(tok, next) CHK( p_tok(p, tok) && 0 != (r=next(p)) && ACT(l = expr_new_bin(p->pgm, l, r, tok)) )
+#define TOK_EXP2(tok, next) CHK( p_tok(p, tok) && 0 != (r=next(p)) && ACT(l = expr_new_bin(p->mngr, l, r, tok)) )
 // Parse any expression of the type " TOK_UNARY exp "
-#define TOK_EXP1(tok, next) CHK( p_tok(p, tok) && 0 != (r=next(p)) && ACT(r = expr_new_uni(p->pgm, r, tok)) )
+#define TOK_EXP1(tok, next) CHK( p_tok(p, tok) && 0 != (r=next(p)) && ACT(r = expr_new_uni(p->mngr, r, tok)) )
 // Parse any expression of the type " TOK_EXP "
-#define TOK_EXP0(tok) CHK( p_tok(p, tok) && ACT(r = expr_new_tok(p->pgm, tok)) )
+#define TOK_EXP0(tok) CHK( p_tok(p, tok) && ACT(r = expr_new_tok(p->mngr, tok)) )
 
 // Parse one token, advance if equal to given one
 static int p_tok(pstate *p, enum enum_tokens tk)
@@ -91,9 +91,9 @@ static expr *p_number(pstate *p)
         n.dig[4] = p->pos[6];
         p->pos = p->pos + 7;
         if( !hex )
-            return expr_new_number(p->pgm, atari_bcd_to_double(n));
+            return expr_new_number(p->mngr, atari_bcd_to_double(n));
         else
-            return expr_new_hexnumber(p->pgm, atari_bcd_to_double(n));
+            return expr_new_hexnumber(p->mngr, atari_bcd_to_double(n));
     }
     return 0;
 }
@@ -108,7 +108,7 @@ static expr *p_cstring_expr(pstate *p)
         {
             uint8_t *s = p->pos + 2;
             p->pos = p->pos + 2 + len;
-            return expr_new_string(p->pgm, s, len);
+            return expr_new_string(p->mngr, s, len);
         }
     }
     return 0;
@@ -138,7 +138,7 @@ static expr *p_label_expr(pstate *p)
     uint8_t *pos;
     unsigned vn;
     if( CHK((vn = p_var(p)) && vtLabel == vars_get_type(p->vrs, vn-1) ) )
-        return expr_new_label(p->pgm,vn-1);
+        return expr_new_label(p->mngr,vn-1);
     return 0;
 }
 
@@ -162,7 +162,7 @@ static expr *p_var_array_expr(pstate *p)
     uint8_t *pos;
     unsigned vn;
     if( CHK((vn = p_var(p)) && vtArray == vars_get_type(p->vrs, vn-1) ) )
-        return expr_new_var_array(p->pgm,vn-1);
+        return expr_new_var_array(p->mngr,vn-1);
     return 0;
 }
 
@@ -173,7 +173,7 @@ static expr *p_var_array_idx_expr(pstate *p)
     uint8_t *pos;
     expr *l, *r;
     if( CHK( (l=p_var_array_expr(p)) && p_tok(p, TOK_A_L_PRN) && (r = p_array_access(p)) && p_tok(p, TOK_R_PRN)) )
-        return expr_new_bin(p->pgm,l, r, TOK_A_L_PRN);
+        return expr_new_bin(p->mngr,l, r, TOK_A_L_PRN);
     return 0;
 }
 
@@ -183,7 +183,7 @@ static expr *p_var_num_expr(pstate *p)
     uint8_t *pos;
     unsigned vn;
     if( CHK((vn = p_var(p)) && vtFloat == vars_get_type(p->vrs, vn-1) ) )
-        return expr_new_var_num(p->pgm,vn-1);
+        return expr_new_var_num(p->mngr,vn-1);
     return 0;
 }
 
@@ -193,7 +193,7 @@ static expr *p_var_str_expr(pstate *p)
     uint8_t *pos;
     unsigned vn;
     if( CHK((vn = p_var(p)) && vtString == vars_get_type(p->vrs, vn-1) ) )
-        return expr_new_var_str(p->pgm,vn-1);
+        return expr_new_var_str(p->mngr,vn-1);
     return 0;
 }
 
@@ -206,7 +206,7 @@ static expr *p_var_str_sub_expr(pstate *p)
     if(  CHK( l = p_var_str_expr(p) ) )
     {
         if( CHK( p_tok(p, TOK_S_L_PRN) && (r = p_array_access(p)) && p_tok(p, TOK_R_PRN)) )
-            return expr_new_bin(p->pgm,l, r, TOK_S_L_PRN);
+            return expr_new_bin(p->mngr,l, r, TOK_S_L_PRN);
         else
             return l;
     }
@@ -219,7 +219,7 @@ static expr *p_dim_var_array_expr(pstate *p)
     uint8_t *pos;
     expr *l, *r;
     if( CHK( (l=p_var_array_expr(p)) && p_tok(p, TOK_D_L_PRN) && (r = p_array_access(p)) && p_tok(p, TOK_R_PRN)) )
-        return expr_new_bin(p->pgm,l, r, TOK_D_L_PRN);
+        return expr_new_bin(p->mngr,l, r, TOK_D_L_PRN);
     return 0;
 }
 
@@ -229,7 +229,7 @@ static expr *p_dim_var_str_expr(pstate *p)
     uint8_t *pos;
     expr *l, *r;
     if( CHK( (l=p_var_str_expr(p)) && p_tok(p, TOK_DS_L_PRN) && (r = p_num_expr(p)) && p_tok(p, TOK_R_PRN)) )
-        return expr_new_bin(p->pgm,l, r, TOK_DS_L_PRN);
+        return expr_new_bin(p->mngr,l, r, TOK_DS_L_PRN);
     return 0;
 }
 
@@ -322,12 +322,11 @@ static expr *p_in_instr_expr(pstate *p)
     expr *r, *l = 0;
     if( CHK( 0 != (l = p_str_expr(p)) && p_tok(p, TOK_A_COMMA) && 0 != (r=p_str_expr(p)) ) )
     {
-        l = expr_new_bin(p->pgm,l, r, TOK_A_COMMA);
+        l = expr_new_bin(p->mngr,l, r, TOK_A_COMMA);
         if( TOK_EXP2(TOK_A_COMMA, p_num_expr) )
             return l;
         return l;
     }
-    // TODO: leak!
     return 0;
 }
 
@@ -614,7 +613,7 @@ static expr *p_num_assign_expr(pstate *p)
     uint8_t *pos;
     expr *r, *l = 0;
     if( CHK( (l = p_var_numeric_expr(p)) && p_tok(p,TOK_F_ASGN) && (r=p_num_expr(p)) ) )
-        return expr_new_bin(p->pgm, l, r, TOK_F_ASGN);
+        return expr_new_bin(p->mngr, l, r, TOK_F_ASGN);
     return 0;
 }
 
@@ -623,7 +622,7 @@ static expr *p_str_assign_expr(pstate *p)
     uint8_t *pos;
     expr *r, *l = 0;
     if( CHK( (l = p_var_str_sub_expr(p)) && p_tok(p,TOK_S_ASGN) && (r=p_str_expr(p)) ) )
-        return expr_new_bin(p->pgm, l, r, TOK_S_ASGN);
+        return expr_new_bin(p->mngr, l, r, TOK_S_ASGN);
     return 0;
 }
 
@@ -646,8 +645,8 @@ static expr *p_for_expr(pstate *p)
     {
         expr *s;
         if( CHK( p_tok(p,TOK_STEP) && (s=p_num_expr(p)) ) )
-            r = expr_new_bin(p->pgm, r, s, TOK_STEP);
-        return expr_new_bin(p->pgm, l, r, TOK_FOR_TO);
+            r = expr_new_bin(p->mngr, r, s, TOK_STEP);
+        return expr_new_bin(p->mngr, l, r, TOK_FOR_TO);
     }
 #endif
     expr *l, *r;
@@ -680,7 +679,7 @@ static expr *p_sharp_label_expr(pstate *p)
     uint8_t *pos;
     expr *l;
     if( CHK( p_tok(p, TOK_SHARP) && (l = p_label_expr(p)) ) )
-        return expr_new_uni(p->pgm, l ,TOK_SHARP);
+        return expr_new_uni(p->mngr, l ,TOK_SHARP);
     return 0;
 }
 
@@ -689,18 +688,18 @@ static expr *p_print_expr(pstate *p)
     uint8_t *pos;
     expr *r, *l = 0;
     if( (l=p_any_expr(p))
-     || CHK( p_tok(p,TOK_COMMA) && (r=p_any_expr(p)) && ACT(l=expr_new_bin(p->pgm,0,r,TOK_COMMA)) )
-     || CHK( p_tok(p,TOK_SEMICOLON) && (r=p_any_expr(p)) && ACT(l=expr_new_bin(p->pgm,0,r,TOK_SEMICOLON)) )
-     || CHK( p_tok(p,TOK_COMMA) && ACT(l=expr_new_bin(p->pgm,0,0,TOK_COMMA)) )
-     || CHK( p_tok(p,TOK_SEMICOLON) && ACT(l=expr_new_bin(p->pgm,0,0,TOK_SEMICOLON)) ) )
+     || CHK( p_tok(p,TOK_COMMA) && (r=p_any_expr(p)) && ACT(l=expr_new_bin(p->mngr,0,r,TOK_COMMA)) )
+     || CHK( p_tok(p,TOK_SEMICOLON) && (r=p_any_expr(p)) && ACT(l=expr_new_bin(p->mngr,0,r,TOK_SEMICOLON)) )
+     || CHK( p_tok(p,TOK_COMMA) && ACT(l=expr_new_bin(p->mngr,0,0,TOK_COMMA)) )
+     || CHK( p_tok(p,TOK_SEMICOLON) && ACT(l=expr_new_bin(p->mngr,0,0,TOK_SEMICOLON)) ) )
     {
         while( TOK_EXP2(TOK_COMMA, p_any_expr)
             || TOK_EXP2(TOK_SEMICOLON, p_any_expr)
-            || CHK( p_tok(p, TOK_COMMA) && ACT(l=expr_new_bin(p->pgm,l,0,TOK_COMMA)) )
-            || CHK( p_tok(p, TOK_SEMICOLON) && ACT(l=expr_new_bin(p->pgm,l,0,TOK_SEMICOLON)) ) );
+            || CHK( p_tok(p, TOK_COMMA) && ACT(l=expr_new_bin(p->mngr,l,0,TOK_COMMA)) )
+            || CHK( p_tok(p, TOK_SEMICOLON) && ACT(l=expr_new_bin(p->mngr,l,0,TOK_SEMICOLON)) ) );
         return l;
     }
-    return expr_new_void(p->pgm);
+    return expr_new_void(p->mngr);
 }
 
 static expr *p_io_expr(pstate *p)
@@ -708,7 +707,7 @@ static expr *p_io_expr(pstate *p)
     uint8_t *pos;
     expr *l;
     if( CHK( p_tok(p, TOK_SHARP) && (l = p_num_expr(p)) ) )
-        return expr_new_uni(p->pgm, l ,TOK_SHARP);
+        return expr_new_uni(p->mngr, l ,TOK_SHARP);
     return 0;
 }
 
@@ -719,9 +718,9 @@ static expr *p_print_io_expr(pstate *p)
     if( CHK(l = p_io_expr(p)) )
     {
         if( CHK( p_tok(p,TOK_COMMA) && (r=p_print_expr(p)) ) )
-            return expr_new_bin(p->pgm, l, r, TOK_COMMA);
+            return expr_new_bin(p->mngr, l, r, TOK_COMMA);
         if( CHK( p_tok(p,TOK_SEMICOLON) && (r=p_print_expr(p)) ) )
-            return expr_new_bin(p->pgm, l, r, TOK_SEMICOLON);
+            return expr_new_bin(p->mngr, l, r, TOK_SEMICOLON);
         return l;
     }
     else
@@ -734,11 +733,11 @@ static expr *p_on_expr(pstate *p)
     expr *r, *l;
     // TODO: parse as line numbers!
     if( CHK( (l=p_num_expr(p)) && p_tok(p, TOK_ON_GOTO) && (r=p_num_comma_expr(p)) ) )
-        return expr_new_bin(p->pgm, l,r,TOK_ON_GOTO);
+        return expr_new_bin(p->mngr, l,r,TOK_ON_GOTO);
     if( CHK( (l=p_num_expr(p)) && p_tok(p, TOK_ON_GOSUB) && (r=p_num_comma_expr(p)) ) )
-        return expr_new_bin(p->pgm, l,r,TOK_ON_GOSUB);
+        return expr_new_bin(p->mngr, l,r,TOK_ON_GOSUB);
     if( CHK( (l=p_num_expr(p)) && p_tok(p, TOK_ON_GOSHARP) && (r=p_label_comma_expr(p)) ) )
-        return expr_new_bin(p->pgm, l,r,TOK_ON_GOSHARP);
+        return expr_new_bin(p->mngr, l,r,TOK_ON_GOSHARP);
     return 0;
 }
 
@@ -750,9 +749,9 @@ static expr *p_if_then_expr(pstate *p)
     {
         expr *r;
         if( CHK( r=p_num_expr(p) ) ) // TODO: parse as "line number"
-            return expr_new_bin(p->pgm, l, r, TOK_THEN);
+            return expr_new_bin(p->mngr, l, r, TOK_THEN);
         else
-            return expr_new_bin(p->pgm, l, 0, TOK_THEN);
+            return expr_new_bin(p->mngr, l, 0, TOK_THEN);
     }
     return 0;
 }
@@ -775,7 +774,7 @@ static expr *p_num_2_expr(pstate *p)
     expr *e1,*e2;
     if( CHK(  (e1=p_num_expr(p)) && p_tok(p,TOK_COMMA) && (e2=p_num_expr(p)) ) )
     {
-        e1 = expr_new_bin(p->pgm, e1, e2, TOK_COMMA);
+        e1 = expr_new_bin(p->mngr, e1, e2, TOK_COMMA);
         return e1;
     }
     return 0;
@@ -787,7 +786,7 @@ static expr *p_num_3_expr(pstate *p)
     expr *e1,*e2;
     if( CHK(  (e1=p_num_2_expr(p)) && p_tok(p,TOK_COMMA) && (e2=p_num_expr(p)) ) )
     {
-        e1 = expr_new_bin(p->pgm, e1, e2, TOK_COMMA);
+        e1 = expr_new_bin(p->mngr, e1, e2, TOK_COMMA);
         return e1;
     }
     return 0;
@@ -832,14 +831,14 @@ static expr *p_list_expr(pstate *p)
         expr *r;
         if( CHK( p_tok(p, TOK_COMMA) && (r=p_num_2_expr(p)) )
          || CHK( p_tok(p, TOK_COMMA) && (r=p_num_expr(p)) ) )
-            return expr_new_bin(p->pgm, l, r, TOK_COMMA);
+            return expr_new_bin(p->mngr, l, r, TOK_COMMA);
         else
             return l;
     }
     if( CHK( l=p_num_2_expr(p) )
      || CHK( l=p_num_expr(p) ) )
         return l;
-    return expr_new_void(p->pgm);
+    return expr_new_void(p->mngr);
 }
 
 static expr * p_label_or_lnum_expr(pstate *p)
@@ -898,7 +897,7 @@ static expr *p_var_numstr_comma_expr(pstate *p)
     expr *l, *r;
     if( CHK( (l=p_var_num_expr(p)) || (l=p_var_str_expr(p)) ) )
         while( CHK( p_tok(p, TOK_COMMA) && ((r=p_var_num_expr(p)) || (r=p_var_str_expr(p))) ) )
-            l=expr_new_bin(p->pgm, l, r, TOK_COMMA);
+            l=expr_new_bin(p->mngr, l, r, TOK_COMMA);
     return l;
 }
 
@@ -907,7 +906,7 @@ static expr *p_get_expr(pstate *p)
     uint8_t *pos;
     expr *l, *r;
     if( CHK( (l=p_io_expr(p)) && p_tok(p, TOK_COMMA) && (r=p_varnum_comma_expr(p)) ) )
-        return expr_new_bin(p->pgm, l, r, TOK_COMMA);
+        return expr_new_bin(p->mngr, l, r, TOK_COMMA);
     if( CHK( (l=p_varnum_comma_expr(p)) ) )
         return l;
     return 0;
@@ -918,7 +917,7 @@ static expr *p_put_expr(pstate *p)
     uint8_t *pos;
     expr *l, *r;
     if( CHK( (l=p_io_expr(p)) && p_tok(p, TOK_COMMA) && (r=p_num_comma_expr(p)) ) )
-        return expr_new_bin(p->pgm, l, r, TOK_COMMA);
+        return expr_new_bin(p->mngr, l, r, TOK_COMMA);
     if( CHK( (l=p_num_comma_expr(p)) ) )
         return l;
     return 0;
@@ -929,13 +928,13 @@ static expr *p_input_expr(pstate *p)
     uint8_t *pos;
     expr *l, *r;
     if( CHK( (l=p_io_expr(p)) && p_tok(p, TOK_COMMA) && (r=p_var_numstr_comma_expr(p)) ) )
-        return expr_new_bin(p->pgm, l, r, TOK_COMMA);
+        return expr_new_bin(p->mngr, l, r, TOK_COMMA);
     if( CHK( (l=p_io_expr(p)) && p_tok(p, TOK_SEMICOLON) && (r=p_var_numstr_comma_expr(p)) ) )
-        return expr_new_bin(p->pgm, l, r, TOK_SEMICOLON);
+        return expr_new_bin(p->mngr, l, r, TOK_SEMICOLON);
     if( CHK( (l=p_cstring_expr(p)) && p_tok(p, TOK_COMMA) && (r=p_var_numstr_comma_expr(p)) ) )
-        return expr_new_bin(p->pgm, l, r, TOK_COMMA);
+        return expr_new_bin(p->mngr, l, r, TOK_COMMA);
     if( CHK( (l=p_cstring_expr(p)) && p_tok(p, TOK_SEMICOLON) && (r=p_var_numstr_comma_expr(p)) ) )
-        return expr_new_bin(p->pgm, l, r, TOK_SEMICOLON);
+        return expr_new_bin(p->mngr, l, r, TOK_SEMICOLON);
     if( CHK( (l=p_var_numstr_comma_expr(p)) ) )
         return l;
     return 0;
@@ -958,11 +957,11 @@ static expr * p_text_expr(pstate *p)
     uint8_t *pos;
     expr *e1, *e2;
     if( CHK( (e1=p_num_2_expr(p)) && p_tok(p, TOK_COMMA) && (e2=p_str_expr(p)) ) )
-        return expr_new_bin(p->pgm, e1, e2, TOK_COMMA);
+        return expr_new_bin(p->mngr, e1, e2, TOK_COMMA);
     return 0;
 }
 
-expr *opt_parse_statement(program *pgm, stmt *s, int fline)
+expr *opt_parse_statement(program *pgm, expr_mngr *mngr, stmt *s, int fline)
 {
     // get original statement data:
     enum enum_statements sn = stmt_get_statement(s);
@@ -974,7 +973,7 @@ expr *opt_parse_statement(program *pgm, stmt *s, int fline)
     expr *ex = 0;
     p.pos = data;
     p.end = data + len;
-    p.pgm = pgm;
+    p.mngr = mngr;
     p.vrs = pgm_get_vars(pgm);
     switch(sn)
     {
@@ -1015,7 +1014,7 @@ expr *opt_parse_statement(program *pgm, stmt *s, int fline)
         case STMT_F_L:
         case STMT_F_B:
         case STMT_ENDIF_INVISIBLE:
-            ex = expr_new_void(pgm);
+            ex = expr_new_void(mngr);
             break;
         case STMT_BLOAD:
         case STMT_BRUN:
@@ -1033,7 +1032,7 @@ expr *opt_parse_statement(program *pgm, stmt *s, int fline)
         case STMT_DUMP:
         case STMT_RUN:
             if( 0 == (ex = p_str_expr(&p)) )
-                ex = expr_new_void(pgm);
+                ex = expr_new_void(mngr);
             break;
         case STMT_COLOR:
         case STMT_FCOLOR:
@@ -1046,7 +1045,7 @@ expr *opt_parse_statement(program *pgm, stmt *s, int fline)
             break;
         case STMT_EXIT:
             if( 0 == (ex = p_num_expr(&p)) )
-                ex = expr_new_void(pgm);
+                ex = expr_new_void(mngr);
             break;
         case STMT_DRAWTO:
         case STMT_DPOKE:
@@ -1068,7 +1067,7 @@ expr *opt_parse_statement(program *pgm, stmt *s, int fline)
         case STMT_DSOUND:
         case STMT_SOUND:
             if( 0 == (ex = p_num_4_expr(&p)) )
-                ex = expr_new_void(pgm);
+                ex = expr_new_void(mngr);
             break;
         case STMT_GOTO:
         case STMT_GO_TO:
@@ -1085,7 +1084,7 @@ expr *opt_parse_statement(program *pgm, stmt *s, int fline)
         case STMT_CLOSE:
         case STMT_CLS:
             if( 0 == (ex = p_io_expr(&p)) )
-                ex = expr_new_void(pgm);
+                ex = expr_new_void(mngr);
             break;
         case STMT_BPUT:
         case STMT_BGET:
@@ -1124,7 +1123,7 @@ expr *opt_parse_statement(program *pgm, stmt *s, int fline)
             break;
         case STMT_RESTORE:
             if( 0 == (ex = p_label_or_lnum_expr(&p)) )
-                ex = expr_new_void(pgm);
+                ex = expr_new_void(mngr);
             break;
         case STMT_TRAP:
             ex = p_label_or_lnum_expr(&p);
@@ -1177,5 +1176,5 @@ expr *opt_parse_statement(program *pgm, stmt *s, int fline)
                 fline, statements[sn].stm_long, sn, len, stmt_get_token_len(s));
         return 0;
     }
-    return expr_new_void(pgm);
+    return expr_new_void(mngr);
 }

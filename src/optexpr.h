@@ -21,6 +21,7 @@
 #include "tokens.h"
 
 typedef struct expr_struct expr;
+typedef struct expr_mngr_struct expr_mngr;
 typedef struct program_struct program;
 typedef struct stmt_struct stmt;
 
@@ -40,6 +41,7 @@ struct expr_struct {
     enum enum_etype type;
     expr *lft; // Left child
     expr *rgt; // Right child
+    expr_mngr *mngr;
     double num;
     unsigned var;
     uint8_t *str;
@@ -47,18 +49,22 @@ struct expr_struct {
     enum enum_tokens tok;
 };
 
-void expr_free(expr *n);
-expr *expr_new_void(program *pgm);
-expr *expr_new_number(program *pgm, double x);
-expr *expr_new_hexnumber(program *pgm, double x);
-expr *expr_new_string(program *pgm, uint8_t *str, unsigned len);
-expr *expr_new_bin(program *pgm, expr *l, expr *r, enum enum_tokens tk);
-expr *expr_new_uni(program *pgm, expr *r, enum enum_tokens tk);
-expr *expr_new_tok(program *pgm, enum enum_tokens tk);
-expr *expr_new_var_num(program *pgm, int vn);
-expr *expr_new_var_str(program *pgm, int vn);
-expr *expr_new_var_array(program *pgm, int vn);
-expr *expr_new_label(program *pgm, int vn);
+void expr_delete(expr *n);
+expr *expr_new_void(expr_mngr *);
+expr *expr_new_number(expr_mngr *, double x);
+expr *expr_new_hexnumber(expr_mngr *, double x);
+expr *expr_new_string(expr_mngr *, uint8_t *str, unsigned len);
+expr *expr_new_bin(expr_mngr *, expr *l, expr *r, enum enum_tokens tk);
+expr *expr_new_uni(expr_mngr *, expr *r, enum enum_tokens tk);
+expr *expr_new_tok(expr_mngr *, enum enum_tokens tk);
+expr *expr_new_var_num(expr_mngr *, int vn);
+expr *expr_new_var_str(expr_mngr *, int vn);
+expr *expr_new_var_array(expr_mngr *, int vn);
+expr *expr_new_label(expr_mngr *, int vn);
 void expr_to_tokens(expr *e, stmt *s);
 
+
+// Expression Manager manages the "expr" tree, allowing to free all memory
+expr_mngr *expr_mngr_new(program *pgm);
+void expr_mngr_delete(expr_mngr *);
 

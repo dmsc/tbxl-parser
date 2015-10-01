@@ -40,7 +40,8 @@ static stmt * optimize_statement(program *pgm, stmt *s, int fline)
     }
 
     // Parse statement tokens:
-    expr *ex = opt_parse_statement(pgm, s, fline);
+    expr_mngr *mngr = expr_mngr_new(pgm);
+    expr *ex = opt_parse_statement(pgm, mngr, s, fline);
 
     if( ex )
     {
@@ -68,8 +69,9 @@ static stmt * optimize_statement(program *pgm, stmt *s, int fline)
             fprintf(stderr,"\n");
         }
 #endif
-        expr_free(ex);
     }
+
+    expr_mngr_delete(mngr);
     return ret;
 }
 
