@@ -31,6 +31,7 @@ SOURCES=\
  ataribcd.c\
  basic.c\
  baswriter.c\
+ defs.c\
  line.c\
  lister.c\
  main.c\

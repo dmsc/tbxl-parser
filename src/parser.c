@@ -23,6 +23,7 @@
 #include "tokens.h"
 #include "statements.h"
 #include "vars.h"
+#include "defs.h"
 #include "dbg.h"
 #include "parser-peg.h"
 
@@ -32,6 +33,7 @@ static int file_line;
 static program *cur_program;
 static enum parser_mode parser_mode;
 static int parser_optimize;
+static int last_def;
 
 program *parse_get_current_pgm(void)
 {
@@ -115,6 +117,15 @@ void add_stmt(enum enum_statements st)
 
 void add_ident(const char *name, enum var_type type)
 {
+    // Search if there is a definition with the same name
+    defs *d = pgm_get_defs( parse_get_current_pgm() );
+    if( defs_search(d, name) >= 0 )
+    {
+        err_print(file_name, file_line, "'%s' is a definition, use '@%s' instead.\n", name, name);
+        parse_error++;
+        return;
+    }
+
     vars *v = pgm_get_vars( parse_get_current_pgm() );
     // Search or create if not found
     int id = vars_search(v, name, type);
@@ -124,12 +135,116 @@ void add_ident(const char *name, enum var_type type)
         if( id < 0 )
         {
             err_print(file_name, file_line, "too many variables, got '%s'\n", name);
+            parse_error++;
             return;
         }
         info_print(file_name, file_line, "renaming %s var '%s' -> '%s'\n",
                    var_type_name(type), name, vars_get_short_name(v, id));
     }
     stmt_add_var(get_statement(), id);
+}
+
+void add_strdef_val(const char *def_name)
+{
+    defs *d = pgm_get_defs( parse_get_current_pgm() );
+    int id;
+    if( (id = defs_search(d, def_name)) < 0 )
+    {
+        err_print(file_name, file_line, "'%s' not defined.\n", def_name);
+        parse_error++;
+        return;
+    }
+    const char *data;
+    int len;
+    if( !defs_get_string(d, id, &data, &len) )
+    {
+        err_print(file_name, file_line, "'%s' not a string definition.\n", def_name);
+        parse_error++;
+    }
+    else
+        stmt_add_binary_string(get_statement(), data, len);
+}
+
+void add_numdef_val(const char *def_name)
+{
+    defs *d = pgm_get_defs( parse_get_current_pgm() );
+    int id;
+    if( (id = defs_search(d, def_name)) < 0 )
+    {
+        err_print(file_name, file_line, "'%s' not defined.\n", def_name);
+        parse_error++;
+        return;
+    }
+    double val;
+    if( !defs_get_numeric(d, id, &val) )
+    {
+        err_print(file_name, file_line, "'%s' not a numeric definition.\n", def_name);
+        parse_error++;
+    }
+    else
+        stmt_add_number(get_statement(), val);
+}
+
+void add_definition(const char *def_name)
+{
+    // Search variable, error if already found
+    vars *v = pgm_get_vars( parse_get_current_pgm() );
+    if( vars_search(v, def_name, vtFloat)  >= 0 ||
+        vars_search(v, def_name, vtString) >= 0 ||
+        vars_search(v, def_name, vtArray)  >= 0 ||
+        vars_search(v, def_name, vtLabel)  >= 0 )
+    {
+        err_print(file_name, file_line, "variable '%s' already used.\n", def_name);
+        parse_error++;
+        return;
+    }
+
+    // Search in definitions
+    defs *d = pgm_get_defs( parse_get_current_pgm() );
+    if( defs_search(d, def_name) >= 0 )
+    {
+        err_print(file_name, file_line, "'%s' already defined.\n", def_name);
+        parse_error++;
+        return;
+    }
+
+    last_def = defs_new_def(d, def_name, file_name, file_line);
+}
+
+void add_incbin_file(const char *bin_file_name)
+{
+    FILE *bf = fopen(bin_file_name, "rb");
+    if( !bf )
+    {
+        err_print(file_name, file_line, "error opening file '%s'.\n", bin_file_name);
+        parse_error++;
+        return;
+    }
+    char buf[256];
+    int len = fread(buf, 1, 255, bf);
+    if( len <= 0 )
+    {
+        err_print(file_name, file_line, "error reading file '%s'.\n", bin_file_name);
+        parse_error++;
+        return;
+    }
+    fclose(bf);
+    if( len >= 248 )
+    {
+        err_print(file_name, file_line, "binary file '%s' is too big, truncating.\n", bin_file_name);
+        parse_error++;
+        len = 247;
+    }
+    // Add to last def:
+    defs *d = pgm_get_defs( parse_get_current_pgm() );
+    defs_set_string(d, last_def, buf, len);
+}
+
+void set_numdef_value(double x)
+{
+    // Add to last def:
+    defs *d = pgm_get_defs( parse_get_current_pgm() );
+    defs_set_numeric(d, last_def, x);
 }
 
 void print_error(const char *msg, const char *pos)
@@ -145,6 +260,7 @@ void inc_file_line(void)
 
 void parse_init(const char *fname)
 {
+    last_def = -1;
     parse_error = 0;
     file_line = 1;
     file_name = fname;

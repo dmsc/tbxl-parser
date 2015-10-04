@@ -17,17 +17,25 @@
  */
 #pragma once
 
-typedef struct program_struct program;
-typedef struct line_struct line;
-typedef struct vars_struct vars;
 typedef struct defs_struct defs;
 
-program *program_new(const char *fname);
-void program_delete(program *p);
+defs * defs_new(void);
+void defs_delete(defs *);
 
-line *pgm_get_current_line(program *p);
-void pgm_add_line(program *p, line *l);
-vars *pgm_get_vars(program *p);
-defs *pgm_get_defs(program *p);
-line **pgm_get_lines(program *p);
-const char *pgm_get_file_name(program *p);
+// Returns ID of definition named "name", or -1 if not found.
+int defs_search(defs *, const char *name);
+// Creates a new definition named "name", returns ID.
+int defs_new_def(defs *, const char *name, const char *file_name, int file_line);
+
+// Sets string data to a definition
+void defs_set_string(defs *, int id, const char *data, int len);
+
+// Sets numeric value to a definition
+void defs_set_numeric(defs *, int id, const double val);
+
+// Gets string data from a definition
+int defs_get_string(defs *, int id, const char **data, int *len);
+
+// Gets value from a definition
+int defs_get_numeric(defs *, int id, double *val);
+

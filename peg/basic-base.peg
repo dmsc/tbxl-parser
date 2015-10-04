@@ -214,12 +214,17 @@ DimVar          <- PDimVarArray NumExpr ( A_COMMA NumExpr )? R_PRN
                  / PDimVarStr NumExpr R_PRN
                  / < ERROREXP > { print_error("DIM string/array", yytext); }
 
+# Variables
 Label           <- < Identifier > { add_ident(yytext, vtLabel);  }               SPC
 PVarStr         <- < Identifier > { add_ident(yytext, vtString); } '$'           SPC
 PVarNum         <- < Identifier > { add_ident(yytext, vtFloat);  }     ![$(]     SPC
 PVarArray       <- < Identifier > { add_ident(yytext, vtArray);  }     A_L_PRN   SPC
 PDimVarArray    <- < Identifier > { add_ident(yytext, vtArray);  }     D_L_PRN   SPC
 PDimVarStr      <- < Identifier > { add_ident(yytext, vtString); } '$' SPC DS_L_PRN  SPC
+
+# Defs
+StringDef       <- '@' < Identifier > '$' { add_strdef_val(yytext); }            SPC
+NumericDef      <- '@' < Identifier >     { add_numdef_val(yytext); }            SPC
 
 # Those constructs produce errors if not matched
 NumExprErr      <- NumExpr
@@ -237,6 +242,7 @@ StrExpr         <- STRP    ParNumExpr
                  / TIMEP
                  / ConstString
                  / ExtendedString
+                 / StringDef
                  / PVarStr SubStr?
 
 # Constant string, enclosed in ""
@@ -337,6 +343,7 @@ UnitExpr        <- Number
                  / PER_3
                  / ERR
                  / ERL
+                 / NumericDef
                  / PVarArray ArrayAccess
                  / PVarNum
 
@@ -385,9 +392,14 @@ IdentifierChar   <- [a-zA-Z0-9_]
 Identifier       <- IdentifierInit IdentifierChar*
 
 # Numbers
-Number          <- '$' < [a-fA-F0-9]+ > SPC                    { add_hex_number( strtol(yytext,0,16) ); }
-                 / < '-'? [0-9]+ ( '.' [0-9]* )? NumExp? > SPC { add_number( strtod(yytext,0) ); }
-                 / < '-'? '.' [0-9]+ NumExp? > SPC             { add_number( strtod(yytext,0) ); }
+Number          <- HexNumber                                   { add_hex_number( strtol(yytext,0,16) ); }
+                 / DecNumber                                   { add_number( strtod(yytext,0) ); }
+
+HexNumber       <- '$' < [a-fA-F0-9]+ > SPC
+
+DecNumber       <- < '-'? [0-9]+ ( '.' [0-9]* )? NumExp? > SPC
+                 / < '-'? '.' [0-9]+ NumExp? > SPC
+
 # The exponent of a floating point number
 NumExp          <- ( 'e' / 'E' ) ( '+' / '-' )? [0-9] [0-9]?
 

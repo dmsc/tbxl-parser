@@ -268,7 +268,7 @@ int stmt_add_extended_string(stmt *s, const char *data, unsigned len, const char
 {
     // Interprets the string:
     unsigned i, rlen = 0;
-    unsigned char buf[256];
+    char buf[256];
     int state = 0, inverse = 0, count = 0, nameStart = 0, hex = 0;
 
     for(i=0; i<len && rlen < 256; i++)
@@ -373,18 +373,23 @@ int stmt_add_extended_string(stmt *s, const char *data, unsigned len, const char
                 break;
         }
     }
-    if( rlen > 255 )
-    {
-        err_print(fname, file_line, "too many characters inside extended string, truncating '%.*s'\n", len, data);
-        rlen = 255;
-    }
-    // Stores into statement
-    stmt_add_byte(s, 0x0F);
-    stmt_add_byte(s, rlen);
-    for(i=0; i<rlen; i++)
-        stmt_add_byte(s, buf[i]);
-    s->last_tok = TOK_LAST_TOKEN;
+    stmt_add_binary_string(s, buf, rlen);
     return 0;
+}
+
+void stmt_add_binary_string(stmt *s, const char *data, unsigned len)
+{
+    if( len > 255 )
+    {
+        fprintf(stderr, "ERROR: truncating string constant, max length 256 bytes.\n");
+        len = 255;
+    }
+    // Store into statement
+    stmt_add_byte(s, 0x0F);
+    stmt_add_byte(s, len);
+    for( ; len; len--, data++ )
+        stmt_add_byte(s, *data);
+    s->last_tok = TOK_LAST_TOKEN;
 }
 
 void stmt_add_number(stmt *s, double d)

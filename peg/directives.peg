@@ -6,8 +6,34 @@
 # the main parser.
 
 DirectiveLine <- OptionsDirective
+               / IncBinaryDirect
+               / DefineNumeric
                / < ERROR >               { print_error("parser directive", yytext); }
 
+# ------ Include Binary ------
+IncBinaryDirect  <- 'incbin' SPC (
+                       StrDefName        { add_definition(yytext); }
+                       SPC ','
+                       SPC IncFileName   { add_incbin_file(yytext); }
+                     / < ERROR >         { print_error("$incbin def and file name", yytext); }
+                     )
+
+IncFileName      <- '"' < ( !'"' . )+ > '"'
+
+# ------ Definitions ------
+DefineNumeric    <- 'define' SPC (
+                       NumDefName        { add_definition(yytext); }
+                       SPC '='
+                       SPC (
+                             DecNumber   { set_numdef_value(strtod(yytext,0)); }
+                           / HexNumber   { set_numdef_value(strtol(yytext,0,16)); }
+                           )
+                     / < ERROR >         { print_error("definition = value", yytext); }
+                     )
+
+NumDefName       <- < Identifier >
+StrDefName       <- < Identifier > ( '$'
+                                     / !'$' { print_error("name ending with '$'", yytext); } )
 # ------ Parser Options ------
 OptionsDirective <- 'options' SPC OptionList EndOfLine
 OptionList       <- ParserOption ( ',' SPC ParserOption

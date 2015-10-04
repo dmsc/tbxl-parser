@@ -201,7 +201,7 @@ int main(int argc, char **argv)
             }
 
             // Run the optimizer if specified by the user
-            if( parser_get_optimize() )
+            if( ok && parser_get_optimize() )
             {
                 program * opt = optimize_program(parse_get_current_pgm(),parser_get_optimize());
                 if( opt )

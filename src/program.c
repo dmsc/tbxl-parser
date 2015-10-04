@@ -19,6 +19,7 @@
 #include "stmt.h"
 #include "line.h"
 #include "vars.h"
+#include "defs.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -33,6 +34,7 @@ static void memory_error(void)
 
 struct program_struct {
     vars *variables; // Program variables
+    defs *defines;   // Program constant defines
     int len;         // Number of lines
     line **lines;    // Array of lines
     unsigned size;   // Available lines
@@ -47,6 +49,7 @@ program *program_new(const char *file_name)
     p->lines = malloc(64 * sizeof(line*));
     p->size  = 64;
     p->variables = vars_new();
+    p->defines   = defs_new();
     p->file_name = strdup(file_name);
     return p;
 }
@@ -58,6 +61,7 @@ void program_delete(program *p)
         line_delete(p->lines[i]);
     free( p->lines );
     vars_delete( p->variables );
+    defs_delete( p->defines );
     free( p->file_name );
     free( p );
 }
@@ -97,6 +101,11 @@ void pgm_add_line(program *p, line *l)
 vars *pgm_get_vars(program *p)
 {
     return p->variables;
+}
+
+defs *pgm_get_defs(program *p)
+{
+    return p->defines;
 }
 
 line **pgm_get_lines(program *p)

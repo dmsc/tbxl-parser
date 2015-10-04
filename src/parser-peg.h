@@ -37,6 +37,13 @@ void add_token(enum enum_tokens);
 void add_stmt(enum enum_statements);
 void add_ident(const char *, enum var_type);
 void print_error(const char *, const char *);
+void add_strdef_val(const char *);
+void add_numdef_val(const char *);
+
+// Used to add binary includes
+void add_definition(const char *var_name);
+void add_incbin_file(const char *bin_file_name);
+void set_numdef_value(double);
 
 // Used to keep current input file line number
 void inc_file_line(void);
