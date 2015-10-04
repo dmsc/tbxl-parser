@@ -5,10 +5,16 @@
 # Note that directives always begin with spaces and a '$', this is removed in
 # the main parser.
 
-DirectiveLine <- OptionsDirective
-               / IncBinaryDirect
-               / DefineNumeric
-               / < ERROR >               { print_error("parser directive", yytext); }
+DirectiveLine <- ( OptionsDirective
+                 / IncBinaryDirect
+                 / DefineNumeric
+                 / < ERROR >             { print_error("parser directive", yytext); }
+                 )
+                 SPC
+                 (
+                   EndOfLine
+                 / < (!EndOfLine .)* >   { print_error("end of line", yytext); }
+                 )
 
 # ------ Include Binary ------
 IncBinaryDirect  <- 'incbin' SPC (
@@ -35,7 +41,7 @@ NumDefName       <- < Identifier >
 StrDefName       <- < Identifier > ( '$'
                                      / !'$' { print_error("name ending with '$'", yytext); } )
 # ------ Parser Options ------
-OptionsDirective <- 'options' SPC OptionList EndOfLine
+OptionsDirective <- 'options' SPC OptionList
 OptionList       <- ParserOption ( ',' SPC ParserOption
                                  / < ERROREXP > { print_error("',' or end of line", yytext); }
                                  )*
