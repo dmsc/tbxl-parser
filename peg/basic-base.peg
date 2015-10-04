@@ -223,8 +223,8 @@ PDimVarArray    <- < Identifier > { add_ident(yytext, vtArray);  }     D_L_PRN  
 PDimVarStr      <- < Identifier > { add_ident(yytext, vtString); } '$' SPC DS_L_PRN  SPC
 
 # Defs
-StringDef       <- '@' < Identifier > '$' { add_strdef_val(yytext); }            SPC
-NumericDef      <- '@' < Identifier >     { add_numdef_val(yytext); }            SPC
+StringDef       <- '@' < Identifier > '$'  { add_strdef_val(yytext); }           SPC
+NumericDef      <- '@' < Identifier > !'$' { add_numdef_val(yytext); }           SPC
 
 # Those constructs produce errors if not matched
 NumExprErr      <- NumExpr
