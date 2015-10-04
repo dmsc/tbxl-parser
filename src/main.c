@@ -66,13 +66,13 @@ int main(int argc, char **argv)
     enum {
         out_short,
         out_long,
-        out_binary } out_type = out_short;
+        out_binary } out_type = out_binary;
     int do_conv_ascii = 0;
     const char *output = 0;
     int max_line_len = 120;
     int bin_variables = 0;
 
-    while ((opt = getopt(argc, argv, "habvqlco:n:fxO")) != -1)
+    while ((opt = getopt(argc, argv, "habvsqlco:n:fxO")) != -1)
     {
         switch (opt)
         {
@@ -87,6 +87,9 @@ int main(int argc, char **argv)
                 break;
             case 'b':
                 out_type = out_binary;
+                break;
+            case 's':
+                out_type = out_short;
                 break;
             case 'a':
                 do_conv_ascii = 1;
@@ -120,9 +123,11 @@ int main(int argc, char **argv)
                 fprintf(stderr, "TurboBasic XL parser tool - version " GIT_VERSION "\n"
                                 "https://github.com/dmsc/tbxl-parser\n"
                                 "\n"
-                                "Usage: %s [-h] [-v] [-n len] [-l] [-a] [-c] [-o output] filename\n"
+                                "Usage: %s [options] filename\n"
                                 "\t-l  Output long (readable) program.\n"
-                                "\t-b  Output binary (.BAS) program.\n"
+                                "\t-b  Output binary (.BAS) program. (default)\n"
+                                "\t-s  Output short listing program.\n"
+                                "\t-n  In short listing, sets the max line length before splitting (%d).\n"
                                 "\t-f  Output full (long) variable names in binary output.\n"
                                 "\t-x  Makes binary output protected (un-listable).\n"
                                 "\t-a  In long output, convert comments to pure ASCII.\n"
@@ -130,7 +135,6 @@ int main(int argc, char **argv)
                                 "\t-q  Don't show parsing information (quiet mode).\n"
                                 "\t-o  Sets the output file name, instead of default one.\n"
                                 "\t-c  Output to standard output instead of a file.\n"
-                                "\t-n  Sets the max line length before splitting (%d).\n"
                                 "\t-O  Defaults to run the optimizer in the parsed program.\n"
                                 "\t-h  Shows help and exit.\n",
                         argv[0], max_line_len);

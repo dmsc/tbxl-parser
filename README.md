@@ -4,10 +4,19 @@ TurboBasic XL parser tool
 This program parses and tokenizes a _TurboBasic XL_ listing in a flexible format
 and produces any of three outputs:
 
+- A tokenized binary file, directly loadable in the original _TurboBasic XL_
+  interpreter.  This mode also replaces variables with single letters by
+  default, but with the `-f` option writes the full variable names and
+  with the `-x` option writes invalid variable names, making the program
+  unable to be listed or edited.
+
+  This is the default operating mode, and also can be forced with the `-b`
+  command line switch.
+
 - A minimized listing, replacing variable names with single letters, using
   abbreviations, removing spaces and using Atari end of lines.
 
-  This is the default operating mode.
+  This mode is selected with the `-s` command line switch.
 
 - A pretty printed expanded listing, with one statement per line and
   indentation, and standard ASCII line endings.
@@ -20,14 +29,6 @@ and produces any of three outputs:
   multi-line `IF`/`ENDIF` statements.
 
   This mode is selected with the `-l` command line switch.
-
-- A tokenized binary file, directly loadable in the original _TurboBasic XL_
-  interpreter.  This mode also replaces variables with single letters by
-  default, but with the `-f` option writes the full variable names and
-  with the `-x` option writes invalid variable names, making the program
-  unable to be listed or edited.
-
-  This mode is selected with the `-b` command line switch.
 
 
 The input listing format is very flexible:
@@ -113,10 +114,15 @@ Options:
             is output anyway.
             The default is 120 characters (the standard Atari Editor limit)
 
-- `-l`  Output long (readable) listing instead of minimized.
+- `-l`  Output long (readable) listing, suitable for editing, with ASCII
+  end of lines and lowercase statements.
+
+- `-s`  Output a short, minimized listing, with ATASCII end of lines. The
+  default output file name is the same as input with `.lst` extension added.
 
 - `-b`  Output a binary tokenized file instead of a listing. The  default
-  output file name is the same as input with `.bas` extension added.
+  output file name is the same as input with `.bas` extension added. Note that
+  this is the default behaviour.
 
 - `-x`  In binary output mode, writes null variable names, making the program
   unlistable.
