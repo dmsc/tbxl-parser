@@ -163,28 +163,13 @@ static int is_hex_digit(char c)
 void stmt_add_string(stmt *s, const char *data, unsigned len)
 {
     // First pass, calculate real length of string
-    unsigned i, rlen = 0;
-    for(i=0; i<len; i++, rlen++)
-    {
-        if( i+1 < len && data[i] == '"' && data[i+1] == '"' )
-            i++;
-        else if( i+2 < len && data[i] == '\\' &&
-                 is_hex_digit(data[i+1]) && is_hex_digit(data[i+2]) )
-            i+=2;
-    }
-    if( rlen > 255 )
-    {
-        fprintf(stderr, "ERROR: truncating string constant, max length 256 bytes.\n");
-        rlen = 255;
-    }
-    // Second pass, stores into statement
-    stmt_add_byte(s, 0x0F);
-    stmt_add_byte(s, rlen);
-    for( ; rlen; rlen-- )
+    unsigned rlen = 0;
+    char buf[256];
+    for( ; len && rlen<256 ; rlen++)
     {
         if( len>1 && data[0] == '"' && data[1] == '"' )
         {
-            stmt_add_byte(s, '"');
+            buf[rlen] = *data;
             data += 2;
             len  -= 2;
         }
@@ -193,24 +178,29 @@ void stmt_add_string(stmt *s, const char *data, unsigned len)
         {
             int c1 = data[1] > '9' ? data[1] - 'A' + 10 : data[1] - '0';
             int c2 = data[2] > '9' ? data[2] - 'A' + 10 : data[2] - '0';
-            stmt_add_byte(s, c1 * 16 + c2);
+            buf[rlen] = c1 * 16 + c2;
             data += 3;
             len  -= 3;
         }
         else if( len>1 && data[0] == '\\' && data[1] == '\\' )
         {
-            stmt_add_byte(s, '\\');
+            buf[rlen] = *data;
             data += 2;
             len  -= 2;
         }
         else
         {
-            stmt_add_byte(s, *data);
+            buf[rlen] = *data;
             data += 1;
             len  -= 1;
         }
     }
-    s->last_tok = TOK_LAST_TOKEN;
+    if( rlen > 255 )
+    {
+        fprintf(stderr, "ERROR: truncating string constant, max length 256 bytes.\n");
+        rlen = 255;
+    }
+    stmt_add_binary_string(s, buf, rlen);
 }
 
 // Holds a table of names to atascii codes:
@@ -448,6 +438,11 @@ static void print_string_long(const char *str, int len, string_buf *s)
         {
             sb_put(s, '"');
             sb_put(s, '"');
+        }
+        else if( *p == '\\' && len > 2 && is_hex_digit(p[1]) && is_hex_digit(p[2]) )
+        {
+            sb_put(s, '\\');
+            sb_put(s, '\\');
         }
         else
             sb_put(s, *p);
