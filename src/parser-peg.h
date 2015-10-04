@@ -47,6 +47,7 @@ void push_extended_string(const char *data, unsigned len);
 void add_definition(const char *var_name);
 void add_incbin_file(const char *bin_file_name);
 void set_numdef_value(double);
+void set_strdef_value(void);
 
 // Used to keep current input file line number
 void inc_file_line(void);

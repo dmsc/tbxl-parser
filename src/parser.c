@@ -244,6 +244,13 @@ void set_numdef_value(double x)
     defs_set_numeric(d, last_def, x);
 }
 
+void set_strdef_value(void)
+{
+    // Add to last def:
+    defs *d = pgm_get_defs( parse_get_current_pgm() );
+    defs_set_string(d, last_def, last_const_string, last_const_string_len);
+}
+
 void print_error(const char *msg, const char *pos)
 {
     err_print(file_name, file_line, "expected %s, got '%s'\n", msg, pos);

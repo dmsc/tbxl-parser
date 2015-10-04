@@ -7,7 +7,7 @@
 
 DirectiveLine <- ( OptionsDirective
                  / IncBinaryDirect
-                 / DefineNumeric
+                 / DefineVariable
                  / < ERROR >             { print_error("parser directive", yytext); }
                  )
                  SPC
@@ -27,15 +27,24 @@ IncBinaryDirect  <- 'incbin' SPC (
 IncFileName      <- '"' < ( !'"' . )+ > '"'
 
 # ------ Definitions ------
-DefineNumeric    <- 'define' SPC (
-                       NumDefName        { add_definition(yytext); }
-                       SPC '='
-                       SPC (
-                             DecNumber   { set_numdef_value(strtod(yytext,0)); }
-                           / HexNumber   { set_numdef_value(strtol(yytext,0,16)); }
-                           )
+DefineVariable  <- 'define' SPC (
+                       DefineNumeric
+                     / DefineString
                      / < ERROR >         { print_error("definition = value", yytext); }
-                     )
+                    )
+
+DefineNumeric   <- NumDefName SPC '='   { add_definition(yytext); }
+                   SPC (
+                         DecNumber      { set_numdef_value(strtod(yytext,0)); }
+                       / HexNumber      { set_numdef_value(strtol(yytext,0,16)); }
+                       / < ERROR >      { print_error("numeric value", yytext); }
+                       )
+
+DefineString    <- StrDefName SPC '='   { add_definition(yytext); }
+                   SPC ( ConstString    { set_strdef_value(); }
+                       / ExtendedString { set_strdef_value(); }
+                       / < ERROR >      { print_error("string constant", yytext); }
+                       )
 
 NumDefName       <- < Identifier >
 StrDefName       <- < Identifier > ( '$'
