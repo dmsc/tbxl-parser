@@ -165,6 +165,8 @@ comma separated options, valid for the current file. Valid options:
 - `optimize` or `+optimize`: Allows the parser to optimize the output to
   produce smaller or faster code.
 - `-optimize`: Disable the optimizations.
+- `optimize=+`*suboption*: Enable the particular optimization option.
+- `optimize=-`*suboption*: Disable the particular optimization option.
 
 Note that options can be changed at any place in the file, this is an example
 of changing the parser mode in the middle of the file:
@@ -179,6 +181,10 @@ of changing the parser mode in the middle of the file:
   ? error1   : ' This is parsed as ? error1
   Printa     : ' This is a parsing error.
 ```
+
+A good optimization mode for producing short listings is
+`$options +optimize, optimize=-convert_percent` , this avoid converting
+numbers to `%` values and produces a smaller listing.
 
 ### `$define` directive.
 
