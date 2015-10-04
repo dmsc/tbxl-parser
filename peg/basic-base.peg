@@ -98,7 +98,7 @@ Statement       <-
                  / GRAPHICS NumExprErr
                  / GO_S   Label
                  / INPUT  (  IOChan ( COMMA / SEMICOLON )
-                           / ConstString ( COMMA / SEMICOLON )
+                           / StringData ( COMMA / SEMICOLON )
                           )? VariableList
                  # We split the IF into three cases:
                  # 1- IF/THEN followed by a number, forcing a line-break.
@@ -240,13 +240,16 @@ StrExpr         <- STRP    ParNumExpr
                  / HEXP    ParNumExpr
                  / INKEYP
                  / TIMEP
-                 / ConstString
-                 / ExtendedString
+                 / StringData
                  / StringDef
                  / PVarStr SubStr?
 
+# Any type of string
+StringData      <- ( ConstString
+                   / ExtendedString )   { add_string(); }
+
 # Constant string, enclosed in ""
-ConstString     <- '"' < StrContent? ( '"' '"' StrContent? )* > { add_string(yytext, yyleng); } '"' SPC
+ConstString     <- '"' < StrContent? ( '"' '"' StrContent? )* > { push_string_const(yytext, yyleng); } '"' SPC
 StrContent      <- [^"]+
 
 # Extended string, enclosed in [" "]
@@ -254,7 +257,7 @@ ExtStringStart <- '[' '"'
 ExtStringEnd   <- '"' ']'
 ExtendedString  <- ExtStringStart < (!ExtStringEnd . )* >
                  (
-                   ExtStringEnd { add_extended_string(yytext, yyleng); }
+                   ExtStringEnd { push_extended_string(yytext, yyleng); }
                  / EndOfFile { print_error("end of extended string (\"])", yytext); }
                  )
 

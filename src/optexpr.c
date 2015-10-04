@@ -358,7 +358,7 @@ void expr_to_tokens(expr *e, stmt *s)
             stmt_add_hex_number(s, e->num);
             break;
         case et_c_string:
-            stmt_add_string(s, (const char *)e->str, e->slen);
+            stmt_add_binary_string(s, (const char *)e->str, e->slen);
             break;
         case et_var_number:
         case et_var_string:

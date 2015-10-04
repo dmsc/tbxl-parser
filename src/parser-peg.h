@@ -31,14 +31,17 @@ void add_force_line(void);
 void add_linenum(double);
 void add_number(double);
 void add_hex_number(double);
-void add_string(const char *, int);
-void add_extended_string(const char *, int);
+void add_string(void);
 void add_token(enum enum_tokens);
 void add_stmt(enum enum_statements);
 void add_ident(const char *, enum var_type);
 void print_error(const char *, const char *);
 void add_strdef_val(const char *);
 void add_numdef_val(const char *);
+
+// Converts strings constants to binary data and store
+void push_string_const(const char *data, unsigned len);
+void push_extended_string(const char *data, unsigned len);
 
 // Used to add binary includes
 void add_definition(const char *var_name);

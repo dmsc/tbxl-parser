@@ -26,6 +26,7 @@
 #include "defs.h"
 #include "dbg.h"
 #include "parser-peg.h"
+#include <string.h>
 
 static int parse_error;
 static const char *file_name;
@@ -34,6 +35,8 @@ static program *cur_program;
 static enum parser_mode parser_mode;
 static int parser_optimize;
 static int last_def;
+static char last_const_string[256]; // Holds last processed string
+static int  last_const_string_len;  // and its length
 
 program *parse_get_current_pgm(void)
 {
@@ -94,15 +97,9 @@ void add_hex_number(double n)
     stmt_add_hex_number(get_statement(), n);
 }
 
-void add_string(const char *str, int len)
+void add_string(void)
 {
-    stmt_add_string(get_statement(), str, len);
-}
-
-void add_extended_string(const char *str, int len)
-{
-    if( stmt_add_extended_string(get_statement(), str, len, file_name, file_line) )
-        print_error("extended string", "invalid");
+    stmt_add_binary_string(get_statement(), last_const_string, last_const_string_len);
 }
 
 void add_token(enum enum_tokens tk)
@@ -306,3 +303,227 @@ int parser_get_optimize(void)
 {
     return parser_optimize;
 }
+
+// For processing of string constants
+static int is_hex_digit(char c)
+{
+    if( c >= '0' && c <= '9' ) return 1;
+    if( c >= 'A' && c <= 'F' ) return 1;
+    return 0;
+}
+
+void push_string_const(const char *data, unsigned len)
+{
+    char *buf = &last_const_string[0];
+    unsigned rlen = 0;
+    for( ; len && rlen<256 ; rlen++)
+    {
+        if( len>1 && data[0] == '"' && data[1] == '"' )
+        {
+            buf[rlen] = *data;
+            data += 2;
+            len  -= 2;
+        }
+        else if( len>2 && data[0] == '\\' &&
+                 is_hex_digit(data[1]) && is_hex_digit(data[2]) )
+        {
+            int c1 = data[1] > '9' ? data[1] - 'A' + 10 : data[1] - '0';
+            int c2 = data[2] > '9' ? data[2] - 'A' + 10 : data[2] - '0';
+            buf[rlen] = c1 * 16 + c2;
+            data += 3;
+            len  -= 3;
+        }
+        else if( len>1 && data[0] == '\\' && data[1] == '\\' )
+        {
+            buf[rlen] = *data;
+            data += 2;
+            len  -= 2;
+        }
+        else
+        {
+            buf[rlen] = *data;
+            data += 1;
+            len  -= 1;
+        }
+    }
+    if( rlen > 255 )
+    {
+        err_print(file_name, file_line, "string constant length too big, truncating.\n");
+        parse_error++;
+        rlen = 255;
+    }
+    last_const_string_len = rlen;
+}
+
+// Holds a table of names to atascii codes:
+struct
+{
+    const char *name;
+    unsigned char code;
+} atascii_names[] = {
+    { "heart", 0 },
+    { "rbranch", 1 },
+    { "rline", 2 },
+    { "tlcorner", 3 },
+    { "lbranch", 4 },
+    { "blcorner", 5 },
+    { "udiag", 6 },
+    { "ddiag", 7 },
+    { "rtriangle", 8 },
+    { "brblock", 9 },
+    { "ltriangle", 10 },
+    { "trblock", 11 },
+    { "tlblock", 12 },
+    { "tline", 13 },
+    { "bline", 14 },
+    { "blblock", 15 },
+    { "clubs", 16 },
+    { "brcorner", 17 },
+    { "hline", 18 },
+    { "cross", 19 },
+    { "ball", 20 },
+    { "bbar", 21 },
+    { "lline", 22 },
+    { "bbranch", 23 },
+    { "tbranch", 24 },
+    { "lbar", 25 },
+    { "trcorner", 26 },
+    { "esc", 27 },
+    { "up", 28 },
+    { "down", 29 },
+    { "left", 30 },
+    { "right", 31 },
+    { "diamond", 96 },
+    { "spade", 123 },
+    { "vline", 124 },
+    { "clr", 125 },
+    { "del", 126 },
+    { "ins", 127 },
+    { "tbar", 21+128 },
+    { "rbar", 25+128 },
+    { "eol", 155 },
+    { "bell", 253 }
+};
+#define atascii_names_len (sizeof(atascii_names)/sizeof(atascii_names[0]))
+
+void push_extended_string(const char *data, unsigned len)
+{
+    // Interprets the string:
+    unsigned i, rlen = 0;
+    char *buf = &last_const_string[0];
+    int state = 0, inverse = 0, count = 0, nameStart = 0, hex = 0;
+
+    for(i=0; i<len && rlen < 256; i++)
+    {
+        char c = data[i];
+        switch( state )
+        {
+            case 5: // CR
+                if( c != '\n' )
+                {
+                    buf[rlen++] = '\r' ^ inverse;
+                    if( rlen >= 255 )
+                        break;
+                }
+                state = 0;
+                // Fall through to normal character
+            case 0: // Normal characters
+                if( c == '{' )
+                {
+                    state = 1;
+                    count = 0;
+                }
+                else if( c == '~' )
+                    inverse ^= 0x80;
+                else if( c == '\\' )
+                    state = 3;
+                else if( c == '\r' )
+                    state = 5;  // Consume CR before LF
+                else if( c == '\n' )
+                    buf[rlen++] = 0x9B;
+                else
+                    buf[rlen++] = c ^ inverse;
+                break;
+            case 1: // Special character - count
+                if( c >= '0' && c <= '9' )
+                    count = count * 10 + (c - '0');
+                else if( c == '*' )
+                {
+                    state = 2;
+                    nameStart = i + 1;
+                }
+                else
+                {
+                    state = 2;
+                    nameStart = i;
+                }
+                break;
+            case 2:
+                if( c == '}' )
+                {
+                    // End of special character name
+                    unsigned len = i - nameStart;
+                    unsigned j;
+                    if( count == 0 )
+                        count = 1;
+                    for(j=0; j<atascii_names_len; j++)
+                        if( strlen(atascii_names[j].name) == len &&
+                            memcmp(atascii_names[j].name, data+nameStart, len) == 0 )
+                            break;
+                    if( j >= atascii_names_len )
+                    {
+                        err_print(file_name, file_line, "invalid character name inside extended string '%.*s'\n",
+                                  len, data + nameStart);
+                        parse_error++;
+                        return;
+                    }
+                    else if( count > 0xFF || count + rlen > 0xFF )
+                    {
+                        err_print(file_name, file_line, "too many characters inside extended string '%.*s'\n",
+                                  len, data);
+                        parse_error++;
+                        return;
+                    }
+                    else
+                    {
+                        while( count-- )
+                            buf[rlen++] = atascii_names[j].code ^ inverse;
+                    }
+                    count = 0;
+                    state = 0;
+                }
+                break;
+            case 3: // Escaped character
+                if( (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') )
+                {
+                    hex = c > '9' ? c - 'A' + 10 : c - '0';
+                    state = 4;
+                }
+                else
+                {
+                    buf[rlen++] = c ^ inverse;
+                    state = 0;
+                }
+                break;
+            case 4: // Escaped character hex 2
+                if( (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') )
+                    buf[rlen++] = hex * 16 + (c > '9' ? c - 'A' + 10 : c - '0');
+                else
+                {
+                    err_print(file_name, file_line, "invalid escape ('\\%c') inside extended string\n", c);
+                    parse_error++;
+                    return;
+                }
+                state = 0;
+                break;
+        }
+    }
+    if( rlen > 255 )
+    {
+        err_print(file_name, file_line, "extended string length too big, truncating.\n");
+        parse_error++;
+        rlen = 255;
+    }
+    last_const_string_len = rlen;
+}
+
