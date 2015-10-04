@@ -180,6 +180,52 @@ of changing the parser mode in the middle of the file:
   Printa     : ' This is a parsing error.
 ```
 
+### `$define` directive.
+
+This directive defines new symbols that are replaced at parsing time with the
+values, like C macros.
+
+Replacement names are prefixed by `@` to differentiate from variables, and
+as variables, string defines end in `$`, the syntax of the directive is
+
+  $define *defineName* = *value*
+
+Keep in mind that as the value is replaced each time the variable is used, it
+is probably best to assign them to a variable instead if the value will be
+used multiple times, and you should enable optimizations so that the usage is
+simplified at parsing time.
+
+This is an example usage of the `$define` directive:
+
+```
+  ' Example usage of defines
+  $options +optimize
+  $define Message$ = "Hello world!"
+  $define PCOLR0   = $2C0
+  
+  print @Message$       : ' Replaced by: ? "Hello world!"
+  print len(@Message$)  : ' Replaced by: ? 12
+  poke @PCOLR0+2, $1F   : ' Replaced by: POKE 706,31
+```
+
+### `$incbin` directive.
+
+This directive allows including data from a binary file to a new string
+definition. The content of the file is read at parsing time and the full
+content is stored in the define. The syntax of the directive is:
+
+  $incbin *defineName$* , "*fileName*"
+
+This is an example usage of the `$incbin` directive:
+
+```
+  $options +optimize
+  $incbin asmBin$, "myasm.bin"
+
+  asmRut = adr( @asmBin$ )  : ' Store address in variable to use multiple times.
+  ? usr(asmRut, 1, 2)       : ' Call routine. Should be relocatable and less than 242 bytes.
+```
+
 Limitations and Incompatibilities
 ---------------------------------
 
