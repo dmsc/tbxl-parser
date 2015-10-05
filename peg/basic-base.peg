@@ -50,8 +50,8 @@ Statement       <-
                  / &{ testToken( TOK_TIMEP ) } SPC '=' SPC { add_stmt( STMT_TIME_S ); } StrExprErr
                  # Test variable assignment, this fails (and goes to the rest of
                  # statements if there is no '=' sign after the variable name.
-                 / LET_INV AssignVarStr S_ASGN StrExprErr
-                 / LET_INV AssignVarNum F_ASGN NumExprErr
+                 / LET_INV AssignVarStr S_ASGN StrExprErr  !THEN
+                 / LET_INV AssignVarNum F_ASGN NumExprErr  !THEN !FOR_TO
                  # Standard REM comments
                  / < REM  NotEOL* >                        { add_comment(yytext, yyleng); }
                  # Follows the standard statements, listed here in alphabetical order
