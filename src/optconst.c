@@ -452,3 +452,100 @@ void opt_convert_tok(expr *ex)
         changed = do_convert_tok(ex);
 }
 
+// Computes the maximum height of the tree
+static int ex_tree_height(const expr *ex)
+{
+    if( !ex ) return 0;
+    int hgl = ex_tree_height(ex->lft);
+    int hgr = ex_tree_height(ex->rgt);
+    if( hgl > hgr )
+        return hgl + 1;
+    else
+        return hgr + 1;
+}
+
+static int do_commute(expr *ex)
+{
+    // If we are a leaf node, don't apply here
+    if( ex->type != et_tok )
+        return 0;
+
+    // Try to apply in the left/right branches
+    int x = ((ex->lft) && do_commute(ex->lft)) +
+            ((ex->rgt) && do_commute(ex->rgt));
+
+    // See if our TOKEN is commutative
+    enum enum_tokens tk = ex->tok;
+    switch(tk)
+    {
+        // Commutative numeric operators
+        case TOK_OR:
+        case TOK_AND:
+        case TOK_N_NEQ:
+        case TOK_N_GE:
+        case TOK_N_EQ:
+        case TOK_PLUS:
+        case TOK_STAR:
+        case TOK_ANDPER:
+        case TOK_EXCLAM:
+        case TOK_EXOR:
+        // Commutative string operators
+        case TOK_S_NEQ:
+        case TOK_S_EQ:
+            break;
+
+        // Non-equality comparisons, can be replaced by the inverse operation
+        case TOK_N_LEQ:
+        case TOK_N_GEQ:
+        case TOK_N_LE:
+        case TOK_S_LEQ:
+        case TOK_S_GEQ:
+        case TOK_S_LE:
+        case TOK_S_GE:
+            // TODO:
+            return x;
+
+        // Non commutative numeric binary operators.
+        case TOK_MINUS:
+        case TOK_SLASH:
+        case TOK_DIV:
+        case TOK_MOD:
+        case TOK_CARET:
+        default:
+            return x;
+    }
+
+    // Get our precedence
+    int prec = tok_prec_level(ex->tok);
+
+    // Only apply if we have a TOKEN on left with less precedence, this avoids
+    // adding an extra parenthesis on the right:
+    if( ex->lft && ex->lft->type == et_tok && prec >= tok_prec_level(ex->lft->tok) )
+        return x;
+
+    // Get tree heights at left/right
+    int hgr = ex_tree_height(ex->rgt);
+    int hgl = ex_tree_height(ex->lft);
+
+    // Commute to get a higher height on the left or if we have a parenthesis that
+    // we can avoid by swapping:
+    if( hgr > hgl ||
+        ( ex->rgt && ex->rgt->type == et_tok && prec == tok_prec_level(ex->rgt->tok) ) )
+    {
+        // Swap
+        expr *tmp = ex->lft;
+        ex->lft = ex->rgt;
+        ex->rgt = tmp;
+        return 1;
+    }
+
+    return x;
+}
+
+void opt_commute(expr *ex)
+{
+    // Apply rules over the tree until stops changing
+    int changed = 1;
+    while(changed)
+        changed = do_commute(ex);
+}

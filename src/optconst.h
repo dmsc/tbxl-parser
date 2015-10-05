@@ -22,5 +22,8 @@ typedef struct expr_struct expr;
 // Performs constant propagation over the tree
 void opt_constprop(expr *ex);
 
+// Performs commuting of operands to minimize expression depth
+void opt_commute(expr *ex);
+
 // Replaces constants 0/1/2 and 3 with tokens
 void opt_convert_tok(expr *ex);

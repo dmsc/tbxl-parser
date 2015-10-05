@@ -148,7 +148,7 @@ expr *expr_new_string(expr_mngr *mngr, uint8_t *str, unsigned len)
 }
 
 // Returns the precedence level of a token
-static int tok_prec_level(enum enum_tokens tk)
+int tok_prec_level(enum enum_tokens tk)
 {
     switch(tk)
     {

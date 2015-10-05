@@ -73,4 +73,5 @@ OptimizeSuboptions  <- ( < '+' / '-' >
           (
             'const_folding'   &{ parser_add_optimize( OPT_CONST_FOLD, yytext[0] == '+' ) , 1 }
           / 'convert_percent' &{ parser_add_optimize( OPT_NUMBER_TOK, yytext[0] == '+' ) , 1 }
+          / 'commute'         &{ parser_add_optimize( OPT_COMMUTE,    yytext[0] == '+' ) , 1 }
           ) )+

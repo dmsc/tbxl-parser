@@ -49,6 +49,10 @@ static stmt * optimize_statement(program *pgm, stmt *s, int fline, int level)
     {
         if( level & OPT_CONST_FOLD )
             opt_constprop(ex);
+
+        if( level & OPT_COMMUTE )
+            opt_commute(ex);
+
         if( level & OPT_NUMBER_TOK )
             opt_convert_tok(ex);
 

@@ -64,7 +64,7 @@ expr *expr_new_label(expr_mngr *, int vn);
 void expr_to_tokens(expr *e, stmt *s);
 const char *expr_get_file_name(expr *e);
 int expr_get_file_line(expr *e);
-
+int tok_prec_level(enum enum_tokens tk);
 
 // Expression Manager manages the "expr" tree, allowing to free all memory
 expr_mngr *expr_mngr_new(program *pgm);

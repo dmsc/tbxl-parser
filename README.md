@@ -168,6 +168,11 @@ comma separated options, valid for the current file. Valid options:
 - `optimize=+`*suboption*: Enable the particular optimization option.
 - `optimize=-`*suboption*: Disable the particular optimization option.
 
+The optimization sub-options are:
+- `const_folding`: Replace operations on constants with the result.
+- `convert_percent`: Replace small integers with the `%*` equivalent.
+- `commute`: Swap arguments to binary operations to minimize runtime.
+
 Note that options can be changed at any place in the file, this is an example
 of changing the parser mode in the middle of the file:
 
