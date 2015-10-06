@@ -24,6 +24,7 @@
 #include "tokens.h"
 #include "statements.h"
 #include "ataribcd.h"
+#include "dbg.h"
 #include <stdio.h>
 
 // Structure to hold current parsing state
@@ -961,18 +962,14 @@ static expr * p_text_expr(pstate *p)
     return 0;
 }
 
-expr *opt_parse_statement(program *pgm, expr_mngr *mngr, stmt *s, int fline)
+static expr *opt_parse_tokens(program *pgm, expr_mngr *mngr,
+                              enum enum_statements sn, const uint8_t *data, unsigned len)
 {
-    // get original statement data:
-    enum enum_statements sn = stmt_get_statement(s);
-    unsigned len  = stmt_get_token_len(s);
-    uint8_t *data = stmt_get_token_data(s);
-
     // Parse statement tokens:
     pstate p;
     expr *ex = 0;
-    p.pos = data;
-    p.end = data + len;
+    p.pos = (uint8_t *)data;
+    p.end = (uint8_t *)data + len;
     p.mngr = mngr;
     p.vrs = pgm_get_vars(pgm);
     switch(sn)
@@ -1166,15 +1163,35 @@ expr *opt_parse_statement(program *pgm, expr_mngr *mngr, stmt *s, int fline)
     {
         if(p.pos != p.end )
         {
-            fprintf(stderr,"OPTIMIZER_ERROR:%d: parse ended at: %zd before end (%x)\n", fline, p.end-p.pos, *p.pos);
+            err_print(expr_mngr_get_file_name(mngr),
+                      expr_mngr_get_file_line(mngr),
+                      "optimizer internal error, parse ended at %zd before end.\n",
+                      p.end-p.pos);
         }
         return ex;
     }
     else if(len)
     {
-        fprintf(stderr,"OPTIMIZER_ERROR:%d: could not parse '%s'[$%x], length was %d (%u)\n",
-                fline, statements[sn].stm_long, sn, len, stmt_get_token_len(s));
+        err_print(expr_mngr_get_file_name(mngr),
+                  expr_mngr_get_file_line(mngr),
+                  "optimizer internal error, could nor parse statement.\n");
         return 0;
     }
     return expr_new_void(mngr);
+}
+
+expr *opt_parse_statement(program *pgm, expr_mngr *mngr, stmt *s)
+{
+    enum enum_statements sn = stmt_get_statement(s);
+    const uint8_t *data     = stmt_get_token_data(s);
+    unsigned len            = stmt_get_token_len(s);
+    expr *tok;
+
+    // Special case "text" statements
+    if( stmt_is_text(s) )
+        tok = expr_new_data(mngr, data, len);
+    else
+        tok = opt_parse_tokens(pgm, mngr, sn, data, len);
+
+    return expr_new_stmt(mngr, 0, tok, sn);
 }

@@ -62,6 +62,27 @@ expr *expr_new_void(expr_mngr *mngr)
     return n;
 }
 
+expr *expr_new_stmt(expr_mngr *mngr, expr *prev, expr *toks, enum enum_statements stmt)
+{
+    expr *n = expr_new(mngr);
+    n->lft = prev;
+    n->rgt = toks;
+    n->stmt = stmt;
+    n->type = et_stmt;
+    return n;
+}
+
+expr *expr_new_lnum(expr_mngr *mngr, expr *prev, int lnum)
+{
+    expr *n = expr_new(mngr);
+    n->lft = prev;
+    n->rgt = 0;
+    n->num = lnum;
+    n->type = et_lnum;
+    return n;
+}
+
+
 expr *expr_new_bin(expr_mngr *mngr, expr *l, expr *r, enum enum_tokens tk)
 {
     expr *n = expr_new(mngr);
@@ -137,13 +158,23 @@ expr *expr_new_hexnumber(expr_mngr *mngr, double x)
     return n;
 }
 
-expr *expr_new_string(expr_mngr *mngr, uint8_t *str, unsigned len)
+expr *expr_new_string(expr_mngr *mngr, const uint8_t *str, unsigned len)
 {
     expr *n = expr_new(mngr);
     n->type = et_c_string;
     n->str = malloc(len);
     n->slen = len;
     memcpy(n->str, str, len);
+    return n;
+}
+
+expr *expr_new_data(expr_mngr *mngr, const uint8_t *data, unsigned len)
+{
+    expr *n = expr_new(mngr);
+    n->type = et_data;
+    n->str = malloc(len);
+    n->slen = len;
+    memcpy(n->str, data, len);
     return n;
 }
 
@@ -282,7 +313,7 @@ int tok_prec_level(enum enum_tokens tk)
 }
 
 // Expressions to TOKENS
-void expr_to_tokens(expr *e, stmt *s)
+static void expr_to_tokens(expr *e, stmt *s)
 {
     int use_l_parens = 0;
     int use_r_parens = 0;
@@ -290,6 +321,15 @@ void expr_to_tokens(expr *e, stmt *s)
 
     switch( e->type )
     {
+        case et_lnum:
+        case et_stmt:
+            fprintf(stderr,"INTERNAL ERROR: unexpected expr type.\n");
+            return;
+
+        case et_data:
+            stmt_add_data(s, (const char *)e->str, e->slen);
+            return;
+
         case et_tok:
             prec = tok_prec_level(e->tok);
             switch(e->tok)
@@ -384,6 +424,16 @@ void expr_to_tokens(expr *e, stmt *s)
     }
 }
 
+stmt *expr_to_statement(expr *e)
+{
+    if( e->type != et_stmt )
+        return 0;
+    stmt *ret = stmt_new(e->stmt);
+    if( e->rgt )
+        expr_to_tokens(e->rgt, ret);
+    return ret;
+}
+
 const char *expr_get_file_name(expr *e)
 {
     return e->mngr->file_name;
@@ -446,3 +496,14 @@ void expr_mngr_set_file_line(expr_mngr *m, int fline)
 {
     m->file_line = fline;
 }
+
+int expr_mngr_get_file_line(const expr_mngr *m)
+{
+    return m->file_line;
+}
+
+const char *expr_mngr_get_file_name(const expr_mngr *m)
+{
+    return m->file_name;
+}
+

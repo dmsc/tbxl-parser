@@ -29,21 +29,13 @@
 
 static stmt * optimize_statement(program *pgm, stmt *s, int fline, int level)
 {
-    // Create output statement
-    stmt *ret = stmt_new(stmt_get_statement(s));
-
-    if( stmt_is_text(s) )
-    {
-        // Text statement, simply copy over
-        stmt_add_data(ret, (const char *)stmt_get_token_data(s), stmt_get_token_len(s));
-        return ret;
-    }
+    stmt *ret = 0;
 
     // Parse statement tokens:
     expr_mngr *mngr = expr_mngr_new(pgm);
     expr_mngr_set_file_name(mngr, pgm_get_file_name(pgm));
     expr_mngr_set_file_line(mngr, fline);
-    expr *ex = opt_parse_statement(pgm, mngr, s, fline);
+    expr *ex = opt_parse_statement(pgm, mngr, s);
 
     if( ex )
     {
@@ -56,7 +48,7 @@ static stmt * optimize_statement(program *pgm, stmt *s, int fline, int level)
         if( level & OPT_NUMBER_TOK )
             opt_convert_tok(ex);
 
-        expr_to_tokens(ex, ret);
+        ret = expr_to_statement(ex);
 #if 0
         enum enum_statements sn = stmt_get_statement(s);
         unsigned len  = stmt_get_token_len(s);

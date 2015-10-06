@@ -95,12 +95,14 @@ static int ex_strcomp(expr *a, expr *b)
 
 static int do_constprop(expr *ex)
 {
-    // If we are a leaf node, don't apply here
-    if( ex->type != et_tok )
-        return 0;
     // Try to apply in the left/right branches
     int x = ((ex->lft) && do_constprop(ex->lft)) +
             ((ex->rgt) && do_constprop(ex->rgt));
+
+    // Only apply to tokens:
+    if( ex->type != et_tok )
+        return x;
+
     // Finally, apply here:
     enum enum_tokens tk = ex->tok;
     int l_inum = ex->lft && (ex->lft->type == et_c_number || ex->lft->type == et_c_hexnumber);
@@ -466,13 +468,13 @@ static int ex_tree_height(const expr *ex)
 
 static int do_commute(expr *ex)
 {
-    // If we are a leaf node, don't apply here
-    if( ex->type != et_tok )
-        return 0;
-
     // Try to apply in the left/right branches
     int x = ((ex->lft) && do_commute(ex->lft)) +
             ((ex->rgt) && do_commute(ex->rgt));
+
+    // Only apply to tokens
+    if( ex->type != et_tok )
+        return x;
 
     // See if our TOKEN is commutative
     enum enum_tokens tk = ex->tok;
