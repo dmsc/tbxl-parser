@@ -192,7 +192,7 @@ static int do_constprop(expr *ex)
             if( (l_inum && chk_int(ex->lft)) || (r_inum && chk_int(ex->rgt)) )
             {
                 warn("operands to '&' out of range\n");
-                return 0;
+                return set_number(ex,0.0);
             }
             if( (l_inum && ex->lft->num < 0.5) || (r_inum && ex->rgt->num < 0.5) )
                 return set_number(ex,0.0);
@@ -203,7 +203,7 @@ static int do_constprop(expr *ex)
             if( (l_inum && chk_int(ex->lft)) || (r_inum && chk_int(ex->rgt)) )
             {
                 warn("operands to '!' out of range\n");
-                return 0;
+                return set_number(ex,0.0);
             }
             if( (l_inum && ex->lft->num >= 65534.5) || (r_inum && ex->rgt->num >= 65534.5) )
                 return set_number(ex,1.0);
@@ -214,7 +214,7 @@ static int do_constprop(expr *ex)
             if( (l_inum && chk_int(ex->lft)) || (r_inum && chk_int(ex->rgt)) )
             {
                 warn("operands to 'EXOR' out of range\n");
-                return 0;
+                return set_number(ex,0.0);
             }
             if( l_inum && r_inum )
                 return set_number(ex, lrint(ex->lft->num) ^ lrint(ex->rgt->num) );
@@ -255,8 +255,7 @@ static int do_constprop(expr *ex)
             {
                 if( ex->rgt->num <= 0 )
                     warn("at 'LOG', argument <= 0\n");
-                else
-                    return set_number(ex, log(ex->rgt->num));
+                return set_number(ex, log(ex->rgt->num));
             }
             return x;
         case TOK_CLOG:
@@ -264,8 +263,7 @@ static int do_constprop(expr *ex)
             {
                 if( ex->rgt->num <= 0 )
                     warn("at 'CLOG', argument <= 0\n");
-                else
-                    return set_number(ex, log10(ex->rgt->num));
+                return set_number(ex, log10(ex->rgt->num));
             }
             return x;
         case TOK_SQR:
@@ -273,8 +271,7 @@ static int do_constprop(expr *ex)
             {
                 if( ex->rgt->num < 0 )
                     warn("at 'SQR', argument < 0\n");
-                else
-                    return set_number(ex, sqrt(ex->rgt->num));
+                return set_number(ex, sqrt(ex->rgt->num));
             }
             return x;
         case TOK_SGN:
