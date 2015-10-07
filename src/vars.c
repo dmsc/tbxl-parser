@@ -142,7 +142,7 @@ int vars_new_var(vars *v, const char *name, enum var_type type, const char *file
     v->num[type] ++;
 
     // End if called from outside program, don't check name.
-    if( file_line < 0 )
+    if( !file_name || file_line < 0 )
         return i;
 
     // Search in token list, to avoid defining variables identical to tokens
