@@ -23,6 +23,7 @@
 #include "stmt.h"
 #include "tokens.h"
 #include "statements.h"
+#include "line.h"
 #include "ataribcd.h"
 #include "dbg.h"
 #include <stdio.h>
@@ -1180,7 +1181,7 @@ static expr *opt_parse_tokens(program *pgm, expr_mngr *mngr,
     return expr_new_void(mngr);
 }
 
-expr *opt_parse_statement(program *pgm, expr_mngr *mngr, stmt *s)
+static expr *opt_parse_statement(program *pgm, expr_mngr *mngr, stmt *s, expr *prev)
 {
     enum enum_statements sn = stmt_get_statement(s);
     const uint8_t *data     = stmt_get_token_data(s);
@@ -1193,5 +1194,31 @@ expr *opt_parse_statement(program *pgm, expr_mngr *mngr, stmt *s)
     else
         tok = opt_parse_tokens(pgm, mngr, sn, data, len);
 
-    return expr_new_stmt(mngr, 0, tok, sn);
+    return expr_new_stmt(mngr, prev, tok, sn);
+}
+
+expr *opt_parse_program(program *pgm, expr_mngr *mngr)
+{
+    // Starting expression
+    expr *ex = 0;
+
+    // Set program name to the expression manager:
+    expr_mngr_set_file_name(mngr, pgm_get_file_name(pgm));
+
+    // Parse each line/statement:
+    line **lp;
+    for( lp = pgm_get_lines(pgm); *lp != 0; ++lp )
+    {
+        line *l = *lp;
+
+        // Set file line to the program manager:
+        expr_mngr_set_file_line(mngr, line_get_file_line(l));
+
+        // Parse line number or statement
+        if( line_is_num(l) )
+            ex = expr_new_lnum(mngr, ex, line_get_num(l));
+        else
+            ex = opt_parse_statement(pgm, mngr, line_get_statement(l), ex);
+    }
+    return ex;
 }

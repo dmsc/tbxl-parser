@@ -45,6 +45,7 @@ struct expr_struct {
     enum enum_etype type;
     expr *lft; // Left child
     expr *rgt; // Right child
+    int file_line; // Line number on input file
     expr_mngr *mngr;
     double num;
     unsigned var;
@@ -69,7 +70,7 @@ expr *expr_new_var_num(expr_mngr *, int vn);
 expr *expr_new_var_str(expr_mngr *, int vn);
 expr *expr_new_var_array(expr_mngr *, int vn);
 expr *expr_new_label(expr_mngr *, int vn);
-stmt *expr_to_statement(expr *e);
+int expr_to_program(expr *e, program *out);
 
 const char *expr_get_file_name(expr *e);
 int expr_get_file_line(expr *e);

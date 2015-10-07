@@ -27,93 +27,42 @@
 #include "statements.h"
 #include <stdio.h>
 
-static stmt * optimize_statement(program *pgm, stmt *s, int fline, int level)
-{
-    stmt *ret = 0;
-
-    // Parse statement tokens:
-    expr_mngr *mngr = expr_mngr_new(pgm);
-    expr_mngr_set_file_name(mngr, pgm_get_file_name(pgm));
-    expr_mngr_set_file_line(mngr, fline);
-    expr *ex = opt_parse_statement(pgm, mngr, s);
-
-    if( ex )
-    {
-        if( level & OPT_CONST_FOLD )
-            opt_constprop(ex);
-
-        if( level & OPT_COMMUTE )
-            opt_commute(ex);
-
-        if( level & OPT_NUMBER_TOK )
-            opt_convert_tok(ex);
-
-        ret = expr_to_statement(ex);
-#if 0
-        enum enum_statements sn = stmt_get_statement(s);
-        unsigned len  = stmt_get_token_len(s);
-        uint8_t *data = stmt_get_token_data(s);
-        enum enum_statements osn = stmt_get_statement(ret);
-        unsigned olen  = stmt_get_token_len(ret);
-        uint8_t *odata = stmt_get_token_data(ret);
-        unsigned i;
-        if( len != olen || memcmp(data,odata,len) || sn != osn )
-        {
-            fprintf(stderr,"in: %02x:", sn);
-            for(i=0; i<len; i++)
-                fprintf(stderr," %02x", data[i]&0xFF);
-            fprintf(stderr,"\n");
-
-            fprintf(stderr,"ot: %02x:", stmt_get_statement(ret));
-            for(i=0; i<olen; i++)
-                fprintf(stderr," %02x", odata[i]&0xFF);
-            fprintf(stderr,"\n");
-        }
-#endif
-    }
-
-    expr_mngr_delete(mngr);
-    return ret;
-}
-
 program *optimize_program(program *pgm, int level)
 {
     program *ret = program_new(pgm_get_file_name(pgm));
-    // For each line/statement:
-    line **lp;
-    for( lp = pgm_get_lines(pgm); *lp != 0; ++lp )
-    {
-        line *l = *lp;
-        if( line_is_num(l) )
-        {
-            // Duplicate and add to new program
-            line * nl = line_new_linenum(line_get_num(l), line_get_file_line(l));
-            pgm_add_line(ret,nl);
-        }
-        else
-        {
-            // Serialize statement
-            int fl = line_get_file_line(l);
-            stmt *s = line_get_statement(l);
-            stmt *ns = optimize_statement(pgm, s, fl, level);
-            line * nl = line_new_from_stmt(ns, fl);
-            pgm_add_line(ret,nl);
-        }
-    }
+
     // Copy variables
     vars *v = pgm_get_vars(pgm);
     vars *vret = pgm_get_vars(ret);
     int i;
-    for(i=0; i<256; i++) // Up to 256 vars
+    for(i=0; i<256; i++)
     {
-        // We write all variables undimmed, BASIC fills the
-        // correct values on RUN.
         enum var_type t = vars_get_type(v, i);
         if( t == vtNone )
             break;
         const char *l_name = vars_get_long_name(v, i);
-        vars_new_var(vret, l_name, t, "", -1);
+        vars_new_var(vret, l_name, t, 0, -1);
     }
+
+    // Convert program to expression tree
+    expr_mngr *mngr = expr_mngr_new(pgm);
+    expr *ex = opt_parse_program(pgm, mngr);
+
+
+    // Optimize:
+    if( level & OPT_CONST_FOLD )
+        opt_constprop(ex);
+
+    if( level & OPT_COMMUTE )
+        opt_commute(ex);
+
+    if( level & OPT_NUMBER_TOK )
+        opt_convert_tok(ex);
+
+    expr_to_program(ex, ret);
+
+    // Delete memory
+    expr_mngr_delete(mngr);
 
     return ret;
 }

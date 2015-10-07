@@ -21,6 +21,7 @@
 #include "stmt.h"
 #include "tokens.h"
 #include "statements.h"
+#include "line.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -424,7 +425,7 @@ static void expr_to_tokens(expr *e, stmt *s)
     }
 }
 
-stmt *expr_to_statement(expr *e)
+static stmt *expr_to_statement(expr *e)
 {
     if( e->type != et_stmt )
         return 0;
@@ -434,6 +435,36 @@ stmt *expr_to_statement(expr *e)
     return ret;
 }
 
+// Convert expression tree back to program
+int expr_to_program(expr *e, program *out)
+{
+    if( !e )
+        return 0;
+
+    if( e->type != et_stmt && e->type != et_lnum )
+    {
+        fprintf(stderr,"INTERNAL ERROR: expr tree invalid\n");
+        return 1;
+    }
+
+    int err = expr_to_program(e->lft, out);
+
+    line *l;
+    if( e->type == et_stmt )
+    {
+        stmt *s = expr_to_statement(e);
+        if( !s )
+            err ++;
+
+        l = line_new_from_stmt(s, 0);
+    }
+    else
+        l = line_new_linenum(e->num, 0);
+
+    pgm_add_line(out,l);
+    return err;
+}
+
 const char *expr_get_file_name(expr *e)
 {
     return e->mngr->file_name;
@@ -441,7 +472,7 @@ const char *expr_get_file_name(expr *e)
 
 int expr_get_file_line(expr *e)
 {
-    return e->mngr->file_line;
+    return e->file_line;
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -462,6 +493,7 @@ static expr *expr_new(expr_mngr *m)
     memset(e, 0, sizeof(expr));
     m->len++;
     e->mngr = m;
+    e->file_line = m->file_line;
     return e;
 }
 
