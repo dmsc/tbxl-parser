@@ -20,6 +20,7 @@
 #include "optexpr.h"
 #include "optparse.h"
 #include "optconst.h"
+#include "optlinenum.h"
 #include "vars.h"
 #include "line.h"
 #include "program.h"
@@ -55,6 +56,9 @@ program *optimize_program(program *pgm, int level)
 
     if( level & OPT_COMMUTE )
         opt_commute(ex);
+
+    if( level & OPT_LINE_NUM )
+        opt_remove_line_num(ex);
 
     if( level & OPT_NUMBER_TOK )
         opt_convert_tok(ex);

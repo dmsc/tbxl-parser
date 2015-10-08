@@ -38,6 +38,7 @@ SOURCES=\
  optconst.c\
  optexpr.c\
  optimize.c\
+ optlinenum.c\
  optparse.c\
  parser.c\
  program.c\

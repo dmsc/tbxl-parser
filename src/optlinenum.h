@@ -17,15 +17,8 @@
  */
 #pragma once
 
-typedef struct program_struct program;
+typedef struct expr_struct expr;
 
-enum optimize_levels {
-    OPT_CONST_FOLD = 1,
-    OPT_NUMBER_TOK = 2,
-    OPT_COMMUTE    = 3,
-    OPT_LINE_NUM   = 4
-};
-
-// Generates a new, optimized, program
-program *optimize_program(program *pgm, int level);
+// Remove unused line numbers in a program
+void opt_remove_line_num(expr *ex);
 
