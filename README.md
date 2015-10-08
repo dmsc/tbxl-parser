@@ -172,6 +172,7 @@ The optimization sub-options are:
 - `const_folding`: Replace operations on constants with the result.
 - `convert_percent`: Replace small integers with the `%*` equivalent.
 - `commute`: Swap arguments to binary operations to minimize runtime.
+- `line_numbers`: Remove all Basic line numbers that are unused.
 
 Note that options can be changed at any place in the file, this is an example
 of changing the parser mode in the middle of the file:
