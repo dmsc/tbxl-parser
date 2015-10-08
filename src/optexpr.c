@@ -26,15 +26,6 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef struct expr_mngr_struct {
-    program *pgm;
-    expr *data;
-    const char *file_name;
-    unsigned file_line;
-    unsigned len;
-    unsigned size;
-} expr_mngr;
-
 static void memory_error(void)
 {
     fprintf(stderr,"INTERNAL ERROR: memory allocation failure.\n");
@@ -43,10 +34,6 @@ static void memory_error(void)
 
 void expr_delete(expr *n)
 {
-    if( n->lft )
-        expr_delete(n->lft);
-    if( n->rgt )
-        expr_delete(n->rgt);
     if( n->str )
         free(n->str);
     n->lft = 0;
@@ -58,7 +45,7 @@ static expr *expr_new(expr_mngr *);
 
 expr *expr_new_void(expr_mngr *mngr)
 {
-    expr *n = calloc(1, sizeof(expr));
+    expr *n = expr_new(mngr);
     n->type = et_void;
     return n;
 }
@@ -467,7 +454,7 @@ int expr_to_program(expr *e, program *out)
 
 const char *expr_get_file_name(expr *e)
 {
-    return e->mngr->file_name;
+    return expr_mngr_get_file_name(e->mngr);
 }
 
 int expr_get_file_line(expr *e)
@@ -476,22 +463,39 @@ int expr_get_file_line(expr *e)
 }
 
 ///////////////////////////////////////////////////////////////////////
+// Number of expressions in each expression manager block
+#define EXPR_MNGR_BLOCK_SIZE 1024
+// Maximum memory available to the expression manager
+#define EXPR_MNGR_MAX_SIZE 131072
+
+typedef struct expr_mngr_struct {
+    program *pgm;
+    expr *blocks[EXPR_MNGR_MAX_SIZE / EXPR_MNGR_BLOCK_SIZE];
+    expr *current;
+    const char *file_name;
+    unsigned file_line;
+    unsigned len;
+    unsigned size;
+} expr_mngr;
 
 static expr *expr_new(expr_mngr *m)
 {
     if( m->len == m->size )
     {
+        unsigned idx = m->size / EXPR_MNGR_BLOCK_SIZE;
         // TODO: compact our expr list removing unused entries
-        m->size *= 2;
-        if( !m->size )
+        m->size += EXPR_MNGR_BLOCK_SIZE;
+        if( m->size > EXPR_MNGR_MAX_SIZE )
             memory_error();
-        m->data = realloc(m->data, sizeof(expr) * m->size);
-        if( !m->data )
+        m->blocks[idx] = calloc(sizeof(expr), EXPR_MNGR_BLOCK_SIZE);
+        if( !m->blocks[idx] )
             memory_error();
+        m->current = m->blocks[idx];
     }
-    expr *e = &(m->data[m->len]);
+    expr *e = m->current;
     memset(e, 0, sizeof(expr));
     m->len++;
+    m->current ++;
     e->mngr = m;
     e->file_line = m->file_line;
     return e;
@@ -499,23 +503,28 @@ static expr *expr_new(expr_mngr *m)
 
 expr_mngr *expr_mngr_new(program *pgm)
 {
-    expr_mngr *m = malloc(sizeof(expr_mngr));
+    expr_mngr *m = calloc(sizeof(expr_mngr),1);
     if( !m )
         memory_error();
     m->len  = 0;
-    m->size = 256;
-    m->data = calloc(sizeof(expr), 256);
-    if( !m->data )
+    m->size = EXPR_MNGR_BLOCK_SIZE;
+    m->blocks[0] = calloc(sizeof(expr), EXPR_MNGR_BLOCK_SIZE);
+    if( !m->blocks[0] )
         memory_error();
+    m->current = m->blocks[0];
     return m;
 }
 
 void expr_mngr_delete(expr_mngr *m)
 {
     // Free all associated expressions
-    for(unsigned i=0; i < m->len; i++)
-        expr_delete( &(m->data[i]) );
-    free(m->data);
+    for(unsigned i=0; i < m->size/EXPR_MNGR_BLOCK_SIZE; i++)
+    {
+        expr *c = m->blocks[i];
+        for(unsigned j=0; j<EXPR_MNGR_BLOCK_SIZE; j++, c++)
+            expr_delete( c );
+        free(m->blocks[i]);
+    }
     free(m);
 }
 
