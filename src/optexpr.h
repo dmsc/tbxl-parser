@@ -73,6 +73,8 @@ expr *expr_new_label(expr_mngr *, int vn);
 int expr_to_program(expr *e, program *out);
 
 const char *expr_get_file_name(expr *e);
+program *expr_get_program(const expr *e);
+
 int expr_get_file_line(expr *e);
 int tok_prec_level(enum enum_tokens tk);
 
@@ -84,4 +86,5 @@ void expr_mngr_delete(expr_mngr *);
 
 int expr_mngr_get_file_line(const expr_mngr *);
 const char *expr_mngr_get_file_name(const expr_mngr *);
+program *expr_mngr_get_program(const expr_mngr *e);
 

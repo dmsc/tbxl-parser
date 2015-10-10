@@ -462,6 +462,11 @@ int expr_get_file_line(expr *e)
     return e->file_line;
 }
 
+program *expr_get_program(const expr *e)
+{
+    return expr_mngr_get_program(e->mngr);
+}
+
 ///////////////////////////////////////////////////////////////////////
 // Number of expressions in each expression manager block
 #define EXPR_MNGR_BLOCK_SIZE 1024
@@ -546,5 +551,10 @@ int expr_mngr_get_file_line(const expr_mngr *m)
 const char *expr_mngr_get_file_name(const expr_mngr *m)
 {
     return m->file_name;
+}
+
+program *expr_mngr_get_program(const expr_mngr *m)
+{
+    return m->pgm;
 }
 
