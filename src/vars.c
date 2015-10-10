@@ -122,6 +122,13 @@ int vars_search(vars *v, const char *name, enum var_type type)
     return -1;
 }
 
+int vars_get_total(const vars *v)
+{
+    int i;
+    for(i=0; i<maxVars && v->vlist[i].name; i++);
+    return i;
+}
+
 int vars_new_var(vars *v, const char *name, enum var_type type, const char *file_name, int file_line)
 {
     int i;

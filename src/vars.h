@@ -41,6 +41,9 @@ int vars_new_var(vars *v, const char *name, enum var_type type, const char *file
 // Gets the number of variables of type
 int vars_get_count(vars *v, enum var_type type);
 
+// Gets the total number of variables
+int vars_get_total(const vars *v);
+
 // Gets the "long name" of the variable (the name passed on constructor)
 const char *vars_get_long_name(vars *v, int id);
 // Gets a short unique name for the variable.

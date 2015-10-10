@@ -111,14 +111,14 @@ int bas_write_program(FILE *f, program *pgm, int variables)
     vars *v = pgm_get_vars(pgm);
     string_buf *vnt = sb_new();
     string_buf *vvt = sb_new();
-    int i;
-    for(i=0; i<256; i++) // Up to 256 vars
+    int i, nvar = vars_get_total(v);
+    for(i=0; i<nvar; i++)
     {
         // We write all variables undimmed, BASIC fills the
         // correct values on RUN.
         enum var_type t = vars_get_type(v, i);
         if( t == vtNone )
-            break;
+            continue;
         switch( t )
         {
             case vtNone:

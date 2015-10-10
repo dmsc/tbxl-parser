@@ -35,12 +35,12 @@ program *optimize_program(program *pgm, int level)
     // Copy variables
     vars *v = pgm_get_vars(pgm);
     vars *vret = pgm_get_vars(ret);
-    int i;
-    for(i=0; i<256; i++)
+    int i, nvar = vars_get_total(v);
+    for(i=0; i<nvar; i++)
     {
         enum var_type t = vars_get_type(v, i);
         if( t == vtNone )
-            break;
+            continue;
         const char *l_name = vars_get_long_name(v, i);
         vars_new_var(vret, l_name, t, 0, -1);
     }
