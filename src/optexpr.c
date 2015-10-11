@@ -511,6 +511,7 @@ expr_mngr *expr_mngr_new(program *pgm)
     expr_mngr *m = calloc(sizeof(expr_mngr),1);
     if( !m )
         memory_error();
+    m->pgm  = pgm;
     m->len  = 0;
     m->size = EXPR_MNGR_BLOCK_SIZE;
     m->blocks[0] = calloc(sizeof(expr), EXPR_MNGR_BLOCK_SIZE);
