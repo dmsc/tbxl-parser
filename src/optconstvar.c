@@ -70,70 +70,77 @@ static int cvalue_saved_bytes(const cvalue *c)
 {
     if( c->str )
     {
-        // Currently, the constant uses 2+LEN bytes each time it
-        // appears in the program, by replacing by a variable we
-        // use 1 byte each time is used (if variable is < 128),
-        // so we save "count * (1+slen)" bytes.
+        // Currently, the constant uses 2+LEN bytes each time it appears in the
+        // program, by replacing by a variable we use 1 byte each time is used
+        // (if variable is < 128), so we save "count * (1+slen)" bytes.
         //
-        // To use the constant, we need to add the size of the
-        // variable (6 + slen bytes), the size of the name (we
-        // assume best case, 0 bytes) and the size of the init
-        // program:
-        //     DIM X$(LEN) : X$="....."
-        // Assuming the LEN is not a common value, we have:
-        // LEN=0, 1, 2 or 3: 13 + slen + 6 + slen
-        // LEN>3           : 19 + slen + 6 + slen
+        // To use the constant, we need to add the size of the variable (8+slen
+        // bytes), the size of the name (we assume best case, 0 bytes) and the
+        // size of the init program:
+        //     DIM X$(LEN) : X$="....." :
+        // Assuming the LEN is not already in a variable, we have:
+        // LEN=0, 1, 2 or 3       : 14 + slen + 8 + slen
+        // LEN=4, 5, 6 or 9       : 16 + slen + 8 + slen
+        // LEN=8,9,10,11,12,18,27 : 18 + slen + 8 + slen
+        // other LEN              : 20 + slen + 8 + slen
         //
-        if( c->slen < 3 )
-            return (19 + 2 * c->slen) - c->count * (1+c->slen);
+        // Note that if we convert more than one string, the next converted use
+        // 2 less bytes, as the "DIM" is reused.
+        if( c->slen < 4 )
+            return (22 + 2 * c->slen) - c->count * (1+c->slen);
+        else if( c->slen < 7 || c->slen == 9 )
+            return (24 + 2 * c->slen) - c->count * (1+c->slen);
+        else if( c->slen < 13 || c->slen == 18 || c->slen == 27 )
+            return (26 + 2 * c->slen) - c->count * (1+c->slen);
         else
-            return (25 + 2 * c->slen) - c->count * (1+c->slen);
+            return (28 + 2 * c->slen) - c->count * (1+c->slen);
     }
     else
     {
         double n = c->num;
-        // Currently, the constant uses 7 bytes each time, it
-        // appears in the program, by replacing by a variable we
-        // use 1 byte each time is used (if variable is < 128),
-        // so we save "count * 6" bytes.
+        // Currently, the constant uses 7 bytes each time, it appears in the
+        // program, by replacing by a variable we use 1 byte each time is used
+        // (if variable is < 128), so we save "count * 6" bytes.
         //
-        // To use the constant, we need to add the size of the
-        // variable (6 bytes), the size of the name (we assume
-        // best case, 0 bytes) and the size of the init program,
-        // one of:
+        // To use the constant, we need to add the size of the variable (8
+        // bytes), the size of the name (we assume best case, 0 bytes) and the
+        // size of the init program, one of:
         //    X = NUM
         //    X = -%N
         //    X =  %N1 op %N2
         //    X = -%N1 op %N2
         //    X =  %N1 op %N2 op %N3
         // The options are:
-        //  N=-1, -2, -3                          : 4 + 2 =  6 bytes
-        //  N=1/3,1/2,2/3,3/2,4, 5, 6, 9          : 4 + 3 =  7 bytes
-        //  N=-1/3,-1/2,-2/3,-3/2,-4,-5,-6,-9     : 4 + 4 =  8 bytes
+        //  N=-1, -2, -3                              : 5 + 2 =  7 bytes
+        //  N=1/3,1/2,2/3,3/2,4, 5, 6, 9              : 5 + 3 =  8 bytes
+        //  N=-1/3,-1/2,-2/3,-3/2,-4,-5,-6,-9         : 5 + 4 =  9 bytes
         //  N=-8,-7,4/3,5/3,7/3,5/2,8/3,10/3,
-        //    7/2,11/3,9/2,7,8,10,11,12,18,27     : 4 + 5 =  9 bytes
+        //    7/2,11/3,9/2,7,8,10,11,12,18,27         : 5 + 5 = 10 bytes
         //  N=-27,-18,-12,-11,-10,-9/2,-11/3,-7/2,
-        //    -10/3,-8/3,-5/2,-7/3,-5/3,-4/3      : 4 + 6 = 10 bytes
-        //  other N                               : 4 + 7 = 11 bytes
+        //    -10/3,-8/3,-5/2,-7/3,-5/3,-4/3          : 5 + 6 = 11 bytes
+        //  other N                                   : 5 + 7 = 12 bytes
+        //
+        // Note that when emitting the code, we reuse any already emitted
+        // constant value, so the number of bytes could be less.
         if( n == -1 || n == -2 || n == -3 )
-            return 12 - c->count * 6;
+            return 15 - c->count * 6;
         else if( n == 4 || n == 5 || n == 6 || n == 9 || n == 0.5 ||
                  n == 1/3.0 || n == 2/3.0 || n == 1.5 )
-            return 13 - c->count * 6;
+            return 16 - c->count * 6;
         else if( n == -4 || n == -5 || n == -6 || n == -9 || n == -0.5 ||
                  n == -1/3.0 || n == -2/3.0 || n == -1.5 )
-            return 14 - c->count * 6;
+            return 17 - c->count * 6;
         else if( n == -8 || n == -7 || n == 4/3.0 || n == 5/3.0 || n == 7/3.0 ||
                  n == 2.5 || n == 8/3.0 || n == 10/3.0 || n == 7/2.0 || n == 11/3.0 ||
-                 n == 4.5 || n == 7 || n == 8 || n == 9 || n == 10 || n == 11 ||
+                 n == 4.5 || n == 7 || n == 8 || n == 10 || n == 11 ||
                  n == 12 || n == 18 || n == 27 )
-            return 15 - c->count * 6;
+            return 18 - c->count * 6;
         else if( n == -27 || n == -18 || n == -12 || n == -11 || n == -10 ||
                  n == -4.5 || n == -11/3.0 || n == -3.5 || n == -10/3.0 || n ==  -8/3.0||
                  n == -2.5 || n == -7/3.0 || n == -5/3.0 || n == -4/3.0 )
-            return 16 - c->count * 6;
+            return 19 - c->count * 6;
         else
-            return 17 - c->count * 6;
+            return 20 - c->count * 6;
     }
 }
 
