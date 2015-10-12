@@ -512,6 +512,7 @@ expr_mngr *expr_mngr_new(program *pgm)
     if( !m )
         memory_error();
     m->pgm  = pgm;
+    m->file_name = pgm_get_file_name(pgm);
     m->len  = 0;
     m->size = EXPR_MNGR_BLOCK_SIZE;
     m->blocks[0] = calloc(sizeof(expr), EXPR_MNGR_BLOCK_SIZE);
@@ -532,11 +533,6 @@ void expr_mngr_delete(expr_mngr *m)
         free(m->blocks[i]);
     }
     free(m);
-}
-
-void expr_mngr_set_file_name(expr_mngr *m, const char *fname)
-{
-    m->file_name = fname;
 }
 
 void expr_mngr_set_file_line(expr_mngr *m, int fline)

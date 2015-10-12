@@ -35,7 +35,7 @@ program *optimize_program(program *pgm, int level)
 
     // Convert program to expression tree
     expr_mngr *mngr = expr_mngr_new(pgm);
-    expr *ex = opt_parse_program(pgm, mngr);
+    expr *ex = opt_parse_program(mngr);
 
 
     // Optimize:

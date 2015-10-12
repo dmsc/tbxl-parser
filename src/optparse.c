@@ -963,7 +963,7 @@ static expr * p_text_expr(pstate *p)
     return 0;
 }
 
-static expr *opt_parse_tokens(program *pgm, expr_mngr *mngr,
+static expr *opt_parse_tokens(expr_mngr *mngr,
                               enum enum_statements sn, const uint8_t *data, unsigned len)
 {
     // Parse statement tokens:
@@ -972,7 +972,7 @@ static expr *opt_parse_tokens(program *pgm, expr_mngr *mngr,
     p.pos = (uint8_t *)data;
     p.end = (uint8_t *)data + len;
     p.mngr = mngr;
-    p.vrs = pgm_get_vars(pgm);
+    p.vrs = pgm_get_vars(expr_mngr_get_program(mngr));
     switch(sn)
     {
         case STMT_REM:
@@ -1181,7 +1181,7 @@ static expr *opt_parse_tokens(program *pgm, expr_mngr *mngr,
     return expr_new_void(mngr);
 }
 
-static expr *opt_parse_statement(program *pgm, expr_mngr *mngr, stmt *s, expr *prev)
+static expr *opt_parse_statement(expr_mngr *mngr, stmt *s, expr *prev)
 {
     enum enum_statements sn = stmt_get_statement(s);
     const uint8_t *data     = stmt_get_token_data(s);
@@ -1192,18 +1192,18 @@ static expr *opt_parse_statement(program *pgm, expr_mngr *mngr, stmt *s, expr *p
     if( stmt_is_text(s) )
         tok = expr_new_data(mngr, data, len);
     else
-        tok = opt_parse_tokens(pgm, mngr, sn, data, len);
+        tok = opt_parse_tokens(mngr, sn, data, len);
 
     return expr_new_stmt(mngr, prev, tok, sn);
 }
 
-expr *opt_parse_program(program *pgm, expr_mngr *mngr)
+expr *opt_parse_program(expr_mngr *mngr)
 {
     // Starting expression
     expr *ex = 0;
 
-    // Set program name to the expression manager:
-    expr_mngr_set_file_name(mngr, pgm_get_file_name(pgm));
+    // Get program to parse
+    program *pgm = expr_mngr_get_program(mngr);
 
     // Parse each line/statement:
     line **lp;
@@ -1218,7 +1218,7 @@ expr *opt_parse_program(program *pgm, expr_mngr *mngr)
         if( line_is_num(l) )
             ex = expr_new_lnum(mngr, ex, line_get_num(l));
         else
-            ex = opt_parse_statement(pgm, mngr, line_get_statement(l), ex);
+            ex = opt_parse_statement(mngr, line_get_statement(l), ex);
     }
     return ex;
 }

@@ -17,11 +17,9 @@
  */
 #pragma once
 
-typedef struct program_struct program;
-typedef struct stmt_struct stmt;
 typedef struct expr_struct expr;
 typedef struct expr_mngr_struct expr_mngr;
 
 // Generates an expression tree from a statement
-expr *opt_parse_program(program *pgm, expr_mngr *mngr);
+expr *opt_parse_program(expr_mngr *mngr);
 

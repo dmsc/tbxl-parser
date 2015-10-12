@@ -80,7 +80,6 @@ int tok_prec_level(enum enum_tokens tk);
 
 // Expression Manager manages the "expr" tree, allowing to free all memory
 expr_mngr *expr_mngr_new(program *pgm);
-void expr_mngr_set_file_name(expr_mngr *, const char *fname);
 void expr_mngr_set_file_line(expr_mngr *, int fline);
 void expr_mngr_delete(expr_mngr *);
 
