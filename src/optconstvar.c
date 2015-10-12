@@ -458,6 +458,9 @@ static void add_to_prog(expr *prog, expr *e)
 
 void opt_replace_const(expr *prog)
 {
+    if( !prog )
+        return;
+
     // Get current number of variables, used to estimate the
     // memory usage of each new constant added to the program
     vars *v = pgm_get_vars( expr_get_program(prog) );
