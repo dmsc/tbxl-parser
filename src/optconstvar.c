@@ -174,7 +174,7 @@ static void cvalue_list_add(cvalue_list *l, cvalue *nv)
     if( l->len == l->size )
     {
         l->size *= 2;
-        if( !l->size || !(l->data = realloc(l->data, l->size)) )
+        if( !l->size || !(l->data = realloc(l->data, sizeof(cvalue) * l->size)) )
             memory_error();
     }
     memcpy(l->data + l->len, nv, sizeof(*nv));
