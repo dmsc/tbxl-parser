@@ -17,16 +17,8 @@
  */
 #pragma once
 
-typedef struct program_struct program;
+typedef struct expr_struct expr;
 
-enum optimize_levels {
-    OPT_CONST_FOLD = 1,
-    OPT_NUMBER_TOK = 2,
-    OPT_COMMUTE    = 3,
-    OPT_LINE_NUM   = 4,
-    OPT_CONST_VARS = 5
-};
-
-// Generates a new, optimized, program
-program *optimize_program(program *pgm, int level);
+// Replace constants with variables
+void opt_replace_const(expr *ex);
 

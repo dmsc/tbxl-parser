@@ -75,4 +75,5 @@ OptimizeSuboptions  <- ( < ( '+' / '-' ) >
           / 'convert_percent' &{ parser_add_optimize( OPT_NUMBER_TOK, yytext[0] == '+' ) , 1 }
           / 'commute'         &{ parser_add_optimize( OPT_COMMUTE,    yytext[0] == '+' ) , 1 }
           / 'line_numbers'    &{ parser_add_optimize( OPT_LINE_NUM,   yytext[0] == '+' ) , 1 }
+          / 'const_replace'   &{ parser_add_optimize( OPT_CONST_VARS, yytext[0] == '+' ) , 1 }
           ) )+

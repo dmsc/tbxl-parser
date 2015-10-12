@@ -36,6 +36,7 @@ SOURCES=\
  lister.c\
  main.c\
  optconst.c\
+ optconstvar.c\
  optexpr.c\
  optimize.c\
  optlinenum.c\

@@ -173,6 +173,10 @@ The optimization sub-options are:
 - `convert_percent`: Replace small integers with the `%*` equivalent.
 - `commute`: Swap arguments to binary operations to minimize runtime.
 - `line_numbers`: Remove all Basic line numbers that are unused.
+- `const_replace`: Replace repeated constant values (numeric or string) with
+  a variable initialized to the value. The initialization code is added
+  before any statement in the program, and tries to use the minimum number
+  of bytes posible.
 
 Note that options can be changed at any place in the file, this is an example
 of changing the parser mode in the middle of the file:
@@ -189,8 +193,11 @@ of changing the parser mode in the middle of the file:
 ```
 
 A good optimization mode for producing short listings is
-`$options +optimize, optimize=-convert_percent` , this avoid converting
-numbers to `%` values and produces a smaller listing.
+`$options +optimize, optimize=-convert_percent-const_replace` , this avoid
+converting numbers to `%` values and the replacement of constants, producing
+a smaller listing. Note that replacement of constants can be beneficial, so
+try enabling the optimization and running with "-v" option to see what
+variables are good candidates for replacement.
 
 ### `$define` directive.
 

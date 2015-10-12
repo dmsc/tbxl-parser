@@ -21,6 +21,7 @@
 #include "optparse.h"
 #include "optconst.h"
 #include "optlinenum.h"
+#include "optconstvar.h"
 #include "vars.h"
 #include "line.h"
 #include "program.h"
@@ -31,19 +32,6 @@
 program *optimize_program(program *pgm, int level)
 {
     program *ret = program_new(pgm_get_file_name(pgm));
-
-    // Copy variables
-    vars *v = pgm_get_vars(pgm);
-    vars *vret = pgm_get_vars(ret);
-    int i, nvar = vars_get_total(v);
-    for(i=0; i<nvar; i++)
-    {
-        enum var_type t = vars_get_type(v, i);
-        if( t == vtNone )
-            continue;
-        const char *l_name = vars_get_long_name(v, i);
-        vars_new_var(vret, l_name, t, 0, -1);
-    }
 
     // Convert program to expression tree
     expr_mngr *mngr = expr_mngr_new(pgm);
@@ -62,6 +50,22 @@ program *optimize_program(program *pgm, int level)
 
     if( level & OPT_NUMBER_TOK )
         opt_convert_tok(ex);
+
+    if( level & OPT_CONST_VARS )
+        opt_replace_const(ex);
+
+    // Copy variables
+    vars *v = pgm_get_vars(pgm);
+    vars *vret = pgm_get_vars(ret);
+    int i, nvar = vars_get_total(v);
+    for(i=0; i<nvar; i++)
+    {
+        enum var_type t = vars_get_type(v, i);
+        if( t == vtNone )
+            continue;
+        const char *l_name = vars_get_long_name(v, i);
+        vars_new_var(vret, l_name, t, 0, -1);
+    }
 
     expr_to_program(ex, ret);
 
