@@ -372,6 +372,7 @@ static void print_comment_ascii(string_buf *b, const uint8_t *txt, unsigned len)
     }
     // Print
     print_comment(b, (uint8_t *)tmp->data, tmp->len);
+    sb_delete(tmp);
 }
 
 string_buf *stmt_print_long(stmt *s, vars *varl, int *indent, int conv_ascii)

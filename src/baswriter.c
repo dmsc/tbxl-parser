@@ -227,6 +227,10 @@ int bas_write_program(FILE *f, program *pgm, int variables)
                 err_print(fname, line_get_file_line(l),
                           "line number %d already in use, current free number is %d\n",
                           line_get_num(l), 1 + cur_line);
+                sb_delete(bin_line);
+                sb_delete(vnt);
+                sb_delete(vvt);
+                sb_delete(bw.toks);
                 return 1;
             }
             else
@@ -247,7 +251,12 @@ int bas_write_program(FILE *f, program *pgm, int variables)
                 string_buf *prn = stmt_print_alone(s, pgm_get_vars(pgm));
                 err_print(fname, line_get_file_line(l), "statement too long at line %d:\n", cur_line);
                 err_print(fname, line_get_file_line(l), "'%.*s'\n", prn->len, prn->data);
+                sb_delete(bin_line);
                 sb_delete(prn);
+                sb_delete(sb);
+                sb_delete(vnt);
+                sb_delete(vvt);
+                sb_delete(bw.toks);
                 return 1;
             }
             if( sb->len )
@@ -264,7 +273,14 @@ int bas_write_program(FILE *f, program *pgm, int variables)
                     // We can't add this statement to the current line,
                     // write the old line and create a new line
                     if( bas_add_line(&bw, cur_line, line_valid, bin_line, old_last_colon, fname, file_line) )
+                    {
+                        sb_delete(bin_line);
+                        sb_delete(sb);
+                        sb_delete(vnt);
+                        sb_delete(vvt);
+                        sb_delete(bw.toks);
                         return 1;
+                    }
                     sb_delete(bin_line);
                     file_line = line_get_file_line(l);
                     bin_line = sb_new();
@@ -323,5 +339,8 @@ int bas_write_program(FILE *f, program *pgm, int variables)
                        vnt->len, vvt->len, bw.toks->len,
                        14 + vnt->len + vvt->len + bw.toks->len);
     }
+    sb_delete(vnt);
+    sb_delete(vvt);
+    sb_delete(bw.toks);
     return 0;
 }
