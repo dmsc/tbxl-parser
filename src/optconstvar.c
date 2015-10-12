@@ -321,7 +321,7 @@ static expr *create_num(expr_mngr *m, cvalue_list *l, double n)
     // Now, try with "MINUS" and a value:
     for(i=0; 0 != (i = val_from_i(m, l, i, &x)); )
     {
-        if( n == x )
+        if( n == -x )
             return expr_new_uni(m, expr_from_i(m, l, i-1), TOK_UMINUS);
     }
 
@@ -527,7 +527,7 @@ void opt_replace_const(expr *prog)
                 else
                     sprintf(name, "__n_%.0f", -cv->num);
             }
-            else if( cv->num < 1000 && (10 * cv->num) == round(10 * cv->num) )
+            else if( cv->num < 1000 && round(10000000 * cv->num) == 1000000 * round(10 * cv->num) )
             {
                 if( cv->num >= 0 )
                     sprintf(name, "__n%.0f_%.0f", trunc(cv->num), 10 * (cv->num - trunc(cv->num)));
