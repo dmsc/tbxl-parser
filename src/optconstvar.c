@@ -17,7 +17,7 @@
  */
 
 #include "optconstvar.h"
-#include "optexpr.h"
+#include "expr.h"
 #include "vars.h"
 #include "dbg.h"
 #include "program.h"

@@ -16,7 +16,7 @@
  *  with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
-#include "optexpr.h"
+#include "expr.h"
 #include "program.h"
 #include "stmt.h"
 #include "tokens.h"

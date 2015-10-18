@@ -17,7 +17,7 @@
  */
 
 #include "optimize.h"
-#include "optexpr.h"
+#include "expr.h"
 #include "optparse.h"
 #include "optconst.h"
 #include "optlinenum.h"

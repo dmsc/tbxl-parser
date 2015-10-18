@@ -17,7 +17,7 @@
  */
 
 #include "optparse.h"
-#include "optexpr.h"
+#include "expr.h"
 #include "vars.h"
 #include "program.h"
 #include "stmt.h"

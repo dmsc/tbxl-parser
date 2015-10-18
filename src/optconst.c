@@ -17,7 +17,7 @@
  */
 
 #include "optconst.h"
-#include "optexpr.h"
+#include "expr.h"
 #include "dbg.h"
 #include <stdlib.h>
 #include <string.h>

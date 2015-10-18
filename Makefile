@@ -32,12 +32,12 @@ SOURCES=\
  basic.c\
  baswriter.c\
  defs.c\
+ expr.c\
  line.c\
  lister.c\
  main.c\
  optconst.c\
  optconstvar.c\
- optexpr.c\
  optimize.c\
  optlinenum.c\
  optparse.c\

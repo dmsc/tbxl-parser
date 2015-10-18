@@ -17,7 +17,7 @@
  */
 
 #include "optlinenum.h"
-#include "optexpr.h"
+#include "expr.h"
 #include "dbg.h"
 #include <assert.h>
 #include <stdlib.h>
