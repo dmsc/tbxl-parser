@@ -357,6 +357,7 @@ static void expr_to_tokens(expr *e, stmt *s)
                     use_l_parens = 1;
                     use_r_parens = 1;
                     break;
+                case TOK_L_PRN:
                 case TOK_S_L_PRN:
                 case TOK_A_L_PRN:
                 case TOK_D_L_PRN:
