@@ -444,10 +444,10 @@ int expr_to_program(expr *e, program *out)
         if( !s )
             err ++;
 
-        l = line_new_from_stmt(s, 0);
+        l = line_new_from_stmt(s, e->file_line);
     }
     else
-        l = line_new_linenum(e->num, 0);
+        l = line_new_linenum(e->num, e->file_line);
 
     pgm_add_line(out,l);
     return err;
