@@ -94,7 +94,7 @@ Statement       <-
                  / GOTO   NumExprErr
                  / GO_TO  NumExprErr
                  / GOSUB  NumExprErr
-                 / GET    (IOChanErr COMMA)? PVarNum (COMMA PVarNum)*
+                 / GET    (IOChan COMMA)? PVarNum (COMMA PVarNum)*
                  / GRAPHICS NumExprErr
                  / GO_S   Label
                  / INPUT  (  IOChan ( COMMA / SEMICOLON )
@@ -112,7 +112,8 @@ Statement       <-
                  / IF_THEN      NumExprErr THEN StatementLine ENDIF_INVISIBLE ForceLine
                  # 3- A multi-line IF
                  / IF_MULTILINE NumExprErr
-                 / LIST   (StrExpr COMMA)? ( NumExprErr ( COMMA NumExprErr )? )?
+                 / LIST   StrExpr (COMMA NumExprErr ( COMMA NumExprErr )? )?
+                 / LIST   ( NumExprErr ( COMMA NumExprErr )? )?
                  / LET    AssignVarStr S_ASGN StrExprErr
                  / LET    AssignVarNum F_ASGN NumExprErr
                  / LOAD   StrExprErr
@@ -140,7 +141,7 @@ Statement       <-
                  / PRINT  ( IOChan ((COMMA / SEMICOLON) PrintExpr)? / PrintExpr )
                  / PRINT_ ( IOChan ((COMMA / SEMICOLON) PrintExpr)? / PrintExpr )
                  / POP
-                 / PUT    (IOChanErr COMMA)? NumExprErr (COMMA NumExprErr)*
+                 / PUT    (IOChan COMMA)? NumExprErr (COMMA NumExprErr)*
                  / PLOT   NumExpr2
                  / POSITION NumExpr2
                  / PAUSE  NumExprErr
@@ -170,8 +171,8 @@ Statement       <-
                  / F_F
                  / F_L
                  / F_B
-                 / P_PUT  (IOChanErr COMMA)? NumExprErr (COMMA NumExprErr)*
-                 / P_GET  (IOChanErr COMMA)? PVarNum (COMMA PVarNum)*
+                 / P_PUT  (IOChan COMMA)? NumExprErr (COMMA NumExprErr)*
+                 / P_GET  (IOChan COMMA)? PVarNum (COMMA PVarNum)*
                  / LBL_S  Label
                  # A basic ERROR- line, parsed for compatibility
                  / < BAS_ERROR ERROR > { print_error("statement", yytext);
