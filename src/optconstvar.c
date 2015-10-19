@@ -153,6 +153,42 @@ static int cvalue_sort_comp(const void *pa, const void *pb)
     return sa-sb;
 }
 
+// Function to sort constant values based numeric absolute value
+// Also, positive numbers come before negative ones and numbers are
+// before strings.
+static int cvalue_sort_abs_comp(const void *pa, const void *pb)
+{
+    const cvalue *a = pa, *b = pb;
+    // If both are number, compare values:
+    if( !a->str && !b->str )
+    {
+        double fa = fabs(a->num), fb = fabs(b->num);
+        if( fa < fb )
+            return -1;
+        else if( fa > fb )
+            return +1;
+        else if( a->num > b->num )
+            return -1;
+        else if( a->num < b->num )
+            return +1;
+        else
+            return 0;
+    }
+    else if( a->str && b->str )
+    {
+        if( a->slen < b->slen )
+            return -1;
+        else if( a->slen > b->slen )
+            return +1;
+        else
+            return 0;
+    }
+    else if( !a->str )
+        return -1;
+    else
+        return +1;
+}
+
 // List of cvalue
 typedef struct {
     cvalue *data;
@@ -200,6 +236,11 @@ static cvalue *cvalue_list_find(cvalue_list *l, cvalue *nv)
 static void cvalue_list_sort(cvalue_list *l)
 {
     qsort(l->data, l->len, sizeof(l->data[0]), cvalue_sort_comp);
+}
+
+static void cvalue_list_sort_abs(cvalue_list *l)
+{
+    qsort(l->data, l->len, sizeof(l->data[0]), cvalue_sort_abs_comp);
 }
 
 static int expr_is_cnum(const expr *ex)
@@ -556,6 +597,9 @@ void opt_replace_const(expr *prog)
             replace_cvalue(prog, cv);
         }
     }
+
+    // Sort again by absolute value, this tends to generate smaller code
+    cvalue_list_sort_abs(lst);
 
     // Now, add all variable initializations to the program, first numeric, then strings:
     expr *init = 0, *dim = 0;
