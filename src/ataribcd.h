@@ -34,6 +34,3 @@ double atari_bcd_to_double(atari_bcd n);
 // Prints a double in a format suitable for BASIC input
 void atari_bcd_print(atari_bcd n, string_buf *sb);
 
-// Prints a double in hexadecimal format. The value must be from 0 to 65535.
-void atari_bcd_print_hex(atari_bcd n, string_buf *sb);
-

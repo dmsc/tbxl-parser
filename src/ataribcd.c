@@ -205,36 +205,3 @@ void atari_bcd_print(atari_bcd n, string_buf *sb)
     }
 }
 
-// Prints a double in hexadecimal format. The value must be from 0 to 65535.
-void atari_bcd_print_hex(atari_bcd n, string_buf *sb)
-{
-    int v = -1;
-    if( n.exp == 0x40 )
-    {
-        if( (n.dig[1] | n.dig[2] | n.dig[3] | n.dig[4]) == 0 )
-            v = 10 * (n.dig[0] >> 4) + (n.dig[0] & 0x0F);
-    }
-    else if( n.exp == 0x41 )
-    {
-        if( (n.dig[2] | n.dig[3] | n.dig[4]) == 0)
-            v = 1000 * (n.dig[0] >> 4) + 100 * (n.dig[0] & 0x0F)
-                + 10 * (n.dig[1] >> 4) + (n.dig[1] & 0x0F);
-    }
-    else if( n.exp == 0x42 )
-    {
-        if( (n.dig[3] | n.dig[4]) == 0 )
-            v = 100000 * (n.dig[0] >> 4) + 10000 * (n.dig[0] & 0x0F)
-                + 1000 * (n.dig[1] >> 4) + 100 * (n.dig[1] & 0x0F)
-                + 10 * (n.dig[2] >> 4) + (n.dig[2] & 0x0F);
-    }
-    else if( n.exp == 0x00 || n.exp == 0x80 )
-        v = 0;
-
-    // Check numeric range
-    if( v < 0 || v > 0xFFFF )
-        sb_puts(sb, "ERROR 3");
-    else if( v < 256 )
-        sb_put_hex(sb, v, 2);
-    else
-        sb_put_hex(sb, v, 4);
-}

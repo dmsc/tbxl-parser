@@ -234,9 +234,12 @@ static int print_expr_long_rec(string_buf *out, const expr *e, vars *varl, int s
             break;
         case et_c_hexnumber:
             {
-                atari_bcd n = atari_bcd_from_double(e->num);
+                int n = e->num;
                 sb_put(out, '$');
-                atari_bcd_print_hex(n, out);
+                if( n < 256 )
+                    sb_put_hex(out, n, 2);
+                else
+                    sb_put_hex(out, n, 4);
             }
             break;
         case et_c_string:
