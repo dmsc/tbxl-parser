@@ -48,6 +48,7 @@ static int expr_is_cnum(expr *ex)
 // is not in the program.
 static int verify_target_line(expr *ex, uint8_t *keep, uint8_t *avail, int range, int ignore)
 {
+    assert(ex != 0);
     if( expr_is_cnum(ex) )
     {
         double limit = range ? 65535.5 : 32767.5;
@@ -65,10 +66,6 @@ static int verify_target_line(expr *ex, uint8_t *keep, uint8_t *avail, int range
     }
     else
     {
-        if( ex && ex->type == et_tok )
-        {
-            warn("found %s\n", tokens[ex->tok].tok_long);
-        }
         warn("target line number not constant, disabling line number optimization.\n");
         return 1;
     }
@@ -190,6 +187,9 @@ static int do_search_stmt(expr *ex, uint8_t *keep, uint8_t *avail)
             return 0;
 
         case STMT_RESTORE:
+            // Skip if no argument
+            if( !ex->rgt)
+                return 0;
         case STMT_TRAP:
             // Skip if argument is label
             if( ex->rgt && ex->rgt->type == et_tok && ex->rgt->tok == TOK_SHARP )
