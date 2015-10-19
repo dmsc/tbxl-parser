@@ -22,9 +22,9 @@ typedef struct program_struct program;
 enum optimize_levels {
     OPT_CONST_FOLD = 1,
     OPT_NUMBER_TOK = 2,
-    OPT_COMMUTE    = 3,
-    OPT_LINE_NUM   = 4,
-    OPT_CONST_VARS = 5
+    OPT_COMMUTE    = 4,
+    OPT_LINE_NUM   = 8,
+    OPT_CONST_VARS = 16
 };
 
 // Generates a new, optimized, program
