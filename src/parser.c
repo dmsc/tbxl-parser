@@ -54,14 +54,10 @@ static void set_current_pgm(program *pgm)
     cur_program = pgm;
 }
 
-// TODO: remove
 void store_stmt(void)
 {
-    int e = 0;
     if( last_stmt )
         pgm_set_expr(parse_get_current_pgm(), last_stmt);
-    if( e )
-        fprintf(stderr,"--- E = %d ---\n", e);
 }
 
 expr *add_comment(const char *str, int len)

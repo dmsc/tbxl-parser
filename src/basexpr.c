@@ -37,7 +37,7 @@ static int expr_get_bas_rec(string_buf *out, expr *e)
         case et_lnum:
         case et_stmt:
         case et_data:
-            fprintf(stderr,"INTERNAL ERROR: unexpected expr type.\n");
+            assert(0 /* unexpected expr type */);
             return 0;
         case et_tok:
             prec = tok_prec_level(e->tok);

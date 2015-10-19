@@ -205,7 +205,7 @@ static int print_expr_long_rec(string_buf *out, const expr *e, vars *varl, int s
         case et_lnum:
         case et_stmt:
         case et_data:
-            fprintf(stderr,"INTERNAL ERROR: unexpected expr type.\n");
+            assert(0 /* unexpected expr type */);
             return 0;
         case et_tok:
             prec = tok_prec_level(e->tok);
@@ -345,7 +345,7 @@ static int print_expr_short_rec(string_buf *out, const expr *e, vars *varl)
         case et_lnum:
         case et_stmt:
         case et_data:
-            fprintf(stderr,"INTERNAL ERROR: unexpected expr type.\n");
+            assert(0 /* unexpected expr type */);
             return 0;
         case et_tok:
             prec = tok_prec_level(e->tok);

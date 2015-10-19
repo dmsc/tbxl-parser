@@ -21,6 +21,7 @@
 #include "dbg.h"
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 struct def {
     char *name; // Name
@@ -126,11 +127,7 @@ int defs_new_def(defs *d, const char *name, const char *file_name, int file_line
 
 void defs_set_string(defs *d, int id, const char *data, int len)
 {
-    if( id < 0 || id >= MAX_DEFS || ! d->dlist[id].name )
-    {
-        fprintf(stderr,"INTERNAL ERROR: def ID '%d' out of range.\n", id);
-        return;
-    }
+    assert( id >= 0 && id < MAX_DEFS && d->dlist[id].name );
     d->dlist[id].data = malloc(len);
     memcpy(d->dlist[id].data, data, len);
     d->dlist[id].len = len;
@@ -138,11 +135,7 @@ void defs_set_string(defs *d, int id, const char *data, int len)
 
 void defs_set_numeric(defs *d, int id, double val)
 {
-    if( id < 0 || id >= MAX_DEFS || ! d->dlist[id].name )
-    {
-        fprintf(stderr,"INTERNAL ERROR: def ID '%d' out of range.\n", id);
-        return;
-    }
+    assert( id >= 0 && id < MAX_DEFS && d->dlist[id].name );
     d->dlist[id].val = val;
 }
 
