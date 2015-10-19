@@ -80,6 +80,7 @@ const expr ** expr_get_statement_list(const expr *e);
 
 int expr_get_file_line(expr *e);
 int tok_prec_level(enum enum_tokens tk);
+int tok_need_parens(enum enum_tokens tk);
 
 // Expression Manager manages the "expr" tree, allowing to free all memory
 expr_mngr *expr_mngr_new(program *pgm);

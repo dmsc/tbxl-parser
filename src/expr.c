@@ -298,6 +298,56 @@ int tok_prec_level(enum enum_tokens tk)
     }
 }
 
+// Check if this token needs adding parenthesis
+int tok_need_parens(enum enum_tokens tk)
+{
+    switch(tk)
+    {
+        case TOK_STRP:
+        case TOK_CHRP:
+        case TOK_USR:
+        case TOK_ASC:
+        case TOK_VAL:
+        case TOK_LEN:
+        case TOK_ADR:
+        case TOK_ATN:
+        case TOK_COS:
+        case TOK_PEEK:
+        case TOK_SIN:
+        case TOK_RND:
+        case TOK_FRE:
+        case TOK_EXP:
+        case TOK_LOG:
+        case TOK_CLOG:
+        case TOK_SQR:
+        case TOK_SGN:
+        case TOK_ABS:
+        case TOK_INT:
+        case TOK_PADDLE:
+        case TOK_STICK:
+        case TOK_PTRIG:
+        case TOK_STRIG:
+        case TOK_DPEEK:
+        case TOK_INSTR:
+        case TOK_HEXP:
+        case TOK_UINSTR:
+        case TOK_RAND:
+        case TOK_TRUNC:
+        case TOK_FRAC:
+        case TOK_DEC:
+            return 3;  // L and R
+        case TOK_L_PRN:
+        case TOK_S_L_PRN:
+        case TOK_A_L_PRN:
+        case TOK_D_L_PRN:
+        case TOK_FN_PRN:
+        case TOK_DS_L_PRN:
+            return 1; // R
+        default:
+            return 0; // none
+    }
+}
+
 const char *expr_get_file_name(expr *e)
 {
     return expr_mngr_get_file_name(e->mngr);

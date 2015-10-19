@@ -209,54 +209,10 @@ static int print_expr_long_rec(string_buf *out, const expr *e, vars *varl, int s
             return 0;
         case et_tok:
             prec = tok_prec_level(e->tok);
-            switch(e->tok)
-            {
-                case TOK_STRP:
-                case TOK_CHRP:
-                case TOK_USR:
-                case TOK_ASC:
-                case TOK_VAL:
-                case TOK_LEN:
-                case TOK_ADR:
-                case TOK_ATN:
-                case TOK_COS:
-                case TOK_PEEK:
-                case TOK_SIN:
-                case TOK_RND:
-                case TOK_FRE:
-                case TOK_EXP:
-                case TOK_LOG:
-                case TOK_CLOG:
-                case TOK_SQR:
-                case TOK_SGN:
-                case TOK_ABS:
-                case TOK_INT:
-                case TOK_PADDLE:
-                case TOK_STICK:
-                case TOK_PTRIG:
-                case TOK_STRIG:
-                case TOK_DPEEK:
-                case TOK_INSTR:
-                case TOK_HEXP:
-                case TOK_UINSTR:
-                case TOK_RAND:
-                case TOK_TRUNC:
-                case TOK_FRAC:
-                case TOK_DEC:
-                    use_l_parens = 1;
-                    use_r_parens = 1;
-                    break;
-                case TOK_L_PRN:
-                case TOK_S_L_PRN:
-                case TOK_A_L_PRN:
-                case TOK_D_L_PRN:
-                case TOK_FN_PRN:
-                case TOK_DS_L_PRN:
-                    use_r_parens = 1;
-                    break;
-                default:
-                    break;
-            }
+            int p = tok_need_parens(e->tok);
+            use_l_parens = p > 1;
+            use_r_parens = p != 0;
+
             if( e->lft && e->lft->type == et_tok && prec > tok_prec_level(e->lft->tok) )
             {
                 sb_puts(out, "( ");
@@ -393,54 +349,10 @@ static int print_expr_short_rec(string_buf *out, const expr *e, vars *varl)
             return 0;
         case et_tok:
             prec = tok_prec_level(e->tok);
-            switch(e->tok)
-            {
-                case TOK_STRP:
-                case TOK_CHRP:
-                case TOK_USR:
-                case TOK_ASC:
-                case TOK_VAL:
-                case TOK_LEN:
-                case TOK_ADR:
-                case TOK_ATN:
-                case TOK_COS:
-                case TOK_PEEK:
-                case TOK_SIN:
-                case TOK_RND:
-                case TOK_FRE:
-                case TOK_EXP:
-                case TOK_LOG:
-                case TOK_CLOG:
-                case TOK_SQR:
-                case TOK_SGN:
-                case TOK_ABS:
-                case TOK_INT:
-                case TOK_PADDLE:
-                case TOK_STICK:
-                case TOK_PTRIG:
-                case TOK_STRIG:
-                case TOK_DPEEK:
-                case TOK_INSTR:
-                case TOK_HEXP:
-                case TOK_UINSTR:
-                case TOK_RAND:
-                case TOK_TRUNC:
-                case TOK_FRAC:
-                case TOK_DEC:
-                    use_l_parens = 1;
-                    use_r_parens = 1;
-                    break;
-                case TOK_L_PRN:
-                case TOK_S_L_PRN:
-                case TOK_A_L_PRN:
-                case TOK_D_L_PRN:
-                case TOK_FN_PRN:
-                case TOK_DS_L_PRN:
-                    use_r_parens = 1;
-                    break;
-                default:
-                    break;
-            }
+            int p = tok_need_parens(e->tok);
+            use_l_parens = p > 1;
+            use_r_parens = p != 0;
+
             if( e->lft && e->lft->type == et_tok && prec > tok_prec_level(e->lft->tok) )
             {
                 sb_put(out, '(');
