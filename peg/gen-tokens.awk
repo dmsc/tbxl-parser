@@ -45,7 +45,7 @@ BEGIN {
 
     # PEG file, calls test function, if valid, print
     if( length(s) )
-        printf "%-16s<- &{ testToken( TOK_%s ) } %s { add_token( TOK_%s ); }\n", n, n, spc, n > peg;
+        printf "%-16s= &{ testToken( TOK_%s ) } %s\n", n, n, spc, n > peg;
 
     # Header - enum definition
     enums = enums sprintf("    %s,\n", "TOK_" n);

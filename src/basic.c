@@ -39,6 +39,10 @@ FILE *inFile = 0;
 // YY_PARSE function is local to this file
 #define YY_PARSE(T) static T
 
+// Rules that return values return an "expr *"
+typedef struct expr_struct expr;
+#define YYSTYPE expr *
+
 // Checks the input searching for a statement
 static int testStatement(enum enum_statements e);
 static int testToken(enum enum_tokens e);
@@ -153,6 +157,8 @@ int parse_file(const char *fname)
     int e = yyparse();
     yyrelease(yyctx);
     fclose(inFile);
+    // TODO: TEST ONLY: Transform parsed "expr" to "stmt":
+    store_stmt();
     inFile = 0;
     if( !e )
         err_print(fname, 0, "failed to parse input.\n");

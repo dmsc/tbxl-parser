@@ -18,8 +18,8 @@
 #pragma once
 
 typedef struct expr_struct expr;
-typedef struct expr_mngr_struct expr_mngr;
+typedef struct string_buf string_buf;
 
-// Generates an expression tree from a statement
-expr *opt_parse_program(expr_mngr *mngr);
+string_buf *expr_get_bas(const expr *e, int *end_colon, int *no_split);
+int expr_get_bas_len(const expr *e);
 

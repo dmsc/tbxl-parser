@@ -29,22 +29,21 @@ B=build
 # C sources, in "src" directory
 SOURCES=\
  ataribcd.c\
+ basexpr.c\
  basic.c\
  baswriter.c\
  defs.c\
  expr.c\
- line.c\
  lister.c\
+ listexpr.c\
  main.c\
  optconst.c\
  optconstvar.c\
  optimize.c\
  optlinenum.c\
- optparse.c\
  parser.c\
  program.c\
  sbuf.c\
- stmt.c\
  vars.c\
 
 # Word lists, in "peg" directory
@@ -113,7 +112,7 @@ $(B)/obj/%.o: $(B)/src/%.c
 
 # Generate C source from PEG
 $(P_SRC): %_peg.c: %.peg
-	peg -o$@ $<
+	leg -o$@ $<
 
 # Generate version info from GIT
 .PHONY: $(VERSION_TMP)

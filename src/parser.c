@@ -18,14 +18,13 @@
 #include <stdio.h>
 #include "parser.h"
 #include "program.h"
-#include "line.h"
-#include "stmt.h"
 #include "tokens.h"
 #include "statements.h"
 #include "vars.h"
 #include "defs.h"
 #include "dbg.h"
 #include "parser-peg.h"
+#include "expr.h"
 #include <string.h>
 
 static int parse_error;
@@ -37,6 +36,8 @@ static int parser_optimize;
 static int last_def;
 static char last_const_string[256]; // Holds last processed string
 static int  last_const_string_len;  // and its length
+static expr_mngr *mngr;
+static expr *last_stmt;
 
 program *parse_get_current_pgm(void)
 {
@@ -48,35 +49,35 @@ void parser_set_current_pgm(program *p)
     cur_program = p;
 }
 
-static line *current_line(void)
-{
-    return pgm_get_current_line( parse_get_current_pgm() );
-}
-
-static stmt *get_statement(void)
-{
-    return line_get_statement(current_line());
-}
-
 static void set_current_pgm(program *pgm)
 {
     cur_program = pgm;
 }
 
-void add_comment(const char *str, int len)
+// TODO: remove
+void store_stmt(void)
 {
-    stmt_add_comment(get_statement(), str, len);
+    int e = 0;
+    if( last_stmt )
+        pgm_set_expr(parse_get_current_pgm(), last_stmt);
+    if( e )
+        fprintf(stderr,"--- E = %d ---\n", e);
 }
 
-void add_data_stmt(const char *str, int len)
+expr *add_comment(const char *str, int len)
 {
-    stmt_add_data(get_statement(), str, len);
+    return expr_new_data(mngr, (const uint8_t *)str, len);
+}
+
+expr *add_data_stmt(const char *str, int len)
+{
+    return expr_new_data(mngr, (const uint8_t *)str, len);
 }
 
 void add_force_line()
 {
-    if( !line_is_num(pgm_get_current_line(parse_get_current_pgm())) )
-        pgm_add_line(parse_get_current_pgm(), line_new_linenum(-1, file_line) );
+    if( last_stmt && last_stmt->type != et_lnum )
+        last_stmt = expr_new_lnum(mngr, last_stmt, -1);
 }
 
 void add_linenum(double num)
@@ -84,35 +85,40 @@ void add_linenum(double num)
     if( num < 0 || num > 65535 )
         print_error("line number out of range","");
     else
-        pgm_add_line(parse_get_current_pgm(), line_new_linenum( (int)(num+0.5), file_line ) );
+        last_stmt = expr_new_lnum(mngr, last_stmt, (int)(num+0.5));
 }
 
-void add_number(double n)
+expr *ex_comma(expr *l, expr *r)
 {
-    stmt_add_number(get_statement(), n);
+    return expr_new_bin(mngr, l, r, TOK_COMMA);
 }
 
-void add_hex_number(double n)
+expr *ex_bin(expr *l, expr *r, enum enum_tokens k)
 {
-    stmt_add_hex_number(get_statement(), n);
+    return expr_new_bin(mngr, l, r, k);
 }
 
-void add_string(void)
+expr *add_number(double n)
 {
-    stmt_add_binary_string(get_statement(), last_const_string, last_const_string_len);
+    return expr_new_number(mngr, n);
 }
 
-void add_token(enum enum_tokens tk)
+expr *add_hex_number(double n)
 {
-    stmt_add_token(get_statement(), tk);
+    return expr_new_hexnumber(mngr,n);
 }
 
-void add_stmt(enum enum_statements st)
+expr *add_string(void)
 {
-    pgm_add_line(parse_get_current_pgm(), line_new_statement(st, file_line));
+    return expr_new_string(mngr, (const uint8_t *)last_const_string, last_const_string_len);
 }
 
-void add_ident(const char *name, enum var_type type)
+void add_stmt(enum enum_statements st, expr *toks)
+{
+    last_stmt = expr_new_stmt(mngr, last_stmt, toks, st);
+}
+
+expr *add_ident(const char *name, enum var_type type)
 {
     // Search if there is a definition with the same name
     defs *d = pgm_get_defs( parse_get_current_pgm() );
@@ -120,7 +126,7 @@ void add_ident(const char *name, enum var_type type)
     {
         err_print(file_name, file_line, "'%s' is a definition, use '@%s' instead.\n", name, name);
         parse_error++;
-        return;
+        return 0;
     }
 
     vars *v = pgm_get_vars( parse_get_current_pgm() );
@@ -133,15 +139,29 @@ void add_ident(const char *name, enum var_type type)
         {
             err_print(file_name, file_line, "too many variables, got '%s'\n", name);
             parse_error++;
-            return;
+            return 0;
         }
         info_print(file_name, file_line, "renaming %s var '%s' -> '%s'\n",
                    var_type_name(type), name, vars_get_short_name(v, id));
     }
-    stmt_add_var(get_statement(), id);
+    switch(type)
+    {
+        case vtFloat:
+            return expr_new_var_num(mngr,id);
+        case vtString:
+            return expr_new_var_str(mngr,id);
+        case vtArray:
+            return expr_new_var_array(mngr,id);
+        case vtLabel:
+            return expr_new_label(mngr,id);
+        case vtNone:
+        case vtMaxType:
+            return 0;
+    }
+    return 0;
 }
 
-void add_strdef_val(const char *def_name)
+expr *add_strdef_val(const char *def_name)
 {
     defs *d = pgm_get_defs( parse_get_current_pgm() );
     int id;
@@ -149,7 +169,7 @@ void add_strdef_val(const char *def_name)
     {
         err_print(file_name, file_line, "'%s' not defined.\n", def_name);
         parse_error++;
-        return;
+        return 0;
     }
     const char *data;
     int len;
@@ -157,12 +177,13 @@ void add_strdef_val(const char *def_name)
     {
         err_print(file_name, file_line, "'%s' not a string definition.\n", def_name);
         parse_error++;
+        return 0;
     }
     else
-        stmt_add_binary_string(get_statement(), data, len);
+        return expr_new_string(mngr, (const uint8_t *)data, len);
 }
 
-void add_numdef_val(const char *def_name)
+expr *add_numdef_val(const char *def_name)
 {
     defs *d = pgm_get_defs( parse_get_current_pgm() );
     int id;
@@ -170,16 +191,17 @@ void add_numdef_val(const char *def_name)
     {
         err_print(file_name, file_line, "'%s' not defined.\n", def_name);
         parse_error++;
-        return;
+        return 0;
     }
     double val;
     if( !defs_get_numeric(d, id, &val) )
     {
         err_print(file_name, file_line, "'%s' not a numeric definition.\n", def_name);
         parse_error++;
+        return 0;
     }
     else
-        stmt_add_number(get_statement(), val);
+        return expr_new_number(mngr, val);
 }
 
 void add_definition(const char *def_name)
@@ -260,6 +282,7 @@ void print_error(const char *msg, const char *pos)
 void inc_file_line(void)
 {
     file_line ++;
+    expr_mngr_set_file_line(mngr, file_line);
 }
 
 void parse_init(const char *fname)
@@ -268,8 +291,12 @@ void parse_init(const char *fname)
     parse_error = 0;
     file_line = 1;
     file_name = fname;
+    program *pgm = program_new(fname);
+    set_current_pgm(pgm);
+    mngr = pgm_get_expr_mngr(pgm);
+    last_stmt = 0;
+    expr_mngr_set_file_line(mngr, file_line);
     parser_mode = parser_mode_default;
-    set_current_pgm( program_new(fname) );
 }
 
 int get_parse_errors(void)

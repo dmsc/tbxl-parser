@@ -24,6 +24,7 @@
 typedef struct expr_struct expr;
 typedef struct expr_mngr_struct expr_mngr;
 typedef struct program_struct program;
+typedef struct vars_struct vars;
 typedef struct stmt_struct stmt;
 
 enum enum_etype {
@@ -72,8 +73,10 @@ expr *expr_new_var_array(expr_mngr *, int vn);
 expr *expr_new_label(expr_mngr *, int vn);
 int expr_to_program(expr *e, program *out);
 
+int expr_is_label(const expr *e);
 const char *expr_get_file_name(expr *e);
 program *expr_get_program(const expr *e);
+const expr ** expr_get_statement_list(const expr *e);
 
 int expr_get_file_line(expr *e);
 int tok_prec_level(enum enum_tokens tk);

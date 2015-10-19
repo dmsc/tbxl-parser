@@ -18,24 +18,18 @@
 
 #include "optimize.h"
 #include "expr.h"
-#include "optparse.h"
 #include "optconst.h"
 #include "optlinenum.h"
 #include "optconstvar.h"
 #include "vars.h"
-#include "line.h"
 #include "program.h"
-#include "stmt.h"
 #include "statements.h"
 #include <stdio.h>
 
-program *optimize_program(program *pgm, int level)
+void optimize_program(program *pgm, int level)
 {
-    program *ret = program_new(pgm_get_file_name(pgm));
-
     // Convert program to expression tree
-    expr_mngr *mngr = expr_mngr_new(pgm);
-    expr *ex = opt_parse_program(mngr);
+    expr *ex = pgm_get_expr(pgm);
 
 
     // Optimize:
@@ -54,23 +48,5 @@ program *optimize_program(program *pgm, int level)
     if( level & OPT_CONST_VARS )
         opt_replace_const(ex);
 
-    // Copy variables
-    vars *v = pgm_get_vars(pgm);
-    vars *vret = pgm_get_vars(ret);
-    int i, nvar = vars_get_total(v);
-    for(i=0; i<nvar; i++)
-    {
-        enum var_type t = vars_get_type(v, i);
-        if( t == vtNone )
-            continue;
-        const char *l_name = vars_get_long_name(v, i);
-        vars_new_var(vret, l_name, t, 0, -1);
-    }
-
-    expr_to_program(ex, ret);
-
-    // Delete memory
-    expr_mngr_delete(mngr);
-
-    return ret;
+    pgm_set_expr(pgm, ex);
 }

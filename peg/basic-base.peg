@@ -17,399 +17,501 @@
 #
 
 # Full program
-Program  <- UnicodeBOM?    # Optional Unicode BOM
+Program   = UnicodeBOM?    # Optional Unicode BOM
             ProgramLine*   # Zero or more lines
             EndOfFile      # End of file
 
 # One program line, can be:
-ProgramLine     <- !EndOfFile SPC (
-                       EndOfLine                              # An empty line
-                    /  '$' SPC DirectiveLine                  # A parser directive
-                    /  ':' SPC StatementLine EndOfLine        # A line with statements after a ':'
-                    /  LineNumber EndOfLine                   # A line-number alone
-                    /  LineNumber SPC StatementLine EndOfLine # A line-number and statements
-                    /  StatementLine EndOfLine                # Only statements
-                    / < ERROR > EndOfLine   { print_error("input line", yytext); }
-                  )
+ProgramLine      = !EndOfFile SPC
+                    ( EndOfLine                                 # An empty line
+                    | '$' SPC DirectiveLine                     # A parser directive
+                    | ':' SPC StatementLine EndOfLine           # A line with statements after a ':'
+                    | LineNumber EndOfLine                      # A line-number alone
+                    | LineNumber SPC StatementLine EndOfLine    # A line-number and statements
+                    | StatementLine EndOfLine                   # Only statements
+                    | < ERROR > EndOfLine               { print_error("input line", yytext); }
+                    )
 
 # One statement line, with multiple statements separated by ':'
-StatementLine   <- Statement (   ':' SPC Statement
-                               / ':' SPC EndOfLine { print_error("statement", yytext); }
-                               / < ERROR > { print_error("end of line/statement", yytext); }
+StatementLine    = Statement ( ':' SPC Statement
+                             | ':' SPC EndOfLine        { print_error("statement", yytext); }
+                             | < ERROR >                { print_error("end of line/statement", yytext); }
                              )*
 
 # One statement
-Statement       <-
+Statement        =
                  # Start with comments, *except* REM, as we try to support variable
                  # names starting with "rem".
-                   < (REM_C / REM_)  NotEOL* >             { add_comment(yytext, yyleng); }
+                   < REM_C NotEOL* >            { add_stmt(STMT_REM, add_comment(yytext, yyleng)); }
+                 | < REM_ SPC NotEOL* >         { add_stmt(STMT_REM_, add_comment(yytext, yyleng)); }
                  # Special case: TIME$= is a statement, but has an '=' sign, so must
                  # test before testing variables.
-                 / TIME_S StrExprErr
+                 | TIME_S t:StrExprErr          { add_stmt(STMT_TIME_S,t); }
                  # Allows a space after TIME$, this makes parser less confusing.
-                 / &{ testToken( TOK_TIMEP ) } SPC '=' SPC { add_stmt( STMT_TIME_S ); } StrExprErr
+                 | &{ testToken( TOK_TIMEP ) } SPC '=' SPC t:StrExprErr
+                                                { add_stmt(STMT_TIME_S,t); }
                  # Test variable assignment, this fails (and goes to the rest of
                  # statements if there is no '=' sign after the variable name.
-                 / LET_INV AssignVarStr S_ASGN StrExprErr  !THEN
-                 / LET_INV AssignVarNum F_ASGN NumExprErr  !THEN !FOR_TO
+                 | t:LetExprStr  !THEN          { add_stmt(STMT_LET_INV,t); }
+                 | t:LetExprNum  !THEN !FOR_TO  { add_stmt(STMT_LET_INV,t); }
                  # Standard REM comments
-                 / < REM  NotEOL* >                        { add_comment(yytext, yyleng); }
+                 | < REM  NotEOL* >             { add_stmt(STMT_REM, add_comment(yytext, yyleng)); }
                  # Follows the standard statements, listed here in alphabetical order
-                 / BYE
-                 / BPUT   IOChanErr COMMA NumExpr2
-                 / BGET   IOChanErr COMMA NumExpr2
-                 / BLOAD  StrExprErr
-                 / BRUN   StrExprErr
-                 / COLOR  NumExprErr
-                 / CONT
-                 / COM    DimVar (COMMA DimVar)*
-                 / CLOSE  IOChanErr?
-                 / CLR
-                 / CLS    IOChanErr?
-                 / CLOAD
-                 / CIRCLE NumExpr3
-                 / CSAVE
-                 / DATA   < NotEOL* >  { add_data_stmt(yytext, yyleng); } ForceLine
-                 / DEG
-                 / DIM    DimVar (COMMA DimVar)*
-                 / DOS
-                 / DRAWTO NumExpr2
-                 / DPOKE  NumExpr2
-                 / DO
-                 / DIR    StrExprErr?
-                 / DELETE StrExprErr
-                 / DEL    NumExpr2
-                 / DUMP   StrExpr?
-                 / DSOUND NumExpr4?
-                 / ENTER  StrExprErr
-                 / ELSE
-                 / ENDIF
-                 / EXIT   NumExprErr?
-                 / EXEC   Label
-                 / ENDPROC
-                 / END
-                 / FOR    PVarNum F_ASGN NumExprErr FOR_TO NumExprErr (STEP NumExprErr)?
-                 / FILLTO NumExpr2
-                 / FCOLOR NumExprErr
-                 / GOTO   NumExprErr
-                 / GO_TO  NumExprErr
-                 / GOSUB  NumExprErr
-                 / GET    (IOChan COMMA)? PVarNum (COMMA PVarNum)*
-                 / GRAPHICS NumExprErr
-                 / GO_S   Label
-                 / INPUT  (  IOChan ( COMMA / SEMICOLON )
-                           / StringData ( COMMA / SEMICOLON )
-                          )? VariableList
+                 | BYE                          { add_stmt(STMT_BYE,0); }
+                 | BPUT   t:IONumExpr2          { add_stmt(STMT_BPUT,t); }
+                 | BGET   t:IONumExpr2          { add_stmt(STMT_BGET,t); }
+                 | BLOAD  t:StrExprErr          { add_stmt(STMT_BLOAD,t); }
+                 | BRUN   t:StrExprErr          { add_stmt(STMT_BRUN,t); }
+                 | COLOR  t:NumExprErr          { add_stmt(STMT_COLOR,t); }
+                 | CONT                         { add_stmt(STMT_CONT,0); }
+                 | COM    t:DimVarList          { add_stmt(STMT_COM,t); }
+                 | CLOSE  t:IOChanErrOpt        { add_stmt(STMT_CLOSE,t); }
+                 | CLR                          { add_stmt(STMT_CLR,0); }
+                 | CLS    t:IOChanErrOpt        { add_stmt(STMT_CLS,t); }
+                 | CLOAD                        { add_stmt(STMT_CLOAD,0); }
+                 | CIRCLE t:NumExpr3            { add_stmt(STMT_CIRCLE,t); }
+                 | CSAVE                        { add_stmt(STMT_CSAVE,0); }
+                 | DATA   < NotEOL* >           { add_stmt(STMT_DATA,add_data_stmt(yytext, yyleng)); add_force_line(); }
+                 | DEG                          { add_stmt(STMT_DEG,0); }
+                 | DIM    t:DimVarList          { add_stmt(STMT_DIM,t); }
+                 | DOS                          { add_stmt(STMT_DOS,0); }
+                 | DRAWTO t:NumExpr2            { add_stmt(STMT_DRAWTO,t); }
+                 | DPOKE  t:NumExpr2            { add_stmt(STMT_DPOKE,t); }
+                 | DO                           { add_stmt(STMT_DO,0); }
+                 | DIR    t:StrExprErrOpt       { add_stmt(STMT_DIR,t); }
+                 | DELETE t:StrExprErr          { add_stmt(STMT_DELETE,t); }
+                 | DEL    t:NumExpr2            { add_stmt(STMT_DEL,t); }
+                 | DUMP   t:StrExprErrOpt       { add_stmt(STMT_DUMP,t); }
+                 | DSOUND t:NumExpr4Opt         { add_stmt(STMT_DSOUND,t); }
+                 | ENTER  t:StrExprErr          { add_stmt(STMT_ENTER,t); }
+                 | ELSE                         { add_stmt(STMT_ELSE,0); }
+                 | ENDIF                        { add_stmt(STMT_ENDIF,0); }
+                 | EXIT   t:NumExprErrOpt       { add_stmt(STMT_EXIT,t); }
+                 | EXEC   t:Label               { add_stmt(STMT_EXEC,t); }
+                 | ENDPROC                      { add_stmt(STMT_ENDPROC,0); }
+                 | END                          { add_stmt(STMT_END,0); }
+                 | FOR    t:ForStmtExpr         { add_stmt(STMT_FOR,t); }
+                 | FILLTO t:NumExpr2            { add_stmt(STMT_FILLTO,t); }
+                 | FCOLOR t:NumExprErr          { add_stmt(STMT_FCOLOR,t); }
+                 | GOTO   t:NumExprErr          { add_stmt(STMT_GOTO,t); }
+                 | GO_TO  t:NumExprErr          { add_stmt(STMT_GO_TO,t); }
+                 | GOSUB  t:NumExprErr          { add_stmt(STMT_GOSUB,t); }
+                 | GET    t:GetExpr             { add_stmt(STMT_GET,t); }
+                 | GRAPHICS t:NumExprErr        { add_stmt(STMT_GRAPHICS,t); }
+                 | GO_S   t:Label               { add_stmt(STMT_GO_S,t); }
+                 | INPUT  t:InputExpr           { add_stmt(STMT_INPUT,t); }
                  # We split the IF into three cases:
                  # 1- IF/THEN followed by a number, forcing a line-break.
-                 / IF_NUMBER    NumExprErr THEN Number
-                                 (
-                                  ':' SPC < NotEOL* >
-                                  { add_stmt( STMT_REM ); add_comment(yytext, yyleng); }
-                                 )? ForceLine
+                 | IF_NUMBER t:IfNumberExpr     { add_stmt(STMT_IF_NUMBER,t); }
+                    ( ':' SPC < NotEOL* >       { add_stmt(STMT_REM, add_comment(yytext, yyleng)); } )?
+                                                { add_force_line(); }
                  # 2- IF/THEN followed by statements, adding an invisible ENDIF at
                  # the end of the statements and forcing a line-break.
-                 / IF_THEN      NumExprErr THEN StatementLine ENDIF_INVISIBLE ForceLine
+                 | IF_THEN t:IfThenExpr         { add_stmt(STMT_IF_THEN,t); }
+                    StatementLine               { add_stmt(STMT_ENDIF_INVISIBLE,0); add_force_line(); }
                  # 3- A multi-line IF
-                 / IF_MULTILINE NumExprErr
-                 / LIST   StrExpr (COMMA NumExprErr ( COMMA NumExprErr )? )?
-                 / LIST   ( NumExprErr ( COMMA NumExprErr )? )?
-                 / LET    AssignVarStr S_ASGN StrExprErr
-                 / LET    AssignVarNum F_ASGN NumExprErr
-                 / LOAD   StrExprErr
-                 / LOCATE NumExpr2 COMMA PVarNum
-                 / LPRINT PrintExpr
-                 / LOOP
-                 / LOCK   StrExprErr
-                 / MOVE   NumExpr3
-                 / N_MOVE NumExpr3
-                 / NEXT   PVarNum
-                 / NEW
-                 / NOTE   IOChanErr COMMA PVarNum COMMA PVarNum
-                 / OPEN   IOChanErr COMMA NumExpr2 COMMA StrExprErr
-                 / ON     NumExprErr (
-                                     ON_GOTO    NumExprErr (COMMA NumExprErr)*
-                                   / ON_GOSUB   NumExprErr (COMMA NumExprErr)*
-                                   / ON_GOSHARP Label (COMMA Label)*
-                                   / ON_EXEC    Label (COMMA Label)*
-                                   / < ERROR >  { add_stmt( STMT_BAS_ERROR );
-                                                  add_comment(yytext,yyleng);
-                                                  print_error("on goto/gosub/go#/exec", yytext); }
-                                  )
-                 / POINT  IOChanErr COMMA NumExpr2
-                 / POKE   NumExpr2
-                 / PRINT  ( IOChan ((COMMA / SEMICOLON) PrintExpr)? / PrintExpr )
-                 / PRINT_ ( IOChan ((COMMA / SEMICOLON) PrintExpr)? / PrintExpr )
-                 / POP
-                 / PUT    (IOChan COMMA)? NumExprErr (COMMA NumExprErr)*
-                 / PLOT   NumExpr2
-                 / POSITION NumExpr2
-                 / PAUSE  NumExprErr
-                 / PROC   Label
-                 / PAINT  NumExpr2
-                 / RAD
-                 / READ   VariableList
-                 / RESTORE ( SHARP Label / NumExprErr )?
-                 / RETURN
-                 / RUN    StrExpr?
-                 / REPEAT
-                 / RENAME StrExprErr
-                 / RENUM  NumExpr3
-                 / SAVE   StrExprErr
-                 / STATUS IOChanErr COMMA PVarNum
-                 / STOP
-                 / SETCOLOR NumExpr3
-                 / SOUND  NumExpr4?
-                 / TRAP   ( SHARP Label / NumExprErr )
-                 / TRACE
-                 / TEXT   NumExpr2 COMMA StrExprErr
-                 / UNTIL  NumExprErr
-                 / UNLOCK StrExprErr
-                 / WHILE  NumExprErr
-                 / WEND
-                 / XIO    NumExprErr COMMA IOChanErr COMMA NumExpr2 COMMA StrExprErr
-                 / F_F
-                 / F_L
-                 / F_B
-                 / P_PUT  (IOChan COMMA)? NumExprErr (COMMA NumExprErr)*
-                 / P_GET  (IOChan COMMA)? PVarNum (COMMA PVarNum)*
-                 / LBL_S  Label
+                 | IF_MULTILINE t:NumExprErr    { add_stmt(STMT_IF_MULTILINE,t); }
+                 | LIST  { t=0; } t:ListExpr?   { add_stmt(STMT_LIST,t); }
+                 | LET    t:LetExpr             { add_stmt(STMT_LET,t); }
+                 | LOAD   t:StrExprErr          { add_stmt(STMT_LOAD,t); }
+                 | LOCATE t:LocateExpr          { add_stmt(STMT_LOCATE,t); }
+                 | LPRINT t:PrintExpr           { add_stmt(STMT_LPRINT,t); }
+                 | LOOP                         { add_stmt(STMT_LOOP,0); }
+                 | LOCK   t:StrExprErr          { add_stmt(STMT_LOCK,t); }
+                 | MOVE   t:NumExpr3            { add_stmt(STMT_MOVE,t); }
+                 | N_MOVE t:NumExpr3            { add_stmt(STMT_N_MOVE,t); }
+                 | NEXT   t:PVarNum             { add_stmt(STMT_NEXT,t); }
+                 | NEW                          { add_stmt(STMT_NEW,0); }
+                 | NOTE   t:IOVarNumExpr2       { add_stmt(STMT_NOTE,t); }
+                 | OPEN   t:OpenExpr            { add_stmt(STMT_OPEN,t); }
+                 | ON     t:OnExpr              { add_stmt(STMT_ON,t); }
+                 | POINT  t:IONumExpr2          { add_stmt(STMT_POINT,t); }
+                 | POKE   t:NumExpr2            { add_stmt(STMT_POKE,t); }
+                 | PRINT  t:PrintIoExpr         { add_stmt(STMT_PRINT,t); }
+                 | PRINT_ t:PrintIoExpr         { add_stmt(STMT_PRINT_,t); }
+                 | POP                          { add_stmt(STMT_POP,0); }
+                 | PUT    t:PutExpr             { add_stmt(STMT_PUT,t); }
+                 | PLOT   t:NumExpr2            { add_stmt(STMT_PLOT,t); }
+                 | POSITION t:NumExpr2          { add_stmt(STMT_POSITION,t); }
+                 | PAUSE  t:NumExprErr          { add_stmt(STMT_PAUSE,t); }
+                 | PROC   t:Label               { add_stmt(STMT_PROC,t); }
+                 | PAINT  t:NumExpr2            { add_stmt(STMT_PAINT,t); }
+                 | RAD                          { add_stmt(STMT_RAD,0); }
+                 | READ   t:VariableList        { add_stmt(STMT_READ,t); }
+                 | RESTORE (t:LabelOrLNumExpr   { add_stmt(STMT_RESTORE,t); } | { add_stmt(STMT_RESTORE,0); } )
+                 | RETURN                       { add_stmt(STMT_RETURN,0); }
+                 | RUN   (t:StrExpr             { add_stmt(STMT_RUN,t); } | { add_stmt(STMT_RUN,0); } )
+                 | REPEAT                       { add_stmt(STMT_REPEAT,0); }
+                 | RENAME t:StrExprErr          { add_stmt(STMT_RENAME,t); }
+                 | RENUM  t:NumExpr3            { add_stmt(STMT_RENUM,t); }
+                 | SAVE   t:StrExprErr          { add_stmt(STMT_SAVE,t); }
+                 | STATUS t:StatusExpr          { add_stmt(STMT_STATUS,t); }
+                 | STOP                         { add_stmt(STMT_STOP,0); }
+                 | SETCOLOR t:NumExpr3          { add_stmt(STMT_SETCOLOR,t); }
+                 | SOUND  t:NumExpr4Opt         { add_stmt(STMT_SOUND,t); }
+                 | TRAP   t:LabelOrLNumExpr     { add_stmt(STMT_TRAP,t); }
+                 | TRACE                        { add_stmt(STMT_TRACE,0); }
+                 | TEXT   t:Num2StrExpr         { add_stmt(STMT_TEXT,t); }
+                 | UNTIL  t:NumExprErr          { add_stmt(STMT_UNTIL,t); }
+                 | UNLOCK t:StrExprErr          { add_stmt(STMT_UNLOCK,t); }
+                 | WHILE  t:NumExprErr          { add_stmt(STMT_WHILE,t); }
+                 | WEND                         { add_stmt(STMT_WEND,0); }
+                 | XIO    t:XioExpr             { add_stmt(STMT_XIO,t); }
+                 | F_F                          { add_stmt(STMT_F_F,0); }
+                 | F_L                          { add_stmt(STMT_F_L,0); }
+                 | F_B                          { add_stmt(STMT_F_B,0); }
+                 | P_PUT  t:PutExpr             { add_stmt(STMT_P_PUT,t); }
+                 | P_GET  t:GetExpr             { add_stmt(STMT_P_GET,t); }
+                 | LBL_S  t:Label               { add_stmt(STMT_LBL_S,t); }
                  # A basic ERROR- line, parsed for compatibility
-                 / < BAS_ERROR ERROR > { print_error("statement", yytext);
-                                         add_comment(yytext,yyleng); }
+                 | < BAS_ERROR ERROR >          { add_stmt(STMT_BAS_ERROR, add_comment(yytext,yyleng)); print_error("statement", yytext); }
                  # And, if not any of the above, we declare a parsing error
-                 / < ERROR > { add_stmt( STMT_BAS_ERROR );
-                               add_comment(yytext,yyleng);
-                               print_error("statement", yytext); }
+                 | < ERROR >                    { add_stmt(STMT_BAS_ERROR, add_comment(yytext,yyleng)); print_error("statement", yytext); }
 
 # Catches errors and skips to end of statement
-ERROR           <- [^:\233\015\n\t ][^:\015\n\233]*
+ERROR            = [^:\233\015\n\t ][^:\015\n\233]*
 # Catches errors and skips to end of expression
-ERROREXP        <- [^:\233\015\n\t ][^,:\015\n\233]*
+ERROREXP         = [^:\233\015\n\t ][^,:\015\n\233]*
+
+# BPUT / BGET / POINT
+IONumExpr2       = l:IOChanErr COMMA r:NumExpr2         { $$ = ex_bin(l,r,TOK_COMMA); }
+
+# Assignments
+LetExpr          = LetExprStr | LetExprNum
+LetExprStr       = l:AssignVarStr S_ASGN r:StrExprErr   { $$ = ex_bin(l,r,TOK_S_ASGN); }
+LetExprNum       = l:AssignVarNum F_ASGN r:NumExprErr   { $$ = ex_bin(l,r,TOK_F_ASGN); }
 
 # Expressions
-NumExpr2        <- NumExprErr COMMA NumExprErr
-                  / < ERROR > { print_error("2 numeric expressions", yytext); }
-NumExpr3        <- NumExpr2 COMMA NumExprErr
-                  / < ERROR > { print_error("3 numeric expressions", yytext); }
-NumExpr4        <- NumExpr3 COMMA NumExprErr
-                  / < ERROR > { print_error("4 numeric expressions", yytext); }
-IOChan          <- SHARP NumExprErr
-AnyExpr         <- NumExpr / StrExpr
-PrintSep        <- COMMA / SEMICOLON
-PrintExpr       <- AnyExpr? ( PrintSep AnyExpr? )*
+NumExpr2         = l:NumExprErr COMMA r:NumExprErr      { $$ = ex_bin(l,r,TOK_COMMA); }
+                  | < ERROR > { print_error("2 numeric expressions", yytext); }
+NumExpr3         = l:NumExpr2 COMMA r:NumExprErr        { $$ = ex_bin(l,r,TOK_COMMA); }
+                  | < ERROR > { print_error("3 numeric expressions", yytext); }
+NumExpr4         = l:NumExpr3 COMMA r:NumExprErr        { $$ = ex_bin(l,r,TOK_COMMA); }
+                  | < ERROR > { print_error("4 numeric expressions", yytext); }
+NumExpr4Opt      = { $$ = 0; }  NumExpr4?
+IOChan           = SHARP r:NumExprErr                   { $$ = ex_bin(0,r,TOK_SHARP); }
+IOChanErr        = IOChan
+                  | < ERROREXP >                        { print_error("I/O channel (#)", yytext); $$ = 0; }
+IOChanErrOpt     = { $$ = 0; }  IOChanErr?
+AnyExpr          = NumExpr | StrExpr
+VarNumComma      = l:PVarNum (COMMA r:PVarNum           { l = ex_comma(l,r); }
+                             )*                         { $$ = l; }
+NumComma         = l:NumExprErr (COMMA r:NumExprErr     { l = ex_comma(l,r); }
+                                )*                      { $$ = l; }
+LabelComma       = l:Label (COMMA r:Label               { l = ex_comma(l,r); }
+                           )*                           { $$ = l; }
+
+PrintExpr        = l:PrintExprStart
+                        ( COMMA r:AnyExpr               { l = ex_bin(l,r,TOK_COMMA); }
+                        | SEMICOLON r:AnyExpr           { l = ex_bin(l,r,TOK_SEMICOLON); }
+                        | COMMA                         { l = ex_bin(l,0,TOK_COMMA); }
+                        | SEMICOLON                     { l = ex_bin(l,0,TOK_SEMICOLON); }
+                        )*                              { $$ = l; }
+
+PrintExprStart   = AnyExpr
+                 | COMMA r:AnyExpr                      { $$ = ex_bin(0,r,TOK_COMMA); }
+                 | SEMICOLON r:AnyExpr                  { $$ = ex_bin(0,r,TOK_SEMICOLON); }
+                 | COMMA                                { $$ = ex_bin(0,0,TOK_COMMA); }
+                 | SEMICOLON                            { $$ = ex_bin(0,0,TOK_SEMICOLON); }
+                 |                                      { $$ = 0; }
+
+# FOR statement expression:
+ForStmtExpr      = l:PVarNum F_ASGN r:NumExprErr        { l = ex_bin(l,r,TOK_F_ASGN); }
+                   FOR_TO r:NumExprErr                  { l = ex_bin(l,r,TOK_FOR_TO); }
+                   (STEP r:NumExprErr                   { l = ex_bin(l,r,TOK_STEP); }
+                   )?                                   { $$ = l; }
+
+# GET / %GET expressions:
+GetExpr          = l:IOChan COMMA r:VarNumComma         { $$ = ex_comma(l, r); }
+                 | VarNumComma
+
+# PUT / %PUT expressions:
+PutExpr          = l:IOChan COMMA r:NumComma            { $$ = ex_comma(l, r); }
+                 | NumComma
+
+# XIO expression:
+XioExpr          = n1:NumExprErr COMMA n2:IOChanErr COMMA n3:NumExpr2 COMMA n4:StrExprErr
+                                                        { $$ = ex_comma(ex_comma(ex_comma(n1,n2),n3),n4); }
+
+# STATUS expression
+StatusExpr       = l:IOChanErr COMMA r:PVarNum          { $$ = ex_comma(l,r); }
+
+# PRINT and ? expressions:
+PrintIoExpr      = l:IOChan
+                      ( COMMA r:PrintExpr               { l = ex_bin(l,r, TOK_COMMA); }
+                      | SEMICOLON r:PrintExpr           { l = ex_bin(l,r, TOK_SEMICOLON); }
+                      )?                                { $$ = l; }
+                 | PrintExpr
+
+# INPUT expressions:
+InputExpr        = l:IOChan COMMA r:VariableList        { $$ = ex_comma(l,r); }
+                 | l:IOChan SEMICOLON r:VariableList    { $$ = ex_bin(l,r,TOK_SEMICOLON); }
+                 | l:StringData
+                    ( COMMA r:VariableList              { $$ = ex_comma(l,r); }
+                    | SEMICOLON r:VariableList          { $$ = ex_bin(l,r,TOK_SEMICOLON); }
+                    )
+                 | VariableList
+
+# IF / THEN number
+IfNumberExpr     = l:NumExprErr THEN r:Number           { $$ = ex_bin(l,r,TOK_THEN); }
+
+# IF / THEN statement
+IfThenExpr       = l:NumExprErr THEN                    { $$ = ex_bin(l,0,TOK_THEN); }
+
+# LIST expression:
+ListExpr         = l:StrExpr
+                        ( COMMA r:NumExpr               { l = ex_comma(l,r); }
+                           ( COMMA r:NumExpr            { l = ex_comma(l,r); } )? )?
+                                                        { $$ = l; }
+                 | l:NumExpr COMMA r:NumExprErr         { $$ = ex_comma(l,r); }
+                 | NumExprErr
+
+# LOCATE expression:
+LocateExpr       = l:NumExpr2 COMMA r:PVarNum           { $$ = ex_comma(l,r); }
+
+# Used in NOTE
+IOVarNumExpr2    = n1:IOChanErr COMMA n2:PVarNum COMMA n3:PVarNum       { $$ = ex_comma(ex_comma(n1,n2),n3); }
+
+# OPEN expression:
+OpenExpr         = n1:IOChanErr COMMA n2:NumExprErr COMMA n3:NumExprErr COMMA n4:StrExprErr
+                                                        { $$ = ex_comma(ex_comma(ex_comma(n1,n2),n3),n4); }
+
+# ON GOTO/GOSUB/GO#/EXEC
+OnExpr           = l:NumExprErr
+                        ( ON_GOTO    r:NumComma         { $$ = ex_bin(l,r,TOK_ON_GOTO); }
+                        | ON_GOSUB   r:NumComma         { $$ = ex_bin(l,r,TOK_ON_GOSUB); }
+                        | ON_GOSHARP r:LabelComma       { $$ = ex_bin(l,r,TOK_ON_GOSHARP); }
+                        | ON_EXEC    r:LabelComma       { $$ = ex_bin(l,r,TOK_ON_EXEC); }
+                        | < ERROR >  { print_error("on goto/gosub/go#/exec", yytext); $$ = l; }
+                        )
+
+# Used on RESTORE and TRAP:
+LabelOrLNumExpr  = SHARP r:Label                        { $$ = ex_bin(0,r,TOK_SHARP); }
+                 | NumExprErr
+
+# Used on TEXT
+Num2StrExpr      = l:NumExpr2 COMMA r:StrExprErr        { $$ = ex_comma(l,r); }
 
 # Used in INPUT or READ, needs a list of numeric or string variables.
-VariableList    <- PVarNumStr (COMMA PVarNumStr)*
-                  / < ERROR > { print_error("numeric or string variable", yytext); }
-PVarNumStr      <- PVarNum
-                 / PVarStr
-AssignVarNum    <- PVarArray ArrayAccess
-                 / PVarNum
-AssignVarStr    <- PVarStr SubStr?
+VariableList     = l:PVarNumStr (COMMA r:PVarNumStr     { l = ex_comma(l,r); }
+                                )*                      { $$ = l; }
+                 | < ERROR > { print_error("numeric or string variable", yytext); $$ = 0; }
+PVarNumStr       = PVarNum
+                 | PVarStr
+AssignVarNum     = l:PVarArray r:ArrayAccess            { $$ = ex_bin(l,r,TOK_A_L_PRN); }
+                 | PVarNum
+AssignVarStr     = l:PVarStr ( S_L_PRN r:ArrayAccess    { l = ex_bin(l,r,TOK_S_L_PRN); }
+                             )?                         { $$ = l; }
+ArrayAccess      = l:NumExprErr ( A_COMMA r:NumExprErr  { l = ex_bin(l,r,TOK_A_COMMA); }
+                                )? R_PRN                { $$ = l; }
 
-ArrayAccess     <- NumExprErr ( A_COMMA NumExprErr )? R_PRN
-SubStr          <- S_L_PRN ArrayAccess
-
-DimVar          <- PDimVarArray NumExpr ( A_COMMA NumExpr )? R_PRN
-                 / PDimVarStr NumExpr R_PRN
-                 / < ERROREXP > { print_error("DIM string/array", yytext); }
+DimVarList       = l:DimVar (COMMA r:DimVar             { l = ex_comma(l,r); }
+                            )*                          { $$ = l; }
+DimVar           = l:PDimVarArray r:ArrayAccess         { $$ = ex_bin(l,r,TOK_D_L_PRN); }
+                 | l:PDimVarStr r:NumExpr R_PRN         { $$ = ex_bin(l,r,TOK_DS_L_PRN); }
+                 | < ERROREXP >                         { print_error("DIM string/array", yytext); $$ = 0; }
 
 # Variables
-Label           <- < Identifier > { add_ident(yytext, vtLabel);  }               SPC
-PVarStr         <- < Identifier > { add_ident(yytext, vtString); } '$'           SPC
-PVarNum         <- < Identifier > { add_ident(yytext, vtFloat);  }     ![$(]     SPC
-PVarArray       <- < Identifier > { add_ident(yytext, vtArray);  }     A_L_PRN   SPC
-PDimVarArray    <- < Identifier > { add_ident(yytext, vtArray);  }     D_L_PRN   SPC
-PDimVarStr      <- < Identifier > { add_ident(yytext, vtString); } '$' SPC DS_L_PRN  SPC
+Label            = < Identifier >                  SPC { $$ = add_ident(yytext, vtLabel);  }
+PVarStr          = < Identifier > '$'              SPC { $$ = add_ident(yytext, vtString); }
+PVarNum          = < Identifier > ![$(]            SPC { $$ = add_ident(yytext, vtFloat);  }
+PVarArray        = < Identifier >          A_L_PRN SPC { $$ = add_ident(yytext, vtArray);  }
+PDimVarArray     = < Identifier >          D_L_PRN SPC { $$ = add_ident(yytext, vtArray);  }
+PDimVarStr       = < Identifier > '$' SPC DS_L_PRN SPC { $$ = add_ident(yytext, vtString); }
 
 # Defs
-StringDef       <- '@' < Identifier > '$'  { add_strdef_val(yytext); }           SPC
-NumericDef      <- '@' < Identifier > !'$' { add_numdef_val(yytext); }           SPC
+StringDef        = '@' < Identifier > '$'  { $$ = add_strdef_val(yytext); }           SPC
+NumericDef       = '@' < Identifier > !'$' { $$ = add_numdef_val(yytext); }           SPC
 
 # Those constructs produce errors if not matched
-NumExprErr      <- NumExpr
-                  / < ERROREXP > { print_error("numeric expression", yytext); }
-StrExprErr      <- StrExpr
-                  / < ERROREXP > { print_error("string expression", yytext); }
-IOChanErr       <- SHARP NumExprErr
-                  / < ERROREXP > { print_error("I/O channel (#)", yytext); }
+NumExprErr       = NumExpr
+                  | < ERROREXP > { print_error("numeric expression", yytext); $$ = 0; }
+NumExprErrOpt    = { $$ = 0; } NumExprErr?
+StrExprErr       = StrExpr
+                  | < ERROREXP > { print_error("string expression", yytext); $$ = 0; }
+StrExprErrOpt    = { $$ = 0; } StrExprErr?
 
 # String expressions
-StrExpr         <- STRP    ParNumExpr
-                 / CHRP    ParNumExpr
-                 / HEXP    ParNumExpr
-                 / INKEYP
-                 / TIMEP
-                 / StringData
-                 / StringDef
-                 / PVarStr SubStr?
+StrExpr          = STRP    r:ParNumExpr                 { $$ = ex_bin(0,r,TOK_STRP); }
+                 | CHRP    r:ParNumExpr                 { $$ = ex_bin(0,r,TOK_CHRP); }
+                 | HEXP    r:ParNumExpr                 { $$ = ex_bin(0,r,TOK_HEXP); }
+                 | INKEYP                               { $$ = ex_bin(0,0,TOK_INKEYP); }
+                 | TIMEP                                { $$ = ex_bin(0,0,TOK_TIMEP); }
+                 | StringData
+                 | StringDef
+                 | AssignVarStr
 
 # Any type of string
-StringData      <- ( ConstString
-                   / ExtendedString )   { add_string(); }
+StringData       = ( ConstString
+                   | ExtendedString )   { $$ = add_string(); }
 
 # Constant string, enclosed in ""
-ConstString     <- '"' < StrContent? ( '"' '"' StrContent? )* > { push_string_const(yytext, yyleng); } '"' SPC
-StrContent      <- [^"]+
+ConstString      = '"' < StrContent? ( '"' '"' StrContent? )* > { push_string_const(yytext, yyleng); } '"' SPC
+StrContent       = [^"]+
 
 # Extended string, enclosed in [" "]
-ExtStringStart <- '[' '"'
-ExtStringEnd   <- '"' ']'
-ExtendedString  <- ExtStringStart < (!ExtStringEnd . )* >
+ExtStringStart  = '[' '"'
+ExtStringEnd    = '"' ']'
+ExtendedString   = ExtStringStart < (!ExtStringEnd . )* >
                  (
                    ExtStringEnd { push_extended_string(yytext, yyleng); }
-                 / EndOfFile { print_error("end of extended string (\"])", yytext); }
+                 | EndOfFile { print_error("end of extended string (\"])", yytext); }
                  )
 
 # Numeric Expressions
-NumExpr         <- CompExpr (
-                      OR NumExpr
-                    / AND NumExpr
-                    )*
+NumExpr          = l:AndExpr (
+                      OR r:AndExpr                      { l = ex_bin(l,r,TOK_OR); }
+                    )*                                  { $$ = l; }
 
-CompExpr        <-
-                   NotExpr (
-                       N_LEQ CompExpr
-                     / N_NEQ CompExpr
-                     / N_GEQ CompExpr
-                     / N_LE  CompExpr
-                     / N_GE  CompExpr
-                     / N_EQ  CompExpr
-                     )*
+AndExpr          = l:CompExpr (
+                      AND r:CompExpr                    { l = ex_bin(l,r,TOK_AND); }
+                    )*                                  { $$ = l; }
 
-NotExpr         <- NOT NotExpr
-                 / AddExpr
+CompExpr         =
+                   l:NotExpr (
+                       N_LEQ r:NotExpr                  { l = ex_bin(l,r,TOK_N_LEQ); }
+                     | N_NEQ r:NotExpr                  { l = ex_bin(l,r,TOK_N_NEQ); }
+                     | N_GEQ r:NotExpr                  { l = ex_bin(l,r,TOK_N_GEQ); }
+                     | N_LE  r:NotExpr                  { l = ex_bin(l,r,TOK_N_LE); }
+                     | N_GE  r:NotExpr                  { l = ex_bin(l,r,TOK_N_GE); }
+                     | N_EQ  r:NotExpr                  { l = ex_bin(l,r,TOK_N_EQ); }
+                     )*                                 { $$ = l; }
 
-AddExpr         <- MultExpr (
-                     PLUS AddExpr
-                   / MINUS AddExpr
-                   )*
+NotExpr          = NOT r:NotExpr                        { $$ = ex_bin(0,r,TOK_NOT); }
+                 | AddExpr
 
-MultExpr        <- BitExpr (
-                     STAR  MultExpr
-                   / SLASH MultExpr
-                   / DIV   MultExpr
-                   / MOD   MultExpr
-                   )*
+AddExpr          = l:MultExpr (
+                     PLUS  r:MultExpr                   { l = ex_bin(l,r,TOK_PLUS); }
+                   | MINUS r:MultExpr                   { l = ex_bin(l,r,TOK_MINUS); }
+                   )*                                   { $$ = l; }
 
-BitExpr         <- PowExpr (
-                       ANDPER BitExpr
-                     / EXCLAM BitExpr
-                     / EXOR   BitExpr
-                     )*
+MultExpr         = l:BitExpr (
+                     STAR  r:BitExpr                    { l = ex_bin(l,r,TOK_STAR); }
+                   | SLASH r:BitExpr                    { l = ex_bin(l,r,TOK_SLASH); }
+                   | DIV   r:BitExpr                    { l = ex_bin(l,r,TOK_DIV); }
+                   | MOD   r:BitExpr                    { l = ex_bin(l,r,TOK_MOD); }
+                   )*                                   { $$ = l; }
 
-PowExpr         <- NegExpr (
-                     CARET PowExpr
-                     )*
+BitExpr          = l:PowExpr (
+                       ANDPER r:PowExpr                 { l = ex_bin(l,r,TOK_ANDPER); }
+                     | EXCLAM r:PowExpr                 { l = ex_bin(l,r,TOK_EXCLAM); }
+                     | EXOR   r:PowExpr                 { l = ex_bin(l,r,TOK_EXOR); }
+                     )*                                 { $$ = l; }
 
-NegExpr         <- UMINUS NegExpr
-                 / UPLUS  NegExpr
-                 / UnitExpr
+PowExpr          = l:NegExpr (
+                     CARET r:NegExpr                    { l = ex_bin(l,r,TOK_CARET); }
+                     )*                                 { $$ = l; }
 
-UnitExpr        <- Number
-                 / StrCompExpr
-                 / L_PRN NumExpr R_PRN
-                 / USR    ParUsrExpr
-                 / ASC    ParStrExpr
-                 / VAL    ParStrExpr
-                 / LEN    ParStrExpr
-                 / ADR    ParStrExpr
-                 / ATN    ParNumExpr
-                 / COS    ParNumExpr
-                 / PEEK   ParNumExpr
-                 / SIN    ParNumExpr
-                 / RND    ParNumExpr
-                 / RND_S
-                 / FRE    ParNumExpr
-                 / EXP    ParNumExpr
-                 / LOG    ParNumExpr
-                 / CLOG   ParNumExpr
-                 / SQR    ParNumExpr
-                 / SGN    ParNumExpr
-                 / ABS    ParNumExpr
-                 / INT    ParNumExpr
-                 / PADDLE ParNumExpr
-                 / STICK  ParNumExpr
-                 / PTRIG  ParNumExpr
-                 / STRIG  ParNumExpr
-                 / DPEEK  ParNumExpr
-                 / INSTR  ParInstrExpr
-                 / DEC    ParStrExpr
-                 / FRAC   ParNumExpr
-                 / RAND   ParNumExpr
-                 / TRUNC  ParNumExpr
-                 / UINSTR ParInstrExpr
-                 / TIME
-                 / PER_0
-                 / PER_1
-                 / PER_2
-                 / PER_3
-                 / ERR
-                 / ERL
-                 / NumericDef
-                 / PVarArray ArrayAccess
-                 / PVarNum
+NegExpr          = UMINUS r:NegExpr                     { $$ = ex_bin(0,r,TOK_UMINUS); }
+                 | UPLUS  r:NegExpr                     { $$ = ex_bin(0,r,TOK_UPLUS); }
+                 | UnitExpr
+
+UnitExpr         = Number
+                 | StrCompExpr
+                 | L_PRN r:NumExpr R_PRN                { $$ = ex_bin(0,r,TOK_L_PRN); }
+                 | USR    r:ParUsrExpr                  { $$ = ex_bin(0,r,TOK_USR); }
+                 | ASC    r:ParStrExpr                  { $$ = ex_bin(0,r,TOK_ASC); }
+                 | VAL    r:ParStrExpr                  { $$ = ex_bin(0,r,TOK_VAL); }
+                 | LEN    r:ParStrExpr                  { $$ = ex_bin(0,r,TOK_LEN); }
+                 | ADR    r:ParStrExpr                  { $$ = ex_bin(0,r,TOK_ADR); }
+                 | ATN    r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_ATN); }
+                 | COS    r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_COS); }
+                 | PEEK   r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_PEEK); }
+                 | SIN    r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_SIN); }
+                 | RND    r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_RND); }
+                 | RND_S                                { $$ = ex_bin(0,0,TOK_RND_S); }
+                 | FRE    r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_FRE); }
+                 | EXP    r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_EXP); }
+                 | LOG    r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_LOG); }
+                 | CLOG   r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_CLOG); }
+                 | SQR    r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_SQR); }
+                 | SGN    r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_SGN); }
+                 | ABS    r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_ABS); }
+                 | INT    r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_INT); }
+                 | PADDLE r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_PADDLE); }
+                 | STICK  r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_STICK); }
+                 | PTRIG  r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_PTRIG); }
+                 | STRIG  r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_STRIG); }
+                 | DPEEK  r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_DPEEK); }
+                 | INSTR  r:ParInstrExpr                { $$ = ex_bin(0,r,TOK_INSTR); }
+                 | DEC    r:ParStrExpr                  { $$ = ex_bin(0,r,TOK_DEC); }
+                 | FRAC   r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_FRAC); }
+                 | RAND   r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_RAND); }
+                 | TRUNC  r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_TRUNC); }
+                 | UINSTR r:ParInstrExpr                { $$ = ex_bin(0,r,TOK_UINSTR); }
+                 | TIME                                 { $$ = ex_bin(0,0,TOK_TIME); }
+                 | PER_0                                { $$ = ex_bin(0,0,TOK_PER_0); }
+                 | PER_1                                { $$ = ex_bin(0,0,TOK_PER_1); }
+                 | PER_2                                { $$ = ex_bin(0,0,TOK_PER_2); }
+                 | PER_3                                { $$ = ex_bin(0,0,TOK_PER_3); }
+                 | ERR                                  { $$ = ex_bin(0,0,TOK_ERR); }
+                 | ERL                                  { $$ = ex_bin(0,0,TOK_ERL); }
+                 | NumericDef
+                 | AssignVarNum
 
 # String comparisons is a type of numeric expresion
-StrCompExpr     <- StrExpr (
-                     S_LEQ StrExprErr
-                   / S_NEQ StrExprErr
-                   / S_GEQ StrExprErr
-                   / S_LE  StrExprErr
-                   / S_GE  StrExprErr
-                   / S_EQ  StrExprErr
+StrCompExpr      = l:StrExpr (
+                     S_LEQ r:StrExprErr                 { $$ = ex_bin(l,r,TOK_S_LEQ); }
+                   | S_NEQ r:StrExprErr                 { $$ = ex_bin(l,r,TOK_S_NEQ); }
+                   | S_GEQ r:StrExprErr                 { $$ = ex_bin(l,r,TOK_S_GEQ); }
+                   | S_LE  r:StrExprErr                 { $$ = ex_bin(l,r,TOK_S_LE); }
+                   | S_GE  r:StrExprErr                 { $$ = ex_bin(l,r,TOK_S_GE); }
+                   | S_EQ  r:StrExprErr                 { $$ = ex_bin(l,r,TOK_S_EQ); }
                    )
 
 # Parameters to an USR function, one or more numeric expressions in parenthesis
-ParUsrExpr       <- FN_PRN ( NumExprErr ( A_COMMA NumExprErr )* R_PRN
-                             / < ERROREXP > { print_error("numeric (,numeric) expressions", yytext); } )
+NumAComma        = l:NumExprErr (A_COMMA r:NumExprErr   { l = ex_bin(l,r,TOK_A_COMMA); }
+                             )*                         { $$ = l; }
+ParUsrExpr       = FN_PRN ( l:NumAComma R_PRN           { $$ = l; }
+                          | < ERROREXP >                { print_error("numeric (,numeric) expressions", yytext); $$ = 0; }
+                          )
 
 # Parameters to functions with one numeric expression in parenthesis
-ParNumExpr       <- FN_PRN ( NumExpr R_PRN
-                             / < ERROREXP > { print_error("numeric expression in parenthesis", yytext); }
+ParNumExpr        = FN_PRN ( l:NumExpr R_PRN            { $$ = l; }
+                           | < ERROREXP >               { print_error("numeric expression in parenthesis", yytext); $$ = 0; }
                            )
 
 # Parameters to INSTR/UINSTR functions, two string expressions and optionally one numeric
 # expression, all in parenthesis
-ParInstrExpr     <- FN_PRN ( StrExpr A_COMMA StrExpr ( A_COMMA NumExpr )? R_PRN
-                             / < ERROREXP > { print_error("string, string (,numeric) expressions", yytext); } )
+ParInstrExpr      = FN_PRN
+                        ( l:StrExpr A_COMMA r:StrExpr   { l = ex_bin(l,r,TOK_A_COMMA); }
+                                  ( A_COMMA r:NumExpr   { l = ex_bin(l,r,TOK_A_COMMA); } )?
+                                    R_PRN               { $$ = l; }
+                        | < ERROREXP > { print_error("string, string (,numeric) expressions", yytext); }
+                        )
 
 # Parameters to functions with one string expression in parenthesis
-ParStrExpr       <- FN_PRN StrExprErr R_PRN
+ParStrExpr        = FN_PRN l:StrExprErr R_PRN           { $$ = l; }
 
 # Spacing...
-SPC             <- [ \t]*
-EndOfLine       <- ( '\n' / '\233' / "\r\n" / '\r' / EndOfFile ) { inc_file_line(); }
-NotEOL          <- [^\n\233\r]
-EndOfFile       <- !.
-UnicodeBOM      <- "\357\273\277"
+SPC              = [ \t]*
+EndOfLine        = ( '\n' | '\233' | "\r\n" | '\r' | EndOfFile ) { inc_file_line(); }
+NotEOL           = [^\n\233\r]
+EndOfFile        = !.
+UnicodeBOM       = "\357\273\277"
 
 
 # Line Numbers - accept any floating point number and check later for validity
-LineNumber      <-(   < '-'? [0-9]+ ( '.' [0-9]+ )? NumExp? > SPC
-                    / < '-'? '.' [0-9]+ NumExp? > SPC             ) { add_linenum( strtod(yytext,0) ); }
+LineNumber       =(   < '-'? [0-9]+ ( '.' [0-9]+ )? NumExp? > SPC
+                    | < '-'? '.' [0-9]+ NumExp? > SPC             ) { add_linenum( strtod(yytext,0) ); }
 
 # Identifiers (labels / variables)
-IdentifierInit   <- [a-zA-Z_]
-IdentifierChar   <- [a-zA-Z0-9_]
-Identifier       <- IdentifierInit IdentifierChar*
+IdentifierInit    = [a-zA-Z_]
+IdentifierChar    = [a-zA-Z0-9_]
+Identifier        = IdentifierInit IdentifierChar*
 
 # Numbers
-Number          <- HexNumber                                   { add_hex_number( strtol(yytext,0,16) ); }
-                 / DecNumber                                   { add_number( strtod(yytext,0) ); }
+Number           = HexNumber                                   { $$ = add_hex_number( strtol(yytext,0,16) ); }
+                 | DecNumber                                   { $$ = add_number( strtod(yytext,0) ); }
 
-HexNumber       <- '$' < [a-fA-F0-9]+ > SPC
+HexNumber        = '$' < [a-fA-F0-9]+ > SPC
 
-DecNumber       <- < '-'? [0-9]+ ( '.' [0-9]* )? NumExp? > SPC
-                 / < '-'? '.' [0-9]+ NumExp? > SPC
+DecNumber        = < '-'? [0-9]+ ( '.' [0-9]* )? NumExp? > SPC
+                 | < '-'? '.' [0-9]+ NumExp? > SPC
 
 # The exponent of a floating point number
-NumExp          <- ( 'e' / 'E' ) ( '+' / '-' )? [0-9] [0-9]?
+NumExp           = ( 'e' | 'E' ) ( '+' | '-' )? [0-9] [0-9]?
 
 # Parse special REMs
-REM_C           <- "'" SPC { add_stmt( STMT_REM ); }
-
-# Use to force newlines after DATA or IF/THEN
-ForceLine       <- { add_force_line(); }
+REM_C            = "'" SPC
 

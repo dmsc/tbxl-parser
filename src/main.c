@@ -206,18 +206,7 @@ int main(int argc, char **argv)
 
             // Run the optimizer if specified by the user
             if( ok && parser_get_optimize() )
-            {
-                program * opt = optimize_program(parse_get_current_pgm(),parser_get_optimize());
-                if( opt )
-                {
-                    program_delete( parse_get_current_pgm() );
-                    parser_set_current_pgm(opt);
-                }
-                else
-                {
-                    fprintf(stderr,"%s: optimizer error\n", outFname);
-                }
-            }
+                optimize_program(parse_get_current_pgm(),parser_get_optimize());
 
             if( do_debug )
                 show_vars_stats();

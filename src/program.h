@@ -18,16 +18,17 @@
 #pragma once
 
 typedef struct program_struct program;
-typedef struct line_struct line;
+typedef struct expr_struct expr;
+typedef struct expr_mngr_struct expr_mngr;
 typedef struct vars_struct vars;
 typedef struct defs_struct defs;
 
 program *program_new(const char *fname);
 void program_delete(program *p);
 
-line *pgm_get_current_line(program *p);
-void pgm_add_line(program *p, line *l);
+void pgm_set_expr(program *p, expr *e);
 vars *pgm_get_vars(program *p);
 defs *pgm_get_defs(program *p);
-line **pgm_get_lines(program *p);
+expr *pgm_get_expr(program *p);
+expr_mngr *pgm_get_expr_mngr(program *p);
 const char *pgm_get_file_name(program *p);

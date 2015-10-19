@@ -17,9 +17,10 @@
  */
 #include "baswriter.h"
 #include "vars.h"
-#include "line.h"
+#include "expr.h"
+#include "basexpr.h"
+#include "listexpr.h"
 #include "program.h"
-#include "stmt.h"
 #include "sbuf.h"
 #include "dbg.h"
 #include "statements.h"
@@ -194,39 +195,42 @@ int bas_write_program(FILE *f, program *pgm, int variables)
     }
     // VNT must terminate with a 0
     sb_put(vnt, 0);
-    // Serialize lines (TOKENS)
-    line **lp;
+    // Serialize statements
     int cur_line = 0;
     int line_valid = 0;
     int last_colon = 0;
     int no_split = 0;
     int file_line = 0;
     string_buf *bin_line = sb_new();
+    // Get expression list
+    const expr ** elist = expr_get_statement_list(pgm_get_expr(pgm));
+    const expr ** exprs = elist;
+
     // For each line/statement:
-    for( lp = pgm_get_lines(pgm); *lp != 0; ++lp )
+    for(; *exprs ; exprs++)
     {
-        line *l = *lp;
-        if( line_is_num(l) )
+        const expr *ex = *exprs;
+        if( ex->type == et_lnum )
         {
             // Append old line
             int old_len = bin_line->len;
             if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_colon, fname, file_line) )
                 return 1;
             sb_delete(bin_line);
-            file_line = line_get_file_line(l);
+            file_line = ex->file_line;
             bin_line = sb_new();
-            if( line_get_num(l) < 0 )
+            if( ex->num < 0 )
             {
                 // This is a fake DATA line.
                 if( line_valid || old_len )
                     cur_line ++;
                 line_valid = 0;
             }
-            else if( (old_len || line_valid) && line_get_num(l) <= cur_line )
+            else if( (old_len || line_valid) && ex->num <= cur_line )
             {
-                err_print(fname, line_get_file_line(l),
-                          "line number %d already in use, current free number is %d\n",
-                          line_get_num(l), 1 + cur_line);
+                err_print(fname, ex->file_line,
+                          "line number %.0f already in use, current free number is %d\n",
+                          ex->num, 1 + cur_line);
                 sb_delete(bin_line);
                 sb_delete(vnt);
                 sb_delete(vvt);
@@ -235,7 +239,7 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             }
             else
             {
-                cur_line = line_get_num(l);
+                cur_line = ex->num;
                 line_valid = 1;
             }
             last_colon = 0;
@@ -243,14 +247,13 @@ int bas_write_program(FILE *f, program *pgm, int variables)
         else
         {
             // Serialize statement
-            stmt *s = line_get_statement(l);
             int old_last_colon = last_colon;
-            string_buf *sb = stmt_get_bas(s, pgm_get_vars(pgm), &last_colon, &no_split);
+            string_buf *sb = expr_get_bas(ex, &last_colon, &no_split);
             if( sb->len >= 0xFB )
             {
-                string_buf *prn = stmt_print_alone(s, pgm_get_vars(pgm));
-                err_print(fname, line_get_file_line(l), "statement too long at line %d:\n", cur_line);
-                err_print(fname, line_get_file_line(l), "'%.*s'\n", prn->len, prn->data);
+                string_buf *prn = expr_print_alone(ex, pgm_get_vars(pgm));
+                err_print(fname, ex->file_line, "statement too long at line %d:\n", cur_line);
+                err_print(fname, ex->file_line, "'%.*s'\n", prn->len, prn->data);
                 sb_delete(bin_line);
                 sb_delete(prn);
                 sb_delete(sb);
@@ -262,13 +265,13 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             if( sb->len )
             {
                 unsigned ln = sb->len + bin_line->len + 4;
-                if( ln > 0xFF || (stmt_is_label(s) && bin_line->len>0) )
+                if( ln > 0xFF || (expr_is_label(ex) && bin_line->len>0) )
                 {
                     if( no_split > 0 )
                     {
-                        err_print(fname, line_get_file_line(l), "forcing splitting of line %d will produce invalid code.\n",
+                        err_print(fname, ex->file_line, "forcing splitting of line %d will produce invalid code.\n",
                                   cur_line);
-                        err_print(fname, line_get_file_line(l), "please, retry after manually inserting a line.\n");
+                        err_print(fname, ex->file_line, "please, retry after manually inserting a line.\n");
                     }
                     // We can't add this statement to the current line,
                     // write the old line and create a new line
@@ -282,7 +285,7 @@ int bas_write_program(FILE *f, program *pgm, int variables)
                         return 1;
                     }
                     sb_delete(bin_line);
-                    file_line = line_get_file_line(l);
+                    file_line = ex->file_line;
                     bin_line = sb_new();
                     cur_line = cur_line + 1;
                     line_valid = 0;
@@ -301,6 +304,7 @@ int bas_write_program(FILE *f, program *pgm, int variables)
     if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_colon, fname, file_line) )
         return 1;
     sb_delete(bin_line);
+    free(elist);
     // Now, adds a standard immediate line: SAVE "D:X"
     sb_write(bw.toks, (unsigned char *)"\x00\x80\x0b\x0b\x19\x0f\x03\x44\x3a\x58\x16", 11);
     // Verify sizes

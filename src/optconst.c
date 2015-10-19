@@ -222,6 +222,7 @@ static int do_constprop(expr *ex)
                 return set_number(ex, lrint(ex->lft->num) ^ lrint(ex->rgt->num) );
             return x;
         case TOK_UPLUS:
+        case TOK_L_PRN:
             // Always collapse this node
             return set_expr(ex, ex->rgt);
         case TOK_UMINUS:
@@ -405,7 +406,6 @@ static int do_constprop(expr *ex)
         case TOK_DOLAR:
         case TOK_COLON:
         case TOK_EOL:
-        case TOK_L_PRN:
         case TOK_R_PRN:
 
         case TOK_LAST_TOKEN:

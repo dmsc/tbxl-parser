@@ -28,5 +28,5 @@ enum optimize_levels {
 };
 
 // Generates a new, optimized, program
-program *optimize_program(program *pgm, int level);
+void optimize_program(program *pgm, int level);
 

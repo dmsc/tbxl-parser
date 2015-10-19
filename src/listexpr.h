@@ -17,29 +17,11 @@
  */
 #pragma once
 
-// Forwards
-enum enum_statements;
-enum enum_tokens;
-typedef struct stmt_struct stmt;
+typedef struct expr_struct expr;
+typedef struct vars_struct vars;
+typedef struct string_buf string_buf;
 
-// Represents a line of code
-// A program line can be a statement or a line number
-typedef struct line_struct line;
-
-// Create a new line
-line *line_new_linenum(int num, int file_line);
-line *line_new_statement(enum enum_statements s, int file_line);
-line *line_new_from_stmt(stmt *s, int file_line);
-
-// Check line type
-int line_is_num(const line *l);
-int line_is_statement(const line *l);
-
-// Get content
-int   line_get_num(const line *l);
-int   line_get_file_line(const line *l);
-stmt *line_get_statement(const line *l);
-
-// Delete line
-void line_delete(line *l);
+string_buf *expr_print_long(const expr *e, vars *varl, int *indent, int conv_ascii);
+string_buf *expr_print_short(const expr *e, vars *varl, int *skip_colon, int *no_split);
+string_buf *expr_print_alone(const expr *e, vars *varl);
 

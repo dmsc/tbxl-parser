@@ -24,20 +24,28 @@
 enum enum_statements;
 enum enum_tokens;
 enum var_type;
+typedef struct expr_struct expr;
 
-void add_comment(const char *, int);
-void add_data_stmt(const char *, int);
+expr * add_comment(const char *, int);
+expr * add_data_stmt(const char *, int);
 void add_force_line(void);
 void add_linenum(double);
-void add_number(double);
-void add_hex_number(double);
-void add_string(void);
-void add_token(enum enum_tokens);
-void add_stmt(enum enum_statements);
-void add_ident(const char *, enum var_type);
+void add_stmt(enum enum_statements, expr *toks);
+expr * add_number(double);
+expr * add_hex_number(double);
+expr * add_string(void);
+//void add_token(enum enum_tokens);
+//void add_toks(void);
+expr * add_ident(const char *, enum var_type);
+expr * add_strdef_val(const char *);
+expr * add_numdef_val(const char *);
 void print_error(const char *, const char *);
-void add_strdef_val(const char *);
-void add_numdef_val(const char *);
+
+// Expressions...
+expr *ex_comma(expr *l, expr *r);
+expr *ex_bin(expr *l, expr *r, enum enum_tokens k);
+
+void store_stmt(void);
 
 // Converts strings constants to binary data and store
 void push_string_const(const char *data, unsigned len);

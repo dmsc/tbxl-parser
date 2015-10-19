@@ -49,9 +49,7 @@ BEGIN {
 
     # PEG file, calls test function, if valid, print
     if( length(s) )
-        printf "%-16s<- &{ testStatement( STMT_%s ) } SPC { add_stmt( STMT_%s ); }\n", n, n, n > peg;
-    else
-        printf "%-16s<- { add_stmt( STMT_%s ); }\n", n, n > peg;
+        printf "%-16s= &{ testStatement( STMT_%s ) } SPC\n", n, n, n > peg;
 
     # Header - enum definition
     enums = enums sprintf("    %s,\n", "STMT_" n);

@@ -18,10 +18,8 @@
 
 #include "expr.h"
 #include "program.h"
-#include "stmt.h"
 #include "tokens.h"
 #include "statements.h"
-#include "line.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -300,159 +298,6 @@ int tok_prec_level(enum enum_tokens tk)
     }
 }
 
-// Expressions to TOKENS
-static void expr_to_tokens(expr *e, stmt *s)
-{
-    int use_l_parens = 0;
-    int use_r_parens = 0;
-    int prec = 0;
-
-    switch( e->type )
-    {
-        case et_lnum:
-        case et_stmt:
-            fprintf(stderr,"INTERNAL ERROR: unexpected expr type.\n");
-            return;
-
-        case et_data:
-            stmt_add_data(s, (const char *)e->str, e->slen);
-            return;
-
-        case et_tok:
-            prec = tok_prec_level(e->tok);
-            switch(e->tok)
-            {
-                case TOK_STRP:
-                case TOK_CHRP:
-                case TOK_USR:
-                case TOK_ASC:
-                case TOK_VAL:
-                case TOK_LEN:
-                case TOK_ADR:
-                case TOK_ATN:
-                case TOK_COS:
-                case TOK_PEEK:
-                case TOK_SIN:
-                case TOK_RND:
-                case TOK_FRE:
-                case TOK_EXP:
-                case TOK_LOG:
-                case TOK_CLOG:
-                case TOK_SQR:
-                case TOK_SGN:
-                case TOK_ABS:
-                case TOK_INT:
-                case TOK_PADDLE:
-                case TOK_STICK:
-                case TOK_PTRIG:
-                case TOK_STRIG:
-                case TOK_DPEEK:
-                case TOK_INSTR:
-                case TOK_HEXP:
-                case TOK_UINSTR:
-                case TOK_RAND:
-                case TOK_TRUNC:
-                case TOK_FRAC:
-                case TOK_DEC:
-                    use_l_parens = 1;
-                    use_r_parens = 1;
-                    break;
-                case TOK_L_PRN:
-                case TOK_S_L_PRN:
-                case TOK_A_L_PRN:
-                case TOK_D_L_PRN:
-                case TOK_FN_PRN:
-                case TOK_DS_L_PRN:
-                    use_r_parens = 1;
-                    break;
-                default:
-                    break;
-            }
-            if( e->lft && e->lft->type == et_tok && prec > tok_prec_level(e->lft->tok) )
-            {
-                stmt_add_token(s, TOK_L_PRN);
-                expr_to_tokens(e->lft, s);
-                stmt_add_token(s, TOK_R_PRN);
-            }
-            else if( e->lft )
-            {
-                expr_to_tokens(e->lft, s);
-            }
-            stmt_add_token(s, e->tok);
-            break;
-        case et_c_number:
-            stmt_add_number(s, e->num);
-            break;
-        case et_c_hexnumber:
-            stmt_add_hex_number(s, e->num);
-            break;
-        case et_c_string:
-            stmt_add_binary_string(s, (const char *)e->str, e->slen);
-            break;
-        case et_var_number:
-        case et_var_string:
-        case et_var_array:
-        case et_var_label:
-            stmt_add_var(s, e->var);
-            break;
-        case et_void:
-            return;
-    }
-    if( e->rgt )
-    {
-        if( use_r_parens == 0 && e->rgt->type == et_tok && prec >= tok_prec_level(e->rgt->tok) && prec > 0 )
-        {
-            use_r_parens = 1;
-            stmt_add_token(s, TOK_L_PRN);
-        }
-        else if( use_l_parens )
-            stmt_add_token(s, TOK_FN_PRN);
-        expr_to_tokens(e->rgt, s);
-        if( use_r_parens )
-            stmt_add_token(s, TOK_R_PRN);
-    }
-}
-
-static stmt *expr_to_statement(expr *e)
-{
-    if( e->type != et_stmt )
-        return 0;
-    stmt *ret = stmt_new(e->stmt);
-    if( e->rgt )
-        expr_to_tokens(e->rgt, ret);
-    return ret;
-}
-
-// Convert expression tree back to program
-int expr_to_program(expr *e, program *out)
-{
-    if( !e )
-        return 0;
-
-    if( e->type != et_stmt && e->type != et_lnum )
-    {
-        fprintf(stderr,"INTERNAL ERROR: expr tree invalid\n");
-        return 1;
-    }
-
-    int err = expr_to_program(e->lft, out);
-
-    line *l;
-    if( e->type == et_stmt )
-    {
-        stmt *s = expr_to_statement(e);
-        if( !s )
-            err ++;
-
-        l = line_new_from_stmt(s, e->file_line);
-    }
-    else
-        l = line_new_linenum(e->num, e->file_line);
-
-    pgm_add_line(out,l);
-    return err;
-}
-
 const char *expr_get_file_name(expr *e)
 {
     return expr_mngr_get_file_name(e->mngr);
@@ -466,6 +311,40 @@ int expr_get_file_line(expr *e)
 program *expr_get_program(const expr *e)
 {
     return expr_mngr_get_program(e->mngr);
+}
+
+int expr_is_label(const expr *e)
+{
+    return e && e->type == et_stmt && (e->stmt == STMT_LBL_S || e->stmt == STMT_PROC);
+}
+
+// Used to return a list of statements in program order:
+static int expr_count_lft(const expr *e)
+{
+    if( !e )
+        return 0;
+    return expr_count_lft(e->lft) + 1;
+}
+
+static int expr_copy_array(const expr *e, const expr **arr)
+{
+    if( e )
+    {
+        int n = expr_copy_array(e->lft, arr);
+        arr[n] = e;
+        return n+1;
+    }
+    else
+        return 0;
+}
+
+const expr ** expr_get_statement_list(const expr *e)
+{
+    int n = expr_count_lft(e);
+    const expr **arr = malloc(sizeof(expr*)*(n+1));
+    expr_copy_array(e, arr);
+    arr[n] = 0;
+    return arr;
 }
 
 ///////////////////////////////////////////////////////////////////////

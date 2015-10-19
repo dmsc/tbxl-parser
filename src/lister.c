@@ -16,9 +16,10 @@
  *  with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 #include "lister.h"
-#include "line.h"
+#include "listexpr.h"
+#include "basexpr.h"
+#include "expr.h"
 #include "program.h"
-#include "stmt.h"
 #include "sbuf.h"
 #include "dbg.h"
 #include <string.h>
@@ -31,23 +32,26 @@ typedef struct lister {
 int lister_list_program_long(FILE *f, program *pgm, int conv_ascii)
 {
     int indent = 0;
-    line **lp;
-    // For each line:
-    for( lp = pgm_get_lines(pgm); *lp != 0; ++lp )
+
+    // Get expression list
+    const expr ** elist = expr_get_statement_list(pgm_get_expr(pgm));
+    const expr ** exprs = elist;
+
+    // For each line/statement:
+    for(; *exprs ; exprs++)
     {
-        line *l = *lp;
+        const expr *ex = *exprs;
         // Test if it is a line number or a statement
-        if( line_is_num(l) )
+        if( ex->type == et_lnum )
         {
             // Number
-            if( line_get_num(l) >= 0 )
-                fprintf(f, "%d\n", line_get_num(l) );
+            if( ex->num >= 0 )
+                fprintf(f, "%.0f\n", ex->num );
         }
         else
         {
             // Statement
-            stmt *s = line_get_statement(l);
-            string_buf *sb = stmt_print_long(s, pgm_get_vars(pgm), &indent, conv_ascii);
+            string_buf *sb = expr_print_long(ex, pgm_get_vars(pgm), &indent, conv_ascii);
             if( sb && sb->len )
             {
                 putc('\t', f);
@@ -57,6 +61,7 @@ int lister_list_program_long(FILE *f, program *pgm, int conv_ascii)
             sb_delete(sb);
         }
     }
+    free(elist);
     return 0;
 }
 
@@ -160,19 +165,21 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
     int last_split = 0, last_tok_len = 0;
     int return_error = 0;
 
-    // For each line:
-    line **lp;
-    for( lp = pgm_get_lines(pgm); *lp != 0; ++lp )
+    // Get expression list
+    const expr ** elist = expr_get_statement_list(pgm_get_expr(pgm));
+    const expr ** exprs = elist;
+
+    // For each line/statement:
+    for(; *exprs ; exprs++)
     {
-        line *l = *lp;
+        const expr *ex = *exprs;
 
         // Adds a new statement (if any)
-        if( !line_is_num(l) )
+        if( ex->type != et_lnum )
         {
             // Statement
-            stmt *s = line_get_statement(l);
             int skip_colon = 0;
-            string_buf *sb = stmt_print_short(s, pgm_get_vars(pgm), &skip_colon, &no_split);
+            string_buf *sb = expr_print_short(ex, pgm_get_vars(pgm), &skip_colon, &no_split);
             if( sb->len )
             {
                 // If we have statements before any line, start at '0'
@@ -185,12 +192,12 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 if( !skip_colon )
                     sb_put(sb, ':');
 
-                ls.file_line = line_get_file_line(l);
+                ls.file_line = ex->file_line;
                 // Get tokenized length
-                int bas_len = stmt_get_bas_len(s);
+                int bas_len = expr_get_bas_len(ex);
                 if( bas_len >= 0xFB )
                 {
-                    string_buf *prn = stmt_print_alone(s, pgm_get_vars(pgm));
+                    string_buf *prn = expr_print_alone(ex, pgm_get_vars(pgm));
                     err_print(ls.fname, ls.file_line, "statement too long at line %d:\n", ls.cur_line);
                     err_print(ls.fname, ls.file_line, "'%.*s'\n", prn->len, prn->data);
                     sb_delete(prn);
@@ -198,7 +205,7 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 }
 
                 // Split before a label (write full curren line)
-                if( stmt_is_label(s) && ls.out->len )
+                if( expr_is_label(ex) && ls.out->len )
                     ls_write_line(&ls, -1, ls.tok_len);
                 // See if line is too big to join with last line
                 else if( ((ls.tok_len + 1 + bas_len) > 0xFC) ||
@@ -232,9 +239,9 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
             // A line break, (full) output current line
             ls_write_line(&ls, -1, ls.tok_len);
             // Update file line
-            ls.file_line = line_get_file_line(l);
+            ls.file_line = ex->file_line;
             // Get new line number
-            int need_line = line_get_num(l);
+            int need_line = ex->num;
             if( need_line >= 0 )
             {
                 if( ls_set_linenum( &ls, need_line ) )
@@ -251,6 +258,7 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
         ls_write_line(&ls, -1, ls.tok_len);
 
     sb_delete(ls.out);
+    free(elist);
     // Output summary info
     if( do_debug )
     {

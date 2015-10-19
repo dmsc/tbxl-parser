@@ -16,8 +16,7 @@
  *  with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 #include "program.h"
-#include "stmt.h"
-#include "line.h"
+#include "expr.h"
 #include "vars.h"
 #include "defs.h"
 
@@ -26,18 +25,11 @@
 #include <limits.h>
 #include <string.h>
 
-static void memory_error(void)
-{
-    fprintf(stderr,"INTERNAL ERROR: memory allocation failure.\n");
-    abort();
-}
-
 struct program_struct {
     vars *variables; // Program variables
     defs *defines;   // Program constant defines
-    int len;         // Number of lines
-    line **lines;    // Array of lines
-    unsigned size;   // Available lines
+    expr_mngr *mngr; // Expression manager.
+    expr *expr;      // Tree representation of the program
     char *file_name; // Input file name
 };
 
@@ -45,57 +37,21 @@ program *program_new(const char *file_name)
 {
     program *p;
     p = malloc(sizeof(program));
-    p->len = 0;
-    p->lines = malloc(64 * sizeof(line*));
-    p->size  = 64;
     p->variables = vars_new();
     p->defines   = defs_new();
     p->file_name = strdup(file_name);
+    p->expr = 0;
+    p->mngr = expr_mngr_new(p);
     return p;
 }
 
 void program_delete(program *p)
 {
-    int i;
-    for(i=0; i<p->len; i++)
-        line_delete(p->lines[i]);
-    free( p->lines );
     vars_delete( p->variables );
     defs_delete( p->defines );
+    expr_mngr_delete( p->mngr );
     free( p->file_name );
     free( p );
-}
-
-
-// Ensures that there is enough space for one more item in the lines array
-static void check_lines_size(program *p)
-{
-    if( p->len == p->size )
-    {
-        p->size *= 2;
-        if ( p->size >= (UINT_MAX/sizeof(line*)) )
-            memory_error();
-        p->lines = realloc(p->lines, sizeof(line*) * p->size);
-        if( !p->lines )
-            memory_error();
-    }
-}
-
-line *pgm_get_current_line(program *p)
-{
-    if( !p->len )
-    {
-        fprintf(stderr, "INTERNAL ERROR: no current line\n");
-        abort();
-    }
-    return p->lines[p->len-1];
-}
-
-void pgm_add_line(program *p, line *l)
-{
-    check_lines_size(p);
-    p->lines[p->len] = l;
-    p->len ++;
 }
 
 vars *pgm_get_vars(program *p)
@@ -108,12 +64,19 @@ defs *pgm_get_defs(program *p)
     return p->defines;
 }
 
-line **pgm_get_lines(program *p)
+expr *pgm_get_expr(program *p)
 {
-    // Ensures that there is a NULL at the end of the list of lines
-    check_lines_size(p);
-    p->lines[p->len] = 0;
-    return p->lines;
+    return p->expr;
+}
+
+void pgm_set_expr(program *p, expr *e)
+{
+    p->expr = e;
+}
+
+expr_mngr *pgm_get_expr_mngr(program *p)
+{
+    return p->mngr;
 }
 
 const char *pgm_get_file_name(program *p)
