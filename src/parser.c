@@ -206,6 +206,7 @@ void add_definition(const char *def_name)
     {
         err_print(file_name, file_line, "variable '%s' already used.\n", def_name);
         parse_error++;
+        last_def = -1;
         return;
     }
 
@@ -215,6 +216,7 @@ void add_definition(const char *def_name)
     {
         err_print(file_name, file_line, "'%s' already defined.\n", def_name);
         parse_error++;
+        last_def = -1;
         return;
     }
 
@@ -223,6 +225,9 @@ void add_definition(const char *def_name)
 
 void add_incbin_file(const char *bin_file_name)
 {
+    if( last_def == -1 )
+        return; // Ignore error, already flagged.
+
     FILE *bf = fopen(bin_file_name, "rb");
     if( !bf )
     {
@@ -252,6 +257,9 @@ void add_incbin_file(const char *bin_file_name)
 
 void set_numdef_value(double x)
 {
+    if( last_def == -1 )
+        return; // Ignore error, already flagged.
+
     // Add to last def:
     defs *d = pgm_get_defs( parse_get_current_pgm() );
     defs_set_numeric(d, last_def, x);
@@ -259,6 +267,9 @@ void set_numdef_value(double x)
 
 void set_strdef_value(void)
 {
+    if( last_def == -1 )
+        return; // Ignore error, already flagged.
+
     // Add to last def:
     defs *d = pgm_get_defs( parse_get_current_pgm() );
     defs_set_string(d, last_def, last_const_string, last_const_string_len);
