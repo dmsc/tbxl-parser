@@ -1,0 +1,68 @@
+  ' Example program for parser directives
+
+  ' Enable all optimizations:
+  $options +optimize
+  ' Include graphics from a binary file
+  $incbin dataPM$, "sample-4.pm"
+  ' Some defines
+  $define RAMTOP = $6A
+  $define SDMCTL = 559
+  $define PCOLR0 = 704
+  $define HPOSP0 = $D000
+  $define GRACTL = $D01D
+  $define PMBASE = $D407
+
+  ' Enable P/M
+  MemTop = peek(@RAMTOP) - 4
+  poke @RAMTOP, MemTop
+  graphics 0
+  P0Mem = 256 * MemTop + 512
+
+  ' Clear P0 memory
+  poke P0Mem, 0
+  move P0Mem, P0Mem+1, 127
+  poke @PCOLR0, $1F               : ' Set P0 color
+  poke @SDMCTL, peek(@SDMCTL) ! 8 : ' Enable Player DMA
+  poke @PMBASE, MemTop            : ' Set PMBASE
+  poke @GRACTL, 2                 : ' Turns on Player read from ANTIC
+
+  oldYpos = P0Mem + 1
+  Ypos = 50
+  Xpos = 100
+  dx = 1
+  dy = 1
+
+  ' Loop movement of the player
+  do
+    pause 0
+    exec MovePM
+
+    Xpos = Xpos + dx
+    Ypos = Ypos + dy
+
+    if Xpos < 48
+      dx = 1
+    endif
+    if Xpos > 200
+      dx = -1
+    endif
+    if Ypos < 16
+      dy = 1
+    endif
+    if Ypos > 100
+      dy = -1
+    endif
+
+  loop
+  end
+
+  ' Move P/M
+  proc MovePM
+    ' Set X position
+    poke @HPOSP0, Xpos
+    ' Clear old data
+    move oldYpos - 1, oldYpos, len( @dataPM$ ) + 1
+    ' Set new data
+    move adr( @dataPM$ ), P0Mem + Ypos, len( @dataPM$ )
+    oldYpos = P0Mem + Ypos
+  endproc
