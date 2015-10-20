@@ -156,3 +156,14 @@ int defs_get_numeric(defs *d, int id, double *val)
     return 1;
 }
 
+int defs_get_type(const defs *d, int id)
+{
+    assert( id >= 0 && id < MAX_DEFS && d->dlist[id].name );
+    return d->dlist[id].data != 0;
+}
+
+const char * defs_get_name(const defs *d, int id)
+{
+    assert( id >= 0 && id < MAX_DEFS && d->dlist[id].name );
+    return d->dlist[id].name;
+}

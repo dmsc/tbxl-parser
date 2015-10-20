@@ -27,3 +27,6 @@ void opt_commute(expr *ex);
 
 // Replaces constants 0/1/2 and 3 with tokens
 void opt_convert_tok(expr *ex);
+
+// Replaces definitions by values
+void opt_replace_defs(expr *ex);

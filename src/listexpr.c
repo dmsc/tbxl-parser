@@ -21,9 +21,11 @@
 #include "expr.h"
 #include "sbuf.h"
 #include "vars.h"
+#include "defs.h"
 #include "tokens.h"
 #include "statements.h"
 #include "ataribcd.h"
+#include "program.h"
 #include <stdio.h>
 #include <assert.h>
 #include <strings.h>
@@ -73,6 +75,14 @@ static void print_string_short(const char *str, int len, string_buf *s)
         sb_put(s, *p);
     }
     sb_put(s, '"');
+}
+
+static void print_def_long(string_buf *s, defs *d, int id, int strdef)
+{
+    sb_put(s, '@');
+    sb_puts(s, defs_get_name(d, id));
+    if( strdef )
+        sb_put(s, '$');
 }
 
 static void print_var_long(string_buf *s, vars *v, int id)
@@ -245,6 +255,10 @@ static int print_expr_long_rec(string_buf *out, const expr *e, vars *varl, int s
         case et_c_string:
             print_string_long((const char *)e->str, e->slen, out );
             break;
+        case et_def_number:
+        case et_def_string:
+            print_def_long(out, pgm_get_defs(expr_mngr_get_program(e->mngr)), e->var, e->type == et_def_string);
+            break;
         case et_var_number:
         case et_var_string:
         case et_var_array:
@@ -381,6 +395,24 @@ static int print_expr_short_rec(string_buf *out, const expr *e, vars *varl)
             break;
         case et_c_string:
             print_string_short((const char *)e->str, e->slen, out );
+            break;
+        case et_def_number:
+            {
+                defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
+                double val;
+                defs_get_numeric(d, e->var, &val);
+                atari_bcd n = atari_bcd_from_double(val);
+                atari_bcd_print(n, out);
+            }
+            break;
+        case et_def_string:
+            {
+                defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
+                const char *str;
+                int len;
+                defs_get_string(d, e->var, &str, &len);
+                print_string_short(str, len, out);
+            }
             break;
         case et_var_number:
         case et_var_string:

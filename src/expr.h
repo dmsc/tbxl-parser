@@ -35,6 +35,8 @@ enum enum_etype {
     et_var_string,
     et_var_array,
     et_var_label,
+    et_def_string,
+    et_def_number,
     et_tok,
     et_stmt,
     et_lnum,
@@ -70,6 +72,8 @@ expr *expr_new_lnum(expr_mngr *, expr *prev, int lnum);
 expr *expr_new_var_num(expr_mngr *, int vn);
 expr *expr_new_var_str(expr_mngr *, int vn);
 expr *expr_new_var_array(expr_mngr *, int vn);
+expr *expr_new_def_num(expr_mngr *, int dn);
+expr *expr_new_def_str(expr_mngr *, int dn);
 expr *expr_new_label(expr_mngr *, int vn);
 int expr_to_program(expr *e, program *out);
 

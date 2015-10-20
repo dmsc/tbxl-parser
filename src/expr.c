@@ -128,6 +128,22 @@ expr *expr_new_label(expr_mngr *mngr, int vn)
     return n;
 }
 
+expr *expr_new_def_num(expr_mngr *mngr, int dn)
+{
+    expr *n = expr_new(mngr);
+    n->type = et_def_number;
+    n->var = dn;
+    return n;
+}
+
+expr *expr_new_def_str(expr_mngr *mngr, int dn)
+{
+    expr *n = expr_new(mngr);
+    n->type = et_def_string;
+    n->var = dn;
+    return n;
+}
+
 expr *expr_new_number(expr_mngr *mngr, double x)
 {
     expr *n = expr_new(mngr);

@@ -19,6 +19,8 @@
 #include "optconst.h"
 #include "expr.h"
 #include "dbg.h"
+#include "program.h"
+#include "defs.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -554,3 +556,43 @@ void opt_commute(expr *ex)
     while(changed)
         changed = do_commute(ex);
 }
+
+static int do_replace_defs(expr *ex, defs *d)
+{
+    if( !ex )
+        return 0;
+
+    // Try to apply in the left/right branches
+    int x = do_replace_defs(ex->lft, d) + do_replace_defs(ex->rgt, d);
+
+    // Convert defs
+    if( ex->type == et_def_number )
+    {
+        double val;
+        defs_get_numeric(d, ex->var, &val);
+        return set_number(ex, val);
+    }
+    else if( ex->type == et_def_string )
+    {
+        const char *str;
+        int len;
+        defs_get_string(d, ex->var, &str, &len);
+        char *buf = malloc(len);
+        memcpy(buf, str, len);
+        return set_string(ex, buf, len);
+    }
+    return x;
+}
+
+void opt_replace_defs(expr *ex)
+{
+    if( !ex )
+        return;
+
+    // Apply rules over the tree until stops changing
+    defs *d = pgm_get_defs(expr_mngr_get_program(ex->mngr));
+    int changed = 1;
+    while(changed)
+        changed = do_replace_defs(ex,d);
+}
+

@@ -167,16 +167,13 @@ expr *add_strdef_val(const char *def_name)
         parse_error++;
         return 0;
     }
-    const char *data;
-    int len;
-    if( !defs_get_string(d, id, &data, &len) )
+    if( 1 != defs_get_type(d, id) )
     {
         err_print(file_name, file_line, "'%s' not a string definition.\n", def_name);
         parse_error++;
         return 0;
     }
-    else
-        return expr_new_string(mngr, (const uint8_t *)data, len);
+    return expr_new_def_str(mngr, id);
 }
 
 expr *add_numdef_val(const char *def_name)
@@ -189,15 +186,13 @@ expr *add_numdef_val(const char *def_name)
         parse_error++;
         return 0;
     }
-    double val;
-    if( !defs_get_numeric(d, id, &val) )
+    if( 0 != defs_get_type(d, id) )
     {
         err_print(file_name, file_line, "'%s' not a numeric definition.\n", def_name);
         parse_error++;
         return 0;
     }
-    else
-        return expr_new_number(mngr, val);
+    return expr_new_def_num(mngr, id);
 }
 
 void add_definition(const char *def_name)

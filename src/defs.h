@@ -39,3 +39,9 @@ int defs_get_string(defs *, int id, const char **data, int *len);
 // Gets value from a definition
 int defs_get_numeric(defs *, int id, double *val);
 
+// Gets the type of the definition
+// 0 : numeric,  1 : string
+int defs_get_type(const defs *, int id);
+
+// Gets def name
+const char * defs_get_name(const defs *, int id);

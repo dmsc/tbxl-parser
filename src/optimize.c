@@ -33,6 +33,8 @@ void optimize_program(program *pgm, int level)
 
 
     // Optimize:
+    opt_replace_defs(ex);
+
     if( level & OPT_CONST_FOLD )
         opt_constprop(ex);
 
