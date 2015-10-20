@@ -284,7 +284,7 @@ static void print_comment_ascii(string_buf *b, const uint8_t *txt, unsigned len)
     sb_delete(tmp);
 }
 
-static int print_expr_long_rec(string_buf *out, const expr *e, vars *varl, int skip_then)
+static int print_expr_long_rec(string_buf *out, const expr *e, int skip_then)
 {
     int use_l_parens = 0;
     int use_r_parens = 0;
@@ -306,12 +306,12 @@ static int print_expr_long_rec(string_buf *out, const expr *e, vars *varl, int s
             if( e->lft && e->lft->type == et_tok && prec > tok_prec_level(e->lft->tok) )
             {
                 sb_puts(out, "( ");
-                print_expr_long_rec(out, e->lft, varl, skip_then);
+                print_expr_long_rec(out, e->lft, skip_then);
                 sb_puts(out, " )");
             }
             else if( e->lft )
             {
-                print_expr_long_rec(out, e->lft, varl, skip_then);
+                print_expr_long_rec(out, e->lft, skip_then);
             }
             if( !skip_then || e->tok != TOK_THEN )
                 sb_puts(out, tokens[e->tok].tok_long);
@@ -343,7 +343,7 @@ static int print_expr_long_rec(string_buf *out, const expr *e, vars *varl, int s
         case et_var_string:
         case et_var_array:
         case et_var_label:
-            print_var_long(out, varl, e->var);
+            print_var_long(out, pgm_get_vars(expr_mngr_get_program(e->mngr)), e->var);
             break;
         case et_void:
             return 0;
@@ -357,14 +357,14 @@ static int print_expr_long_rec(string_buf *out, const expr *e, vars *varl, int s
         }
         else if( use_l_parens )
             sb_puts(out, "( ");
-        print_expr_long_rec(out, e->rgt, varl, skip_then);
+        print_expr_long_rec(out, e->rgt, skip_then);
         if( use_r_parens )
             sb_puts(out, " )");
     }
     return 0;
 }
 
-string_buf *expr_print_long(const expr *e, vars *varl, int *indent, int conv_ascii)
+string_buf *expr_print_long(const expr *e, int *indent, int conv_ascii)
 {
     assert(e && e->type == et_stmt);
 
@@ -419,18 +419,18 @@ string_buf *expr_print_long(const expr *e, vars *varl, int *indent, int conv_asc
         if( *st )
             sb_put(b, ' ');
         if( e->rgt )
-            print_expr_long_rec(b, e->rgt, varl, e->stmt == STMT_IF_THEN);
+            print_expr_long_rec(b, e->rgt, e->stmt == STMT_IF_THEN);
     }
     return b;
 }
 
-string_buf *expr_print_alone(const expr *e, vars *varl)
+string_buf *expr_print_alone(const expr *e)
 {
     int indent = 0;
-    return expr_print_long(e, varl, &indent, 1);
+    return expr_print_long(e, &indent, 1);
 }
 
-static int print_expr_short_rec(string_buf *out, const expr *e, vars *varl)
+static int print_expr_short_rec(string_buf *out, const expr *e)
 {
     int add_space = 0;
     int use_l_parens = 0;
@@ -453,11 +453,11 @@ static int print_expr_short_rec(string_buf *out, const expr *e, vars *varl)
             if( e->lft && e->lft->type == et_tok && prec > tok_prec_level(e->lft->tok) )
             {
                 sb_put(out, '(');
-                print_expr_short_rec(out, e->lft, varl);
+                print_expr_short_rec(out, e->lft);
                 sb_put(out, ')');
             }
             else if( e->lft )
-                add_space = print_expr_short_rec(out, e->lft, varl);
+                add_space = print_expr_short_rec(out, e->lft);
             {
                 const char *t = tokens[e->tok].tok_short;
                 if( add_space && ( (t[0] >= 'A' && t[0] <= 'Z') || t[0] == '_' ) )
@@ -498,7 +498,7 @@ static int print_expr_short_rec(string_buf *out, const expr *e, vars *varl)
         case et_var_string:
         case et_var_array:
         case et_var_label:
-            add_space = print_var_short(out, varl, e->var);
+            add_space = print_var_short(out, pgm_get_vars(expr_mngr_get_program(e->mngr)), e->var);
             break;
         case et_void:
             return 0;
@@ -512,7 +512,7 @@ static int print_expr_short_rec(string_buf *out, const expr *e, vars *varl)
         }
         else if( use_l_parens )
             sb_put(out, '(');
-        add_space = print_expr_short_rec(out, e->rgt, varl);
+        add_space = print_expr_short_rec(out, e->rgt);
         if( use_r_parens )
         {
             sb_put(out, ')');
@@ -522,7 +522,7 @@ static int print_expr_short_rec(string_buf *out, const expr *e, vars *varl)
     return add_space;
 }
 
-string_buf *expr_print_short(const expr *e, vars *varl, int *skip_colon, int *no_split)
+string_buf *expr_print_short(const expr *e, int *skip_colon, int *no_split)
 {
     assert(e && e->type == et_stmt);
 
@@ -556,7 +556,7 @@ string_buf *expr_print_short(const expr *e, vars *varl, int *skip_colon, int *no
             (*no_split) ++; // Can't split the "THEN" part
         }
         if( e->rgt )
-            print_expr_short_rec(b, e->rgt, varl);
+            print_expr_short_rec(b, e->rgt);
     }
     return b;
 }

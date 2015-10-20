@@ -63,7 +63,7 @@ int lister_list_program_long(FILE *f, program *pgm, int conv_ascii)
         else
         {
             // Statement
-            string_buf *sb = expr_print_long(ex, pgm_get_vars(pgm), &indent, conv_ascii);
+            string_buf *sb = expr_print_long(ex, &indent, conv_ascii);
             if( sb && sb->len )
             {
                 putc('\t', f);
@@ -191,7 +191,7 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
         {
             // Statement
             int skip_colon = 0;
-            string_buf *sb = expr_print_short(ex, pgm_get_vars(pgm), &skip_colon, &no_split);
+            string_buf *sb = expr_print_short(ex, &skip_colon, &no_split);
             if( sb->len )
             {
                 // If we have statements before any line, start at '0'
@@ -209,7 +209,7 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 int bas_len = expr_get_bas_len(ex);
                 if( bas_len >= 0xFB )
                 {
-                    string_buf *prn = expr_print_alone(ex, pgm_get_vars(pgm));
+                    string_buf *prn = expr_print_alone(ex);
                     err_print(ls.fname, ls.file_line, "statement too long at line %d:\n", ls.cur_line);
                     err_print(ls.fname, ls.file_line, "'%.*s'\n", prn->len, prn->data);
                     sb_delete(prn);

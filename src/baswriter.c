@@ -251,7 +251,7 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             string_buf *sb = expr_get_bas(ex, &last_colon, &no_split);
             if( sb->len >= 0xFB )
             {
-                string_buf *prn = expr_print_alone(ex, pgm_get_vars(pgm));
+                string_buf *prn = expr_print_alone(ex);
                 err_print(fname, ex->file_line, "statement too long at line %d:\n", cur_line);
                 err_print(fname, ex->file_line, "'%.*s'\n", prn->len, prn->data);
                 sb_delete(bin_line);

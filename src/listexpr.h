@@ -21,8 +21,8 @@ typedef struct expr_struct expr;
 typedef struct vars_struct vars;
 typedef struct string_buf string_buf;
 
-string_buf *expr_print_long(const expr *e, vars *varl, int *indent, int conv_ascii);
-string_buf *expr_print_short(const expr *e, vars *varl, int *skip_colon, int *no_split);
-string_buf *expr_print_alone(const expr *e, vars *varl);
+string_buf *expr_print_long(const expr *e, int *indent, int conv_ascii);
+string_buf *expr_print_short(const expr *e, int *skip_colon, int *no_split);
+string_buf *expr_print_alone(const expr *e);
 string_buf *expr_print_used_defs(const expr *ex);
 
