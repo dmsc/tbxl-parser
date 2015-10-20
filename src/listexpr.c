@@ -315,10 +315,20 @@ static int print_expr_long_rec(string_buf *out, const expr *e, int skip_then)
                 sb_puts(out, tokens[e->tok].tok_long);
             break;
         case et_c_number:
+            if( e->num < -9.999999999e99 )
+                sb_puts(out,"-9.999999999e99");
+            else if( e->num > 9.999999999e99 )
+                sb_puts(out,"9.999999999e99");
+            else if( e->num > -1e-99 && e->num < 1e-99 )
+                sb_puts(out,"0");
+            else if( e->num > -9.999999999e99 && e->num < 9.999999999e99 )
             {
-                atari_bcd n = atari_bcd_from_double(e->num);
-                atari_bcd_print(n, out);
+                char buf[64];
+                sprintf(buf, "%.12g", e->num);
+                sb_puts(out, buf);
             }
+            else
+                sb_puts(out, "(0/0)");
             break;
         case et_c_hexnumber:
             {
