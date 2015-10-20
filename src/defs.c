@@ -79,7 +79,7 @@ static int case_name_cmp_str(const char *a, const char *b)
     return *b != '$';
 }
 
-int defs_search(defs *d, const char *name)
+int defs_search(const defs *d, const char *name)
 {
     int i;
     for(i=0; i<MAX_DEFS && d->dlist[i].name; i++)
@@ -139,7 +139,7 @@ void defs_set_numeric(defs *d, int id, double val)
     d->dlist[id].val = val;
 }
 
-int defs_get_string(defs *d, int id, const char **data, int *len)
+int defs_get_string(const defs *d, int id, const char **data, int *len)
 {
     if( id < 0 || id >= MAX_DEFS || ! d->dlist[id].name || ! d->dlist[id].data )
         return 0;
@@ -148,7 +148,7 @@ int defs_get_string(defs *d, int id, const char **data, int *len)
     return 1;
 }
 
-int defs_get_numeric(defs *d, int id, double *val)
+int defs_get_numeric(const defs *d, int id, double *val)
 {
     if( id < 0 || id >= MAX_DEFS || ! d->dlist[id].name || d->dlist[id].data )
         return 0;

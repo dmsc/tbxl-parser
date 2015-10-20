@@ -113,7 +113,7 @@ static void get_used_def(defprint *dp, const expr *e)
         add_used_def(dp, e->var);
 }
 
-static void print_def_orig(string_buf *s, defs *d, int id)
+static void print_def_orig(string_buf *s, const defs *d, int id)
 {
     int strdef = defs_get_type(d, id);
     sb_puts(s, "\t$define ");
@@ -150,14 +150,14 @@ string_buf *expr_print_used_defs(const expr *ex)
         return 0;
 
     string_buf *s = sb_new();
-    defs *d = pgm_get_defs(expr_mngr_get_program(ex->mngr));
+    const defs *d = pgm_get_defs(expr_mngr_get_program(ex->mngr));
     for(unsigned i=0; i<dp.len; i++)
         print_def_orig(s, d, dp.num[i]);
     free(dp.num);
     return s;
 }
 
-static void print_def_long(string_buf *s, defs *d, int id, int strdef)
+static void print_def_long(string_buf *s, const defs *d, int id, int strdef)
 {
     sb_put(s, '@');
     sb_puts(s, defs_get_name(d, id));
@@ -478,7 +478,7 @@ static int print_expr_short_rec(string_buf *out, const expr *e)
             break;
         case et_def_number:
             {
-                defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
+                const defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
                 double val;
                 defs_get_numeric(d, e->var, &val);
                 atari_bcd n = atari_bcd_from_double(val);
@@ -487,7 +487,7 @@ static int print_expr_short_rec(string_buf *out, const expr *e)
             break;
         case et_def_string:
             {
-                defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
+                const defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
                 const char *str;
                 int len;
                 defs_get_string(d, e->var, &str, &len);

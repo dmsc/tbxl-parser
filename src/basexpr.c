@@ -92,7 +92,7 @@ static int expr_get_bas_rec(string_buf *out, expr *e)
             break;
         case et_def_number:
             {
-                defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
+                const defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
                 double val;
                 defs_get_numeric(d, e->var, &val);
                 atari_bcd n = atari_bcd_from_double(val);
@@ -107,7 +107,7 @@ static int expr_get_bas_rec(string_buf *out, expr *e)
             break;
         case et_def_string:
             {
-                defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
+                const defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
                 const char *str;
                 int len;
                 defs_get_string(d, e->var, &str, &len);

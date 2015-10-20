@@ -557,7 +557,7 @@ void opt_commute(expr *ex)
         changed = do_commute(ex);
 }
 
-static int do_replace_defs(expr *ex, defs *d)
+static int do_replace_defs(expr *ex, const defs *d)
 {
     if( !ex )
         return 0;
@@ -590,7 +590,7 @@ void opt_replace_defs(expr *ex)
         return;
 
     // Apply rules over the tree until stops changing
-    defs *d = pgm_get_defs(expr_mngr_get_program(ex->mngr));
+    const defs *d = pgm_get_defs(expr_mngr_get_program(ex->mngr));
     int changed = 1;
     while(changed)
         changed = do_replace_defs(ex,d);

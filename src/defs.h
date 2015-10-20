@@ -23,7 +23,7 @@ defs * defs_new(void);
 void defs_delete(defs *);
 
 // Returns ID of definition named "name", or -1 if not found.
-int defs_search(defs *, const char *name);
+int defs_search(const defs *, const char *name);
 // Creates a new definition named "name", returns ID.
 int defs_new_def(defs *, const char *name, const char *file_name, int file_line);
 
@@ -34,10 +34,10 @@ void defs_set_string(defs *, int id, const char *data, int len);
 void defs_set_numeric(defs *, int id, const double val);
 
 // Gets string data from a definition
-int defs_get_string(defs *, int id, const char **data, int *len);
+int defs_get_string(const defs *, int id, const char **data, int *len);
 
 // Gets value from a definition
-int defs_get_numeric(defs *, int id, double *val);
+int defs_get_numeric(const defs *, int id, double *val);
 
 // Gets the type of the definition
 // 0 : numeric,  1 : string
