@@ -568,15 +568,12 @@ static int do_replace_defs(expr *ex, const defs *d)
     // Convert defs
     if( ex->type == et_def_number )
     {
-        double val;
-        defs_get_numeric(d, ex->var, &val);
-        return set_number(ex, val);
+        return set_number(ex, defs_get_numeric(d, ex->var));
     }
     else if( ex->type == et_def_string )
     {
-        const char *str;
         int len;
-        defs_get_string(d, ex->var, &str, &len);
+        const char *str = defs_get_string(d, ex->var, &len);
         char *buf = malloc(len);
         memcpy(buf, str, len);
         return set_string(ex, buf, len);

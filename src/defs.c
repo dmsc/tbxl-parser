@@ -139,21 +139,17 @@ void defs_set_numeric(defs *d, int id, double val)
     d->dlist[id].val = val;
 }
 
-int defs_get_string(const defs *d, int id, const char **data, int *len)
+const char *defs_get_string(const defs *d, int id, int *len)
 {
-    if( id < 0 || id >= MAX_DEFS || ! d->dlist[id].name || ! d->dlist[id].data )
-        return 0;
-    *data = d->dlist[id].data;
+    assert( id >= 0 && id < MAX_DEFS && d->dlist[id].name && d->dlist[id].data );
     *len  = d->dlist[id].len;
-    return 1;
+    return d->dlist[id].data;
 }
 
-int defs_get_numeric(const defs *d, int id, double *val)
+double defs_get_numeric(const defs *d, int id)
 {
-    if( id < 0 || id >= MAX_DEFS || ! d->dlist[id].name || d->dlist[id].data )
-        return 0;
-    *val = d->dlist[id].val;
-    return 1;
+    assert( id >= 0 && id < MAX_DEFS && d->dlist[id].name && !d->dlist[id].data );
+    return d->dlist[id].val;
 }
 
 int defs_get_type(const defs *d, int id)

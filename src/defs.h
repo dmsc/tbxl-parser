@@ -34,10 +34,10 @@ void defs_set_string(defs *, int id, const char *data, int len);
 void defs_set_numeric(defs *, int id, const double val);
 
 // Gets string data from a definition
-int defs_get_string(const defs *, int id, const char **data, int *len);
+const char *defs_get_string(const defs *, int id, int *len);
 
 // Gets value from a definition
-int defs_get_numeric(const defs *, int id, double *val);
+double defs_get_numeric(const defs *, int id);
 
 // Gets the type of the definition
 // 0 : numeric,  1 : string

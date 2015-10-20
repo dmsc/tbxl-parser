@@ -93,8 +93,7 @@ static int expr_get_bas_rec(string_buf *out, expr *e)
         case et_def_number:
             {
                 const defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
-                double val;
-                defs_get_numeric(d, e->var, &val);
+                double val = defs_get_numeric(d, e->var);
                 atari_bcd n = atari_bcd_from_double(val);
                 sb_put(out, 0x0E);
                 sb_put(out, n.exp);
@@ -108,9 +107,8 @@ static int expr_get_bas_rec(string_buf *out, expr *e)
         case et_def_string:
             {
                 const defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
-                const char *str;
                 int len;
-                defs_get_string(d, e->var, &str, &len);
+                const char *str = defs_get_string(d, e->var, &len);
                 sb_put(out, 0x0F);
                 sb_put(out, len);
                 sb_write(out, (const uint8_t *)str, len);

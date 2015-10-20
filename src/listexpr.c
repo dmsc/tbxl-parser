@@ -120,9 +120,8 @@ static void print_def_orig(string_buf *s, const defs *d, int id)
     sb_puts(s, defs_get_name(d, id));
     if( strdef )
     {
-        const char *str;
         int len;
-        defs_get_string(d, id, &str, &len);
+        const char *str = defs_get_string(d, id, &len);
         sb_puts(s, "$ = ");
         print_string_long(str, len, s);
         sb_put(s, '\n');
@@ -130,8 +129,7 @@ static void print_def_orig(string_buf *s, const defs *d, int id)
     else
     {
         char buf[64];
-        double val;
-        defs_get_numeric(d, id, &val);
+        double val = defs_get_numeric(d, id);
         sprintf(buf, " = %g\n", val);
         sb_puts(s, buf);
     }
@@ -479,8 +477,7 @@ static int print_expr_short_rec(string_buf *out, const expr *e)
         case et_def_number:
             {
                 const defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
-                double val;
-                defs_get_numeric(d, e->var, &val);
+                double val = defs_get_numeric(d, e->var);
                 atari_bcd n = atari_bcd_from_double(val);
                 atari_bcd_print(n, out);
             }
@@ -488,9 +485,8 @@ static int print_expr_short_rec(string_buf *out, const expr *e)
         case et_def_string:
             {
                 const defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
-                const char *str;
                 int len;
-                defs_get_string(d, e->var, &str, &len);
+                const char *str = defs_get_string(d, e->var, &len);
                 print_string_short(str, len, out);
             }
             break;
