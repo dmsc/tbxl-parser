@@ -49,7 +49,7 @@ static char *get_out_filename(const char *inFname, const char *output, const cha
     if( output )
         return strdup(output);
 
-    char * out = malloc(strlen(inFname) + 4);
+    char * out = malloc(strlen(inFname) + 1 + strlen(ext));
     strcpy(out,inFname);
     char *p = strrchr(out, '.');
     if( p )
