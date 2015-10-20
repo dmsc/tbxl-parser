@@ -27,8 +27,9 @@
 #include "ataribcd.h"
 #include "program.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
-#include <strings.h>
+#include <string.h>
 
 static int is_hex_digit(char c)
 {
@@ -75,6 +76,85 @@ static void print_string_short(const char *str, int len, string_buf *s)
         sb_put(s, *p);
     }
     sb_put(s, '"');
+}
+
+// Used to store information about printed definitions
+typedef struct {
+    int *num;
+    unsigned len;
+    unsigned size;
+} defprint;
+
+static void add_used_def(defprint *dp, int id)
+{
+    for(unsigned i=0; i<dp->len; i++)
+        if( dp->num[i] == id )
+            return;
+    if( dp->len == dp->size )
+    {
+        if( !dp->size )
+            dp->size = 256;
+        else
+            dp->size *= 2;
+        dp->num = realloc(dp->num, sizeof(dp->num[0]) * dp->size);
+    }
+    dp->num[dp->len] = id;
+    dp->len ++;
+}
+
+static void get_used_def(defprint *dp, const expr *e)
+{
+    if( !e )
+        return;
+    get_used_def(dp, e->lft);
+    get_used_def(dp, e->rgt);
+
+    if( e->type == et_def_number || e->type == et_def_string )
+        add_used_def(dp, e->var);
+}
+
+static void print_def_orig(string_buf *s, defs *d, int id)
+{
+    int strdef = defs_get_type(d, id);
+    sb_puts(s, "\t$define ");
+    sb_puts(s, defs_get_name(d, id));
+    if( strdef )
+    {
+        const char *str;
+        int len;
+        defs_get_string(d, id, &str, &len);
+        sb_puts(s, "$ = ");
+        print_string_long(str, len, s);
+        sb_put(s, '\n');
+    }
+    else
+    {
+        char buf[64];
+        double val;
+        defs_get_numeric(d, id, &val);
+        sprintf(buf, " = %g\n", val);
+        sb_puts(s, buf);
+    }
+}
+
+string_buf *expr_print_used_defs(const expr *ex)
+{
+    if( !ex )
+        return 0;
+
+    defprint dp;
+    memset(&dp,0,sizeof(dp));
+    get_used_def(&dp, ex);
+
+    if( !dp.len )
+        return 0;
+
+    string_buf *s = sb_new();
+    defs *d = pgm_get_defs(expr_mngr_get_program(ex->mngr));
+    for(unsigned i=0; i<dp.len; i++)
+        print_def_orig(s, d, dp.num[i]);
+    free(dp.num);
+    return s;
 }
 
 static void print_def_long(string_buf *s, defs *d, int id, int strdef)

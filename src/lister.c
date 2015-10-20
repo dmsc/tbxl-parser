@@ -33,6 +33,18 @@ int lister_list_program_long(FILE *f, program *pgm, int conv_ascii)
 {
     int indent = 0;
 
+    // Print all used defs
+    {
+        string_buf *sb = expr_print_used_defs(pgm_get_expr(pgm));
+        if( sb )
+        {
+            fprintf(f, "\t' Definitions\n");
+            fwrite(sb->data, sb->len, 1, f);
+            putc('\n', f);
+            sb_delete(sb);
+        }
+    }
+
     // Get expression list
     const expr ** elist = expr_get_statement_list(pgm_get_expr(pgm));
     const expr ** exprs = elist;
