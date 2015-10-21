@@ -499,6 +499,16 @@ static expr *create_str_assign(expr_mngr *m, cvalue_list *l, expr *prev, const u
 
 static void add_to_prog(expr *prog, expr *e)
 {
+    if( !e )
+        return;
+
+    // Swap prog with e
+    expr tmp;
+    tmp = *e;
+    *e = *prog;
+    *prog = tmp;
+
+    // Link
     while(prog->lft)
         prog = prog->lft;
     prog->lft = e;
@@ -602,13 +612,14 @@ void opt_replace_const(expr *prog)
     cvalue_list_sort_abs(lst);
 
     // Now, add all variable initializations to the program, first numeric, then strings:
-    expr *init = 0, *dim = 0;
+    expr *init = 0, *last_stmt = 0, *dim = 0;
     for(unsigned i=0; i<lst->len; i++)
     {
         cvalue *cv = lst->data + i;
         if( cv->status == 1 && !cv->str )
         {
-           init = create_num_assign(prog->mngr, lst, init, cv->num, cv->vid);
+           last_stmt = create_num_assign(prog->mngr, lst, last_stmt, cv->num, cv->vid);
+           if( !init ) init = last_stmt;
            cv->status = 2;
         }
     }
@@ -623,17 +634,22 @@ void opt_replace_const(expr *prog)
         }
     }
     if( dim )
-        init = expr_new_stmt(prog->mngr, init, dim, STMT_DIM);
+    {
+        last_stmt = expr_new_stmt(prog->mngr, last_stmt, dim, STMT_DIM);
+        if( !init ) init = last_stmt;
+    }
     // And all string assignments
     for(unsigned i=0; i<lst->len; i++)
     {
         cvalue *cv = lst->data + i;
         if( cv->status == 2 && cv->str )
         {
-            init = create_str_assign(prog->mngr, lst, init, cv->str, cv->slen, cv->vid);
+            last_stmt = create_str_assign(prog->mngr, lst, last_stmt, cv->str, cv->slen, cv->vid);
+            if( !init ) init = last_stmt;
             cv->status = 2;
         }
     }
+
     add_to_prog(prog, init);
 
     cvalue_list_delete(lst);

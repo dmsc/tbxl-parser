@@ -80,7 +80,6 @@ int expr_to_program(expr *e, program *out);
 int expr_is_label(const expr *e);
 const char *expr_get_file_name(expr *e);
 program *expr_get_program(const expr *e);
-const expr ** expr_get_statement_list(const expr *e);
 
 int expr_get_file_line(expr *e);
 int tok_prec_level(enum enum_tokens tk);

@@ -54,10 +54,11 @@ static void set_current_pgm(program *pgm)
     cur_program = pgm;
 }
 
-void store_stmt(void)
+static void set_last_stmt(expr *ex)
 {
-    if( last_stmt )
-        pgm_set_expr(parse_get_current_pgm(), last_stmt);
+    if( !last_stmt )
+        pgm_set_expr(parse_get_current_pgm(), ex);
+    last_stmt = ex;
 }
 
 expr *add_comment(const char *str, int len)
@@ -73,7 +74,7 @@ expr *add_data_stmt(const char *str, int len)
 void add_force_line()
 {
     if( last_stmt && last_stmt->type != et_lnum )
-        last_stmt = expr_new_lnum(mngr, last_stmt, -1);
+        set_last_stmt(expr_new_lnum(mngr, last_stmt, -1));
 }
 
 void add_linenum(double num)
@@ -81,7 +82,7 @@ void add_linenum(double num)
     if( num < 0 || num > 65535 )
         print_error("line number out of range","");
     else
-        last_stmt = expr_new_lnum(mngr, last_stmt, (int)(num+0.5));
+        set_last_stmt(expr_new_lnum(mngr, last_stmt, (int)(num+0.5)));
 }
 
 expr *ex_comma(expr *l, expr *r)
@@ -111,7 +112,7 @@ expr *add_string(void)
 
 void add_stmt(enum enum_statements st, expr *toks)
 {
-    last_stmt = expr_new_stmt(mngr, last_stmt, toks, st);
+    set_last_stmt(expr_new_stmt(mngr, last_stmt, toks, st));
 }
 
 expr *add_ident(const char *name, enum var_type type)

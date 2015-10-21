@@ -202,14 +202,9 @@ int bas_write_program(FILE *f, program *pgm, int variables)
     int no_split = 0;
     int file_line = 0;
     string_buf *bin_line = sb_new();
-    // Get expression list
-    const expr ** elist = expr_get_statement_list(pgm_get_expr(pgm));
-    const expr ** exprs = elist;
-
     // For each line/statement:
-    for(; *exprs ; exprs++)
+    for(const expr *ex = pgm_get_expr(pgm); ex != 0 ; ex = ex->lft)
     {
-        const expr *ex = *exprs;
         if( ex->type == et_lnum )
         {
             // Append old line
@@ -304,7 +299,6 @@ int bas_write_program(FILE *f, program *pgm, int variables)
     if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_colon, fname, file_line) )
         return 1;
     sb_delete(bin_line);
-    free(elist);
     // Now, adds a standard immediate line: SAVE "D:X"
     sb_write(bw.toks, (unsigned char *)"\x00\x80\x0b\x0b\x19\x0f\x03\x44\x3a\x58\x16", 11);
     // Verify sizes

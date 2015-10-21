@@ -34,8 +34,6 @@ void add_stmt(enum enum_statements, expr *toks);
 expr * add_number(double);
 expr * add_hex_number(double);
 expr * add_string(void);
-//void add_token(enum enum_tokens);
-//void add_toks(void);
 expr * add_ident(const char *, enum var_type);
 expr * add_strdef_val(const char *);
 expr * add_numdef_val(const char *);
@@ -44,8 +42,6 @@ void print_error(const char *, const char *);
 // Expressions...
 expr *ex_comma(expr *l, expr *r);
 expr *ex_bin(expr *l, expr *r, enum enum_tokens k);
-
-void store_stmt(void);
 
 // Converts strings constants to binary data and store
 void push_string_const(const char *data, unsigned len);

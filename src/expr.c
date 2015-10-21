@@ -51,7 +51,8 @@ expr *expr_new_void(expr_mngr *mngr)
 expr *expr_new_stmt(expr_mngr *mngr, expr *prev, expr *toks, enum enum_statements stmt)
 {
     expr *n = expr_new(mngr);
-    n->lft = prev;
+    if( prev )
+        prev->lft = n;
     n->rgt = toks;
     n->stmt = stmt;
     n->type = et_stmt;
@@ -61,7 +62,8 @@ expr *expr_new_stmt(expr_mngr *mngr, expr *prev, expr *toks, enum enum_statement
 expr *expr_new_lnum(expr_mngr *mngr, expr *prev, int lnum)
 {
     expr *n = expr_new(mngr);
-    n->lft = prev;
+    if( prev )
+        prev->lft = n;
     n->rgt = 0;
     n->num = lnum;
     n->type = et_lnum;
@@ -382,35 +384,6 @@ program *expr_get_program(const expr *e)
 int expr_is_label(const expr *e)
 {
     return e && e->type == et_stmt && (e->stmt == STMT_LBL_S || e->stmt == STMT_PROC);
-}
-
-// Used to return a list of statements in program order:
-static int expr_count_lft(const expr *e)
-{
-    if( !e )
-        return 0;
-    return expr_count_lft(e->lft) + 1;
-}
-
-static int expr_copy_array(const expr *e, const expr **arr)
-{
-    if( e )
-    {
-        int n = expr_copy_array(e->lft, arr);
-        arr[n] = e;
-        return n+1;
-    }
-    else
-        return 0;
-}
-
-const expr ** expr_get_statement_list(const expr *e)
-{
-    int n = expr_count_lft(e);
-    const expr **arr = malloc(sizeof(expr*)*(n+1));
-    expr_copy_array(e, arr);
-    arr[n] = 0;
-    return arr;
 }
 
 ///////////////////////////////////////////////////////////////////////

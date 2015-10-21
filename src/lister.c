@@ -45,14 +45,9 @@ int lister_list_program_long(FILE *f, program *pgm, int conv_ascii)
         }
     }
 
-    // Get expression list
-    const expr ** elist = expr_get_statement_list(pgm_get_expr(pgm));
-    const expr ** exprs = elist;
-
     // For each line/statement:
-    for(; *exprs ; exprs++)
+    for(const expr *ex = pgm_get_expr(pgm); ex != 0 ; ex = ex->lft)
     {
-        const expr *ex = *exprs;
         // Test if it is a line number or a statement
         if( ex->type == et_lnum )
         {
@@ -73,7 +68,6 @@ int lister_list_program_long(FILE *f, program *pgm, int conv_ascii)
             sb_delete(sb);
         }
     }
-    free(elist);
     return 0;
 }
 
@@ -177,15 +171,9 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
     int last_split = 0, last_tok_len = 0;
     int return_error = 0;
 
-    // Get expression list
-    const expr ** elist = expr_get_statement_list(pgm_get_expr(pgm));
-    const expr ** exprs = elist;
-
     // For each line/statement:
-    for(; *exprs ; exprs++)
+    for(const expr *ex = pgm_get_expr(pgm); ex != 0 ; ex = ex->lft)
     {
-        const expr *ex = *exprs;
-
         // Adds a new statement (if any)
         if( ex->type != et_lnum )
         {
@@ -270,7 +258,6 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
         ls_write_line(&ls, -1, ls.tok_len);
 
     sb_delete(ls.out);
-    free(elist);
     // Output summary info
     if( do_debug )
     {
