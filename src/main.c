@@ -24,6 +24,7 @@
 #include "baswriter.h"
 #include "version.h"
 #include "optimize.h"
+#include "convertbas.h"
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -175,6 +176,10 @@ int main(int argc, char **argv)
         // Parse input file
         parser_set_optimize(do_optimize);
         int ok = parse_file(inFname);
+
+        // Convert to TurboBasic compatible if output is BAS or short LST
+        if( ok && (out_type == out_short || out_type == out_binary) )
+            ok = !convert_to_turbobas(parse_get_current_pgm());
 
         // Update "all_ok" variable
         all_ok = ok ? all_ok : 0;

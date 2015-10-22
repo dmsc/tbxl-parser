@@ -204,6 +204,7 @@ static int check_add_indent(enum enum_statements s)
         case STMT_IF_MULTILINE:
         case STMT_IF_THEN:
         case STMT_PROC:
+        case STMT_PROC_VAR:
         case STMT_REPEAT:
         case STMT_WHILE:
             return 1;

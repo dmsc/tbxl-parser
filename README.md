@@ -44,6 +44,27 @@ The input listing format is very flexible:
 
   Also, line numbers can appear alone in a line, for better readability.
 
+- Adds parameters and local variables to PROC/EXEC.
+
+  Arguments follow the PROC label after a comma, and local variables follow
+  after a semicolon:
+  ```
+    D = 3
+    EXEC Testing, D+5, "Hello"
+    PRINT D
+    PROC Testing, A, B$(10); D
+        D = A + 1
+        PRINT D; " and "; B$
+    ENDPROC
+  ```
+
+  As the example shows, string variables must include the dimensioned length,
+  as the parser adds a DIM at the start of the program to initialize. The
+  dimensioned length must be an integer, a `$define` or a `%` number.
+
+  Also, setting the value of "D" inside the procedure does not alter the value
+  of the variable "D" outside the procedure.
+
 - Inside strings, special characters can be specified by using a backslash
   followed by an hexadecimal number in upper-case, (i.e., `"\00\A0"` produces
   a string with a "hearth" and an inverse space), this allows editing special

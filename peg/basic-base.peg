@@ -87,6 +87,7 @@ Statement        =
                  | ELSE                         { add_stmt(STMT_ELSE,0); }
                  | ENDIF                        { add_stmt(STMT_ENDIF,0); }
                  | EXIT   t:NumExprErrOpt       { add_stmt(STMT_EXIT,t); }
+                 | EXEC   t:LabelExecParList    { add_stmt(STMT_EXEC_PAR,t); }
                  | EXEC   t:Label               { add_stmt(STMT_EXEC,t); }
                  | ENDPROC                      { add_stmt(STMT_ENDPROC,0); }
                  | END                          { add_stmt(STMT_END,0); }
@@ -134,6 +135,7 @@ Statement        =
                  | PLOT   t:NumExpr2            { add_stmt(STMT_PLOT,t); }
                  | POSITION t:NumExpr2          { add_stmt(STMT_POSITION,t); }
                  | PAUSE  t:NumExprErr          { add_stmt(STMT_PAUSE,t); }
+                 | PROC   t:LabelProcVarList    { add_stmt(STMT_PROC_VAR,t); }
                  | PROC   t:Label               { add_stmt(STMT_PROC,t); }
                  | PAINT  t:NumExpr2            { add_stmt(STMT_PAINT,t); }
                  | RAD                          { add_stmt(STMT_RAD,0); }
@@ -292,6 +294,26 @@ LabelOrLNumExpr  = SHARP r:Label                        { $$ = ex_bin(0,r,TOK_SH
 # Used on TEXT
 Num2StrExpr      = l:NumExpr2 COMMA r:StrExprErr        { $$ = ex_comma(l,r); }
 
+# Parse PROC with parameters:  PROC label, var1, var2$(size), varN; local1, local2, localN
+ProcVar          = PVarNum
+                 | l:PDimVarStr r:ConstNum R_PRN        { $$ = ex_bin(l,r,TOK_DS_L_PRN); }
+                 | < ERROR >  { print_error("proc argument", yytext); $$ = l; }
+ProcVariableList = l:ProcVar (COMMA r:ProcVar           { l = ex_comma(l,r); }
+                             )*                         { $$ = l; }
+ProcVarList      = COMMA? SEMICOLON r:ProcVariableList  { $$ = ex_bin(0,r,TOK_SEMICOLON); }
+                 | COMMA l:ProcVariableList
+                      ( SEMICOLON r:ProcVariableList
+                      |                                 { r = 0; }
+                      )?                                { $$ = ex_bin(l,r,TOK_SEMICOLON); }
+
+LabelProcVarList = l:Label r:ProcVarList                { $$ = ex_comma(l,r); }
+
+# Parse EXEC with parameters: EXEC label, param1, param2, paramN
+AnyExprList      = l:AnyExpr ( COMMA r:AnyExpr          { l = ex_comma(l,r); }
+                             )*                         { $$ = l; }
+
+LabelExecParList = l:Label COMMA r:AnyExprList          { $$ = ex_comma(l,r); }
+
 # Used in INPUT or READ, needs a list of numeric or string variables.
 VariableList     = l:PVarNumStr (COMMA r:PVarNumStr     { l = ex_comma(l,r); }
                                 )*                      { $$ = l; }
@@ -406,7 +428,7 @@ NegExpr          = UMINUS r:NegExpr                     { $$ = ex_bin(0,r,TOK_UM
                  | UPLUS  r:NegExpr                     { $$ = ex_bin(0,r,TOK_UPLUS); }
                  | UnitExpr
 
-UnitExpr         = Number
+UnitExpr         = ConstNum
                  | StrCompExpr
                  | L_PRN r:NumExpr R_PRN                { $$ = ex_bin(0,r,TOK_L_PRN); }
                  | USR    r:ParUsrExpr                  { $$ = ex_bin(0,r,TOK_USR); }
@@ -440,14 +462,18 @@ UnitExpr         = Number
                  | TRUNC  r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_TRUNC); }
                  | UINSTR r:ParInstrExpr                { $$ = ex_bin(0,r,TOK_UINSTR); }
                  | TIME                                 { $$ = ex_bin(0,0,TOK_TIME); }
+                 | ERR                                  { $$ = ex_bin(0,0,TOK_ERR); }
+                 | ERL                                  { $$ = ex_bin(0,0,TOK_ERL); }
+                 | AssignVarNum
+
+# Compile time constant numeric expression - note that we could support more
+# values with optimization ON
+ConstNum         = Number
+                 | NumericDef
                  | PER_0                                { $$ = ex_bin(0,0,TOK_PER_0); }
                  | PER_1                                { $$ = ex_bin(0,0,TOK_PER_1); }
                  | PER_2                                { $$ = ex_bin(0,0,TOK_PER_2); }
                  | PER_3                                { $$ = ex_bin(0,0,TOK_PER_3); }
-                 | ERR                                  { $$ = ex_bin(0,0,TOK_ERR); }
-                 | ERL                                  { $$ = ex_bin(0,0,TOK_ERL); }
-                 | NumericDef
-                 | AssignVarNum
 
 # String comparisons is a type of numeric expresion
 StrCompExpr      = l:StrExpr (

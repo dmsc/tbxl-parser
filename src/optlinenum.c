@@ -109,6 +109,7 @@ static int do_search_stmt(expr *ex, uint8_t *keep, uint8_t *avail)
         case STMT_ENDPROC:
         case STMT_ENTER:
         case STMT_EXEC:
+        case STMT_EXEC_PAR:
         case STMT_EXIT:
         case STMT_F_B:
         case STMT_FCOLOR:
@@ -149,6 +150,7 @@ static int do_search_stmt(expr *ex, uint8_t *keep, uint8_t *avail)
         case STMT_PRINT_:
         case STMT_PRINT:
         case STMT_PROC:
+        case STMT_PROC_VAR:
         case STMT_PUT:
         case STMT_RAD:
         case STMT_READ:

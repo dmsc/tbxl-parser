@@ -32,6 +32,7 @@ SOURCES=\
  basexpr.c\
  basic.c\
  baswriter.c\
+ convertbas.c\
  defs.c\
  expr.c\
  lister.c\
