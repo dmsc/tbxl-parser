@@ -267,7 +267,7 @@ static int set_exec_params(proc *pc, expr *ex, expr *cur_stmt, int n)
     {
         if( p->sdim )
         {
-            error("expected string parameter #%d ('%s$') to PROC '%s', got numeric.\n", 1+(int)n, p->name, pc->name);
+            error("expected string parameter '%s$' to PROC '%s', got numeric.\n", p->name, pc->name);
             return 1;
         }
         ex->lft = expr_new_var_num(mngr, p->new_var);
@@ -276,7 +276,7 @@ static int set_exec_params(proc *pc, expr *ex, expr *cur_stmt, int n)
     {
         if( !p->sdim )
         {
-            error("expected numeric parameter #%d ('%s') to PROC '%s', got string.\n", 1+(int)n, p->name, pc->name);
+            error("expected numeric parameter '%s' to PROC '%s', got string.\n", p->name, pc->name);
             return 1;
         }
         ex->lft = expr_new_var_str(mngr, p->new_var);
