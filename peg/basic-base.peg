@@ -65,9 +65,9 @@ Statement        =
                  | COLOR  t:NumExprErr          { add_stmt(STMT_COLOR,t); }
                  | CONT                         { add_stmt(STMT_CONT,0); }
                  | COM    t:DimVarList          { add_stmt(STMT_COM,t); }
-                 | CLOSE  t:IOChanErrOpt        { add_stmt(STMT_CLOSE,t); }
+                 | CLOSE {t=0;} t:IOChanErr?    { add_stmt(STMT_CLOSE,t); }
                  | CLR                          { add_stmt(STMT_CLR,0); }
-                 | CLS    t:IOChanErrOpt        { add_stmt(STMT_CLS,t); }
+                 | CLS   {t=0;} t:IOChanErr?    { add_stmt(STMT_CLS,t); }
                  | CLOAD                        { add_stmt(STMT_CLOAD,0); }
                  | CIRCLE t:NumExpr3            { add_stmt(STMT_CIRCLE,t); }
                  | CSAVE                        { add_stmt(STMT_CSAVE,0); }
@@ -78,15 +78,15 @@ Statement        =
                  | DRAWTO t:NumExpr2            { add_stmt(STMT_DRAWTO,t); }
                  | DPOKE  t:NumExpr2            { add_stmt(STMT_DPOKE,t); }
                  | DO                           { add_stmt(STMT_DO,0); }
-                 | DIR    t:StrExprErrOpt       { add_stmt(STMT_DIR,t); }
+                 | DIR    {t=0;} t:StrExprErr?  { add_stmt(STMT_DIR,t); }
                  | DELETE t:StrExprErr          { add_stmt(STMT_DELETE,t); }
                  | DEL    t:NumExpr2            { add_stmt(STMT_DEL,t); }
-                 | DUMP   t:StrExprErrOpt       { add_stmt(STMT_DUMP,t); }
-                 | DSOUND t:NumExpr4Opt         { add_stmt(STMT_DSOUND,t); }
+                 | DUMP   {t=0;} t:StrExprErr?  { add_stmt(STMT_DUMP,t); }
+                 | DSOUND {t=0;} t:NumExpr4?    { add_stmt(STMT_DSOUND,t); }
                  | ENTER  t:StrExprErr          { add_stmt(STMT_ENTER,t); }
                  | ELSE                         { add_stmt(STMT_ELSE,0); }
                  | ENDIF                        { add_stmt(STMT_ENDIF,0); }
-                 | EXIT   t:NumExprErrOpt       { add_stmt(STMT_EXIT,t); }
+                 | EXIT   {t=0;} t:NumExprErr?  { add_stmt(STMT_EXIT,t); }
                  | EXEC   t:LabelExecParList    { add_stmt(STMT_EXEC_PAR,t); }
                  | EXEC   t:Label               { add_stmt(STMT_EXEC,t); }
                  | ENDPROC                      { add_stmt(STMT_ENDPROC,0); }
@@ -150,7 +150,7 @@ Statement        =
                  | STATUS t:StatusExpr          { add_stmt(STMT_STATUS,t); }
                  | STOP                         { add_stmt(STMT_STOP,0); }
                  | SETCOLOR t:NumExpr3          { add_stmt(STMT_SETCOLOR,t); }
-                 | SOUND  t:NumExpr4Opt         { add_stmt(STMT_SOUND,t); }
+                 | SOUND  {t=0;} t:NumExpr4?    { add_stmt(STMT_SOUND,t); }
                  | TRAP   t:LabelOrLNumExpr     { add_stmt(STMT_TRAP,t); }
                  | TRACE                        { add_stmt(STMT_TRACE,0); }
                  | TEXT   t:Num2StrExpr         { add_stmt(STMT_TEXT,t); }
@@ -190,11 +190,9 @@ NumExpr3         = l:NumExpr2 COMMA r:NumExprErr        { $$ = ex_bin(l,r,TOK_CO
                   | < ERROR > { print_error("3 numeric expressions", yytext); }
 NumExpr4         = l:NumExpr3 COMMA r:NumExprErr        { $$ = ex_bin(l,r,TOK_COMMA); }
                   | < ERROR > { print_error("4 numeric expressions", yytext); }
-NumExpr4Opt      = { $$ = 0; }  NumExpr4?
 IOChan           = SHARP r:NumExprErr                   { $$ = ex_bin(0,r,TOK_SHARP); }
 IOChanErr        = IOChan
                   | < ERROREXP >                        { print_error("I/O channel (#)", yytext); $$ = 0; }
-IOChanErrOpt     = { $$ = 0; }  IOChanErr?
 AnyExpr          = NumExpr | StrExpr
 VarNumComma      = l:PVarNum (COMMA r:PVarNum           { l = ex_comma(l,r); }
                              )*                         { $$ = l; }
@@ -203,19 +201,12 @@ NumComma         = l:NumExprErr (COMMA r:NumExprErr     { l = ex_comma(l,r); }
 LabelComma       = l:Label (COMMA r:Label               { l = ex_comma(l,r); }
                            )*                           { $$ = l; }
 
-PrintExpr        = l:PrintExprStart
+PrintExpr        = {l=0;} l:AnyExpr?
                         ( COMMA r:AnyExpr               { l = ex_bin(l,r,TOK_COMMA); }
                         | SEMICOLON r:AnyExpr           { l = ex_bin(l,r,TOK_SEMICOLON); }
                         | COMMA                         { l = ex_bin(l,0,TOK_COMMA); }
                         | SEMICOLON                     { l = ex_bin(l,0,TOK_SEMICOLON); }
                         )*                              { $$ = l; }
-
-PrintExprStart   = AnyExpr
-                 | COMMA r:AnyExpr                      { $$ = ex_bin(0,r,TOK_COMMA); }
-                 | SEMICOLON r:AnyExpr                  { $$ = ex_bin(0,r,TOK_SEMICOLON); }
-                 | COMMA                                { $$ = ex_bin(0,0,TOK_COMMA); }
-                 | SEMICOLON                            { $$ = ex_bin(0,0,TOK_SEMICOLON); }
-                 |                                      { $$ = 0; }
 
 # FOR statement expression:
 ForStmtExpr      = l:PVarNum EQ r:NumExprErr            { l = ex_bin(l,r,TOK_F_ASGN); }
@@ -348,10 +339,8 @@ NumericDef       = '@' < Identifier > !'$' { $$ = add_numdef_val(yytext); }     
 # Those constructs produce errors if not matched
 NumExprErr       = NumExpr
                   | < ERROREXP > { print_error("numeric expression", yytext); $$ = 0; }
-NumExprErrOpt    = { $$ = 0; } NumExprErr?
 StrExprErr       = StrExpr
                   | < ERROREXP > { print_error("string expression", yytext); $$ = 0; }
-StrExprErrOpt    = { $$ = 0; } StrExprErr?
 
 # String expressions
 StrExpr          = STRP    r:ParNumExpr                 { $$ = ex_bin(0,r,TOK_STRP); }
