@@ -58,7 +58,7 @@ static int verify_target_line(expr *ex, uint8_t *keep, uint8_t *avail, int range
         else if( lnum < 32767.5 )
         {
             int inum = (int)(lnum + 0.5);
-            if( !bitmap_get(avail, inum) )
+            if( !bitmap_get(avail, inum) && !ignore )
                 warn("target line number %d not in the program.\n", inum);
             bitmap_set(keep, inum);
         }

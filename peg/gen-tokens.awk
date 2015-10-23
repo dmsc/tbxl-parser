@@ -72,7 +72,7 @@ END {
            "    const char *tok_short;\n" \
            "    const char *tok_long;\n" \
            "};\n"\
-           "const extern struct tokens tokens[%d];" \
+           "extern const struct tokens tokens[%d];" \
            "\n", \
            FILENAME, enums, num+1 > hdr
     printf "/* This file is auto-generated from %s, don't modify */\n" \

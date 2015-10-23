@@ -72,7 +72,7 @@ END {
            "    int min;\n" \
            "    const char *stm_short;\n" \
            "};\n"\
-           "const extern struct statements statements[%d];" \
+           "extern const struct statements statements[%d];" \
            "\n", \
            FILENAME, enums, num+1 > hdr
     printf "/* This file is auto-generated from %s, don't modify */\n" \

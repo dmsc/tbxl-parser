@@ -36,8 +36,8 @@
 // Store a PROC parameter
 typedef struct {
     const char *name; // Parameter name
-    int var;          // Original variable ID
-    int new_var;      // New variable ID
+    unsigned var;     // Original variable ID
+    unsigned new_var; // New variable ID
     int sdim;         // String dimension, or 0 if number
     int local;        // 1 = local var, 0 = parameter
 } param;
@@ -46,7 +46,7 @@ typedef darray(param) param_list;
 // Store a PROC info
 typedef struct {
     const char *name; // proc name
-    int label;        // label id
+    unsigned label;   // label id
     int num_args;     // number of arguments
     param_list params;// list of parameters
 } proc;
@@ -244,7 +244,7 @@ static int count_exec_params(expr *ex)
 }
 
 // Set EXEC parameters. Returns != 0 on error.
-static int set_exec_params(proc *pc, expr *ex, expr *cur_stmt, size_t n)
+static int set_exec_params(proc *pc, expr *ex, expr *cur_stmt, int n)
 {
     if( !ex )
         return 0;
@@ -337,7 +337,7 @@ static int do_search_exec(expr *ex, proc_list *pl)
                 err = 1;
                 continue;
             }
-            size_t num = count_exec_params(params);
+            int num = count_exec_params(params);
             if( num != pc->num_args )
             {
                 error("EXEC with too %s parameters to PROC '%s'\n",

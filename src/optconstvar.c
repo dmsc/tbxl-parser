@@ -286,7 +286,7 @@ static int replace_cvalue(expr *ex, cvalue *cv)
 
 }
 
-static int val_from_i(expr_mngr *m, cvalue_list *l, int i, double *v)
+static int val_from_i(cvalue_list *l, int i, double *v)
 {
     if( i < 4 )
     {
@@ -323,25 +323,25 @@ static expr *create_num(expr_mngr *m, cvalue_list *l, double n)
     double x;
     // Creates the optimal numeric initialization expression
     // First, try standard tokens:
-    for(i=0; 0 != (i = val_from_i(m, l, i, &x)); )
+    for(i=0; 0 != (i = val_from_i(l, i, &x)); )
     {
         if( n == x )
             return expr_from_i(m, l, i-1);
     }
 
     // Now, try with "MINUS" and a value:
-    for(i=0; 0 != (i = val_from_i(m, l, i, &x)); )
+    for(i=0; 0 != (i = val_from_i(l, i, &x)); )
     {
         if( n == -x )
             return expr_new_uni(m, expr_from_i(m, l, i-1), TOK_UMINUS);
     }
 
     // Now, try with operations between two simple values:
-    for(i=0; 0 != (i = val_from_i(m, l, i, &x)); )
+    for(i=0; 0 != (i = val_from_i(l, i, &x)); )
     {
         int j;
         double y;
-        for(j=0; 0 != (j = val_from_i(m, l, j, &y)); )
+        for(j=0; 0 != (j = val_from_i(l, j, &y)); )
         {
             if( n == x + y )
                 return expr_new_bin(m, expr_from_i(m, l, i-1), expr_from_i(m, l, j-1), TOK_PLUS);
@@ -355,11 +355,11 @@ static expr *create_num(expr_mngr *m, cvalue_list *l, double n)
     }
 
     // Same as before, adding "-":
-    for(i=0; 0 != (i = val_from_i(m, l, i, &x)); )
+    for(i=0; 0 != (i = val_from_i(l, i, &x)); )
     {
         int j;
         double y;
-        for(j=0; 0 != (j = val_from_i(m, l, j, &y)); )
+        for(j=0; 0 != (j = val_from_i(l, j, &y)); )
         {
             if( n == -x + y )
                 return expr_new_bin(m, expr_new_uni(m, expr_from_i(m, l, i-1), TOK_UMINUS), expr_from_i(m, l, j-1), TOK_PLUS);
@@ -373,15 +373,15 @@ static expr *create_num(expr_mngr *m, cvalue_list *l, double n)
     }
 
     // Now, try with operations between tree simple values:
-    for(i=0; 0 != (i = val_from_i(m, l, i, &x)); )
+    for(i=0; 0 != (i = val_from_i(l, i, &x)); )
     {
         int j;
         double y;
-        for(j=0; 0 != (j = val_from_i(m, l, j, &y)); )
+        for(j=0; 0 != (j = val_from_i(l, j, &y)); )
         {
             int k;
             double z;
-            for(k=0; 0 != (k = val_from_i(m, l, k, &z)); )
+            for(k=0; 0 != (k = val_from_i(l, k, &z)); )
             {
                 if( n == x + y + z )
                     return expr_new_bin(m, expr_new_bin(m, expr_from_i(m,l,i-1), expr_from_i(m,l,j-1), TOK_PLUS), expr_from_i(m,l,k-1), TOK_PLUS);
@@ -404,15 +404,15 @@ static expr *create_num(expr_mngr *m, cvalue_list *l, double n)
     }
 
     // Same as before, adding "-":
-    for(i=0; 0 != (i = val_from_i(m, l, i, &x)); )
+    for(i=0; 0 != (i = val_from_i(l, i, &x)); )
     {
         int j;
         double y;
-        for(j=0; 0 != (j = val_from_i(m, l, j, &y)); )
+        for(j=0; 0 != (j = val_from_i(l, j, &y)); )
         {
             int k;
             double z;
-            for(k=0; 0 != (k = val_from_i(m, l, k, &z)); )
+            for(k=0; 0 != (k = val_from_i(l, k, &z)); )
             {
                 if( n == -x + y + z )
                     return expr_new_bin(m, expr_new_bin(m, expr_new_uni(m, expr_from_i(m,l,i-1), TOK_UMINUS), expr_from_i(m,l,j-1), TOK_PLUS), expr_from_i(m,l,k-1), TOK_PLUS);
@@ -444,7 +444,7 @@ static expr *create_num_assign(expr_mngr *m, cvalue_list *l, expr *prev, double 
     return expr_new_stmt(m, prev, toks, STMT_LET_INV);
 }
 
-static expr *create_str_dim(expr_mngr *m, cvalue_list *l, expr *exp, const uint8_t *data, unsigned len, int vid)
+static expr *create_str_dim(expr_mngr *m, cvalue_list *l, expr *exp, unsigned len, int vid)
 {
     // Create the DIM expression:  [,] X$(len)
     expr *dim = expr_new_bin(m, expr_new_var_str(m, vid), create_num(m, l, len), TOK_DS_L_PRN);
@@ -454,7 +454,7 @@ static expr *create_str_dim(expr_mngr *m, cvalue_list *l, expr *exp, const uint8
         return dim;
 }
 
-static expr *create_str_assign(expr_mngr *m, cvalue_list *l, expr *prev, const uint8_t *data, unsigned len, int vid)
+static expr *create_str_assign(expr_mngr *m, expr *prev, const uint8_t *data, unsigned len, int vid)
 {
     // Create the assign statement: X$=""
     return expr_new_stmt(m, prev, expr_new_bin(m, expr_new_var_str(m, vid), expr_new_string(m, data, len), TOK_S_ASGN), STMT_LET_INV);
@@ -592,7 +592,7 @@ void opt_replace_const(expr *prog)
         cvalue *cv = lst->data + i;
         if( cv->status == 1 && cv->str )
         {
-            dim = create_str_dim(prog->mngr, lst, dim, cv->str, cv->slen, cv->vid);
+            dim = create_str_dim(prog->mngr, lst, dim, cv->slen, cv->vid);
             cv->status = 2;
         }
     }
@@ -607,7 +607,7 @@ void opt_replace_const(expr *prog)
         cvalue *cv = lst->data + i;
         if( cv->status == 2 && cv->str )
         {
-            last_stmt = create_str_assign(prog->mngr, lst, last_stmt, cv->str, cv->slen, cv->vid);
+            last_stmt = create_str_assign(prog->mngr, last_stmt, cv->str, cv->slen, cv->vid);
             if( !init ) init = last_stmt;
             cv->status = 2;
         }
