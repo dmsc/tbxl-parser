@@ -15,19 +15,10 @@
  *  You should have received a copy of the GNU General Public License along
  *  with this program.  If not, see <http://www.gnu.org/licenses/>
  */
+#pragma once
 
-#include "convertbas.h"
-#include "procparams.h"
-#include "expr.h"
-#include "program.h"
+typedef struct expr_struct expr;
 
-int convert_to_turbobas(program *p)
-{
-    int err = 0;
-    expr *ex = pgm_get_expr(p);
-
-    // Converts PROC/EXEC with parameters and local variables to standard PROC/EXEC.
-    err |= convert_proc_exec(ex);
-
-    return err;
-}
+// Converts PROC/EXEC with parameters and local variables to standard PROC/EXEC.
+// Returns != 0 on error.
+int convert_proc_exec(expr *ex);

@@ -43,6 +43,7 @@ SOURCES=\
  optimize.c\
  optlinenum.c\
  parser.c\
+ procparams.c\
  program.c\
  sbuf.c\
  vars.c\
