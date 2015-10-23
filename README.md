@@ -160,7 +160,8 @@ Options:
 - `-q`  Don't show any parsing output, only errors.  (quiet mode)
 
 - `-o`  Sets the output file name.  By default, the output is the name of the
-  input with `.lst` (listing) or `.bas` (tokenized) extension.
+  input with `.lst` (listing) or `.bas` (tokenized) extension. If the given
+  name starts with a dot, use as output file name extension.
 
 - `-c`  Output to standard output instead of a file.
 

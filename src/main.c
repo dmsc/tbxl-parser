@@ -69,7 +69,8 @@ int main(int argc, char **argv)
         out_long,
         out_binary } out_type = out_binary;
     int do_conv_ascii = 0;
-    const char *output = 0;
+    char *output = 0;
+    const char *extension = 0;
     int max_line_len = 120;
     int bin_variables = 0;
 
@@ -102,10 +103,13 @@ int main(int argc, char **argv)
                 bin_variables = -1;
                 break;
             case 'c':
-                output = "-";
+                output = strdup("-");
                 break;
             case 'o':
-                output = strdup(optarg);
+                if( optarg[0] == '.' )
+                    extension = optarg;
+                else
+                    output = strdup(optarg);
                 break;
             case 'O':
                 do_optimize = 1;
@@ -134,7 +138,7 @@ int main(int argc, char **argv)
                                 "\t-a  In long output, convert comments to pure ASCII.\n"
                                 "\t-v  Shows more parsing information (verbose mode).\n"
                                 "\t-q  Don't show parsing information (quiet mode).\n"
-                                "\t-o  Sets the output file name, instead of default one.\n"
+                                "\t-o  Sets the output file name or extension (if starts with a dot).\n"
                                 "\t-c  Output to standard output instead of a file.\n"
                                 "\t-O  Defaults to run the optimizer in the parsed program.\n"
                                 "\t-h  Shows help and exit.\n",
@@ -151,9 +155,18 @@ int main(int argc, char **argv)
 
     if( output && strcmp(output,"-") && optind+1  != argc )
     {
-        fprintf(stderr, "When seting output file, only one input file should be supplied\n");
+        fprintf(stderr, "When setting output file, only one input file should be supplied\n");
         exit(EXIT_FAILURE);
     }
+
+    if( output && extension )
+    {
+        fprintf(stderr, "Only one of output file name or extension should be supplied.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if( !extension )
+        extension = (out_type == out_binary) ? ".bas" : ".lst";
 
     int all_ok = 1;
     for( ; optind<argc; optind++)
@@ -161,15 +174,17 @@ int main(int argc, char **argv)
         const char *inFname = argv[optind];
 
         // Get list output
-        char *outFname = get_out_filename( inFname, output,
-                                           (out_type == out_binary) ? ".bas" : ".lst" );
+        char *outFname = get_out_filename( inFname, output, extension );
         if( !strcmp(inFname, outFname) )
         {
             err_print(inFname, 0, "output file '%s' is the same as input.\n", outFname);
             exit(EXIT_FAILURE);
         }
         if( output && strcmp( output, "-" ) )
+        {
+            free(output);
             output = 0;  // Only use on first file
+        }
 
         info_print(inFname, 0, "parsing to '%s'\n", outFname);
 
@@ -238,6 +253,9 @@ int main(int argc, char **argv)
         if( do_debug )
             fprintf(stderr, "\n");
     }
+
+    if( output )
+        free(output);
 
     return all_ok ? EXIT_SUCCESS : EXIT_FAILURE;
 }
