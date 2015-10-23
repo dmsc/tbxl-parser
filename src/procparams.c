@@ -234,7 +234,7 @@ static int do_search_procs(expr *ex, proc_list *pl)
 }
 
 // Return the number of parameters (arguments) on an EXEC call
-static int count_exec_params(expr *ex)
+static int count_exec_params(const expr *ex)
 {
     if( !ex )
         return 0;
@@ -292,6 +292,34 @@ static int set_exec_params(proc *pc, expr *ex, expr *cur_stmt, int n)
     return 0;
 }
 
+static int process_exec_call(expr *ex, const expr *label, expr *params, const proc_list *pl)
+{
+    vars *vl = pgm_get_vars(expr_mngr_get_program(ex->mngr));
+    proc *pc = 0;
+    for(size_t i=0; i<darray_len(pl); i++)
+    {
+        pc = &darray_i(pl,i);
+        if( pc->label == label->var )
+            break;
+    }
+    if( !pc )
+    {
+        error("EXEC to missing PROC '%s'\n", vars_get_long_name(vl, label->var));
+        return 1;
+    }
+    int num = count_exec_params(params);
+    if( num != pc->num_args )
+    {
+        error("EXEC with too %s parameters to PROC '%s'\n",
+                num<pc->num_args ? "few" : "many",
+                vars_get_long_name(vl, label->var));
+        return 1;
+    }
+
+    // For each parameter, generate code to assign parameter
+    return set_exec_params(pc, params, ex, 0);
+}
+
 // Search EXEC_PAR and generate code to assign parameters
 // returns != 0 on error.
 static int do_search_exec(expr *ex, proc_list *pl)
@@ -304,53 +332,19 @@ static int do_search_exec(expr *ex, proc_list *pl)
         if( ex->type == et_lnum )
             continue;
         assert(ex->type == et_stmt);
-
-        if( ex->stmt == STMT_EXEC_PAR || ex->stmt == STMT_EXEC )
+        if( ex->stmt == STMT_EXEC_PAR )
         {
-            // For each parameter, generate code to assign parameter
-            expr *label;
-            expr *params;
-            if( ex->stmt == STMT_EXEC_PAR )
-            {
-                assert(ex->rgt && ex->rgt->type == et_tok && ex->rgt->tok == TOK_COMMA);
-                assert(ex->rgt->lft->type == et_var_label);
-                label = ex->rgt->lft;
-                params = ex->rgt->rgt;
-            }
-            else
-            {
-                assert(ex->rgt && ex->rgt->type == et_var_label);
-                label = ex->rgt;
-                params = 0;
-            }
-            vars *vl = pgm_get_vars(expr_mngr_get_program(ex->mngr));
-            proc *pc = 0;
-            for(size_t i=0; i<darray_len(pl); i++)
-            {
-                pc = &darray_i(pl,i);
-                if( pc->label == label->var )
-                    break;
-            }
-            if( !pc )
-            {
-                error("EXEC to missing PROC '%s'\n", vars_get_long_name(vl, label->var));
-                err = 1;
-                continue;
-            }
-            int num = count_exec_params(params);
-            if( num != pc->num_args )
-            {
-                error("EXEC with too %s parameters to PROC '%s'\n",
-                      num<pc->num_args ? "few" : "many",
-                      vars_get_long_name(vl, label->var));
-                err = 1;
-                continue;
-            }
-
-            err |= set_exec_params(pc, params, ex, 0);
+            assert(ex->rgt && ex->rgt->type == et_tok && ex->rgt->tok == TOK_COMMA);
+            assert(ex->rgt->lft->type == et_var_label);
+            err |= process_exec_call(ex, ex->rgt->lft, ex->rgt->rgt, pl);
             // Convert to EXEC
             ex->stmt = STMT_EXEC;
-            ex->rgt = label;
+            ex->rgt = ex->rgt->lft;
+        }
+        else if( ex->stmt == STMT_EXEC )
+        {
+            assert(ex->rgt && ex->rgt->type == et_var_label);
+            err |= process_exec_call(ex, ex->rgt, 0, pl);
         }
     }
     return err;
