@@ -419,6 +419,36 @@ string_buf *expr_print_long(const expr *e, int *indent, int conv_ascii)
                 sb_put(b, c);
         }
     }
+    else if( e->stmt == STMT_EXEC_PAR )
+    {
+        // We need to special case this, as parameters have embedded type information!
+        assert(e->rgt && e->rgt->type == et_tok && e->rgt->tok == TOK_COMMA);
+        const char *st = statements[e->stmt].stm_long;
+        sb_puts_lcase(b, st);
+        sb_put(b, ' ');
+        print_expr_long_rec(b, e->rgt->lft, 0);
+        sb_puts(b, ", ");
+        expr *arg = e->rgt->rgt;
+        unsigned pos = sb_len(b);
+        string_buf *tmp = sb_new();
+        while( arg && arg->type == et_tok && arg->tok == TOK_COMMA )
+        {
+            assert(arg->rgt && arg->rgt->rgt);
+            sb_puts(tmp, ", ");
+            print_expr_long_rec(tmp, arg->rgt->rgt, 0);
+            arg = arg->lft;
+            sb_insert(b, pos, tmp);
+            sb_clear(tmp);
+        }
+        if( arg )
+        {
+            assert(arg->rgt);
+            print_expr_long_rec(tmp, arg->rgt, 0);
+            sb_insert(b, pos, tmp);
+            sb_clear(tmp);
+        }
+        sb_delete(tmp);
+    }
     else
     {
         const char *st = statements[e->stmt].stm_long;
