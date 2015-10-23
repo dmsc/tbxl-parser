@@ -479,7 +479,7 @@ int convert_proc_exec(expr *ex)
 {
     int err = 0;
     // Make a list of all "PROC_VAR" and store the parameter list
-    proc_list *plist = darray_new(proc_list,16);
+    proc_list *plist = darray_new(proc,16);
     err |= do_search_procs(ex, plist);
 
     // Convert EXECs
