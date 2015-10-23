@@ -294,13 +294,16 @@ static int set_exec_params(proc *pc, expr *ex, expr *cur_stmt, int n)
 
 static int process_exec_call(expr *ex, const expr *label, expr *params, const proc_list *pl)
 {
+    assert(ex && label && label->type == et_var_label);
     vars *vl = pgm_get_vars(expr_mngr_get_program(ex->mngr));
     proc *pc = 0;
     for(size_t i=0; i<darray_len(pl); i++)
     {
-        pc = &darray_i(pl,i);
-        if( pc->label == label->var )
+        if( darray_i(pl,i).label == label->var )
+        {
+            pc = &darray_i(pl,i);
             break;
+        }
     }
     if( !pc )
     {
@@ -345,6 +348,21 @@ static int do_search_exec(expr *ex, proc_list *pl)
         {
             assert(ex->rgt && ex->rgt->type == et_var_label);
             err |= process_exec_call(ex, ex->rgt, 0, pl);
+        }
+        else if( ex->stmt == STMT_ON )
+        {
+            assert(ex->rgt && ex->rgt->type == et_tok);
+            if( ex->rgt->tok == TOK_ON_EXEC )
+            {
+                assert(ex->rgt->rgt);
+                expr *arg = ex->rgt->rgt;
+                while( arg->type == et_tok && arg->tok == TOK_COMMA )
+                {
+                    err |= process_exec_call(ex, arg->rgt, 0, pl);
+                    arg = arg->lft;
+                }
+                err |= process_exec_call(ex, arg, 0, pl);
+            }
         }
     }
     return err;
