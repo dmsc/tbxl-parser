@@ -103,15 +103,15 @@ Statement        =
                  | INPUT  t:InputExpr           { add_stmt(STMT_INPUT,t); }
                  # We split the IF into three cases:
                  # 1- IF/THEN followed by a number, forcing a line-break.
-                 | IF_NUMBER t:IfNumberExpr     { add_stmt(STMT_IF_NUMBER,t); }
+                 | IF     t:IfNumberExpr        { add_stmt(STMT_IF_NUMBER,t); }
                     ( ':' SPC < NotEOL* >       { add_stmt(STMT_REM, add_comment(yytext, yyleng)); } )?
                                                 { add_force_line(); }
                  # 2- IF/THEN followed by statements, adding an invisible ENDIF at
                  # the end of the statements and forcing a line-break.
-                 | IF_THEN t:IfThenExpr         { add_stmt(STMT_IF_THEN,t); }
+                 | IF     t:IfThenExpr          { add_stmt(STMT_IF_THEN,t); }
                     StatementLine               { add_stmt(STMT_ENDIF_INVISIBLE,0); add_force_line(); }
                  # 3- A multi-line IF
-                 | IF_MULTILINE t:NumExprErr    { add_stmt(STMT_IF_MULTILINE,t); }
+                 | IF     t:NumExprErr          { add_stmt(STMT_IF_MULTILINE,t); }
                  | LIST  { t=0; } t:ListExpr?   { add_stmt(STMT_LIST,t); }
                  | LET    t:LetExpr             { add_stmt(STMT_LET,t); }
                  | LOAD   t:StrExprErr          { add_stmt(STMT_LOAD,t); }
@@ -164,7 +164,7 @@ Statement        =
                  | F_B                          { add_stmt(STMT_F_B,0); }
                  | P_PUT  t:PutExpr             { add_stmt(STMT_P_PUT,t); }
                  | P_GET  t:GetExpr             { add_stmt(STMT_P_GET,t); }
-                 | LBL_S  t:Label               { add_stmt(STMT_LBL_S,t); }
+                 | SHARP  t:Label               { add_stmt(STMT_LBL_S,t); }
                  # A basic ERROR- line, parsed for compatibility
                  | < BAS_ERROR ERROR >          { add_stmt(STMT_BAS_ERROR, add_comment(yytext,yyleng)); print_error("statement", yytext); }
                  # And, if not any of the above, we declare a parsing error
@@ -180,8 +180,8 @@ IONumExpr2       = l:IOChanErr COMMA r:NumExpr2         { $$ = ex_bin(l,r,TOK_CO
 
 # Assignments
 LetExpr          = LetExprStr | LetExprNum
-LetExprStr       = l:AssignVarStr S_ASGN r:StrExprErr   { $$ = ex_bin(l,r,TOK_S_ASGN); }
-LetExprNum       = l:AssignVarNum F_ASGN r:NumExprErr   { $$ = ex_bin(l,r,TOK_F_ASGN); }
+LetExprStr       = l:AssignVarStr EQ r:StrExprErr       { $$ = ex_bin(l,r,TOK_S_ASGN); }
+LetExprNum       = l:AssignVarNum EQ r:NumExprErr       { $$ = ex_bin(l,r,TOK_F_ASGN); }
 
 # Expressions
 NumExpr2         = l:NumExprErr COMMA r:NumExprErr      { $$ = ex_bin(l,r,TOK_COMMA); }
@@ -218,7 +218,7 @@ PrintExprStart   = AnyExpr
                  |                                      { $$ = 0; }
 
 # FOR statement expression:
-ForStmtExpr      = l:PVarNum F_ASGN r:NumExprErr        { l = ex_bin(l,r,TOK_F_ASGN); }
+ForStmtExpr      = l:PVarNum EQ r:NumExprErr            { l = ex_bin(l,r,TOK_F_ASGN); }
                    FOR_TO r:NumExprErr                  { l = ex_bin(l,r,TOK_FOR_TO); }
                    (STEP r:NumExprErr                   { l = ex_bin(l,r,TOK_STEP); }
                    )?                                   { $$ = l; }
@@ -322,9 +322,9 @@ PVarNumStr       = PVarNum
                  | PVarStr
 AssignVarNum     = l:PVarArray r:ArrayAccess            { $$ = ex_bin(l,r,TOK_A_L_PRN); }
                  | PVarNum
-AssignVarStr     = l:PVarStr ( S_L_PRN r:ArrayAccess    { l = ex_bin(l,r,TOK_S_L_PRN); }
+AssignVarStr     = l:PVarStr ( L_PRN r:ArrayAccess      { l = ex_bin(l,r,TOK_S_L_PRN); }
                              )?                         { $$ = l; }
-ArrayAccess      = l:NumExprErr ( A_COMMA r:NumExprErr  { l = ex_bin(l,r,TOK_A_COMMA); }
+ArrayAccess      = l:NumExprErr ( COMMA r:NumExprErr    { l = ex_bin(l,r,TOK_A_COMMA); }
                                 )? R_PRN                { $$ = l; }
 
 DimVarList       = l:DimVar (COMMA r:DimVar             { l = ex_comma(l,r); }
@@ -334,12 +334,12 @@ DimVar           = l:PDimVarArray r:ArrayAccess         { $$ = ex_bin(l,r,TOK_D_
                  | < ERROREXP >                         { print_error("DIM string/array", yytext); $$ = 0; }
 
 # Variables
-Label            = < Identifier >                  SPC { $$ = add_ident(yytext, vtLabel);  }
-PVarStr          = < Identifier > '$'              SPC { $$ = add_ident(yytext, vtString); }
-PVarNum          = < Identifier > ![$(]            SPC { $$ = add_ident(yytext, vtFloat);  }
-PVarArray        = < Identifier >          A_L_PRN SPC { $$ = add_ident(yytext, vtArray);  }
-PDimVarArray     = < Identifier >          D_L_PRN SPC { $$ = add_ident(yytext, vtArray);  }
-PDimVarStr       = < Identifier > '$' SPC DS_L_PRN SPC { $$ = add_ident(yytext, vtString); }
+Label            = < Identifier >               SPC     { $$ = add_ident(yytext, vtLabel);  }
+PVarStr          = < Identifier > '$'           SPC     { $$ = add_ident(yytext, vtString); }
+PVarNum          = < Identifier > ![$(]         SPC     { $$ = add_ident(yytext, vtFloat);  }
+PVarArray        = < Identifier >         L_PRN SPC     { $$ = add_ident(yytext, vtArray);  }
+PDimVarArray     = < Identifier >         L_PRN SPC     { $$ = add_ident(yytext, vtArray);  }
+PDimVarStr       = < Identifier > '$' SPC L_PRN SPC     { $$ = add_ident(yytext, vtString); }
 
 # Defs
 StringDef        = '@' < Identifier > '$'  { $$ = add_strdef_val(yytext); }           SPC
@@ -391,12 +391,12 @@ AndExpr          = l:CompExpr (
 
 CompExpr         =
                    l:NotExpr (
-                       N_LEQ r:NotExpr                  { l = ex_bin(l,r,TOK_N_LEQ); }
-                     | N_NEQ r:NotExpr                  { l = ex_bin(l,r,TOK_N_NEQ); }
-                     | N_GEQ r:NotExpr                  { l = ex_bin(l,r,TOK_N_GEQ); }
-                     | N_LE  r:NotExpr                  { l = ex_bin(l,r,TOK_N_LE); }
-                     | N_GE  r:NotExpr                  { l = ex_bin(l,r,TOK_N_GE); }
-                     | N_EQ  r:NotExpr                  { l = ex_bin(l,r,TOK_N_EQ); }
+                       LEQ r:NotExpr                    { l = ex_bin(l,r,TOK_N_LEQ); }
+                     | NEQ r:NotExpr                    { l = ex_bin(l,r,TOK_N_NEQ); }
+                     | GEQ r:NotExpr                    { l = ex_bin(l,r,TOK_N_GEQ); }
+                     | LE  r:NotExpr                    { l = ex_bin(l,r,TOK_N_LE); }
+                     | GE  r:NotExpr                    { l = ex_bin(l,r,TOK_N_GE); }
+                     | EQ  r:NotExpr                    { l = ex_bin(l,r,TOK_N_EQ); }
                      )*                                 { $$ = l; }
 
 NotExpr          = NOT r:NotExpr                        { $$ = ex_bin(0,r,TOK_NOT); }
@@ -424,8 +424,8 @@ PowExpr          = l:NegExpr (
                      CARET r:NegExpr                    { l = ex_bin(l,r,TOK_CARET); }
                      )*                                 { $$ = l; }
 
-NegExpr          = UMINUS r:NegExpr                     { $$ = ex_bin(0,r,TOK_UMINUS); }
-                 | UPLUS  r:NegExpr                     { $$ = ex_bin(0,r,TOK_UPLUS); }
+NegExpr          = MINUS r:NegExpr                      { $$ = ex_bin(0,r,TOK_UMINUS); }
+                 | PLUS  r:NegExpr                      { $$ = ex_bin(0,r,TOK_UPLUS); }
                  | UnitExpr
 
 UnitExpr         = ConstNum
@@ -477,37 +477,37 @@ ConstNum         = Number
 
 # String comparisons is a type of numeric expresion
 StrCompExpr      = l:StrExpr (
-                     S_LEQ r:StrExprErr                 { $$ = ex_bin(l,r,TOK_S_LEQ); }
-                   | S_NEQ r:StrExprErr                 { $$ = ex_bin(l,r,TOK_S_NEQ); }
-                   | S_GEQ r:StrExprErr                 { $$ = ex_bin(l,r,TOK_S_GEQ); }
-                   | S_LE  r:StrExprErr                 { $$ = ex_bin(l,r,TOK_S_LE); }
-                   | S_GE  r:StrExprErr                 { $$ = ex_bin(l,r,TOK_S_GE); }
-                   | S_EQ  r:StrExprErr                 { $$ = ex_bin(l,r,TOK_S_EQ); }
+                     LEQ r:StrExprErr                   { $$ = ex_bin(l,r,TOK_S_LEQ); }
+                   | NEQ r:StrExprErr                   { $$ = ex_bin(l,r,TOK_S_NEQ); }
+                   | GEQ r:StrExprErr                   { $$ = ex_bin(l,r,TOK_S_GEQ); }
+                   | LE  r:StrExprErr                   { $$ = ex_bin(l,r,TOK_S_LE); }
+                   | GE  r:StrExprErr                   { $$ = ex_bin(l,r,TOK_S_GE); }
+                   | EQ  r:StrExprErr                   { $$ = ex_bin(l,r,TOK_S_EQ); }
                    )
 
 # Parameters to an USR function, one or more numeric expressions in parenthesis
-NumAComma        = l:NumExprErr (A_COMMA r:NumExprErr   { l = ex_bin(l,r,TOK_A_COMMA); }
+NumAComma        = l:NumExprErr (COMMA r:NumExprErr     { l = ex_bin(l,r,TOK_A_COMMA); }
                              )*                         { $$ = l; }
-ParUsrExpr       = FN_PRN ( l:NumAComma R_PRN           { $$ = l; }
+ParUsrExpr       = L_PRN ( l:NumAComma R_PRN            { $$ = l; }
                           | < ERROREXP >                { print_error("numeric (,numeric) expressions", yytext); $$ = 0; }
                           )
 
 # Parameters to functions with one numeric expression in parenthesis
-ParNumExpr        = FN_PRN ( l:NumExpr R_PRN            { $$ = l; }
+ParNumExpr        = L_PRN ( l:NumExpr R_PRN             { $$ = l; }
                            | < ERROREXP >               { print_error("numeric expression in parenthesis", yytext); $$ = 0; }
                            )
 
 # Parameters to INSTR/UINSTR functions, two string expressions and optionally one numeric
 # expression, all in parenthesis
-ParInstrExpr      = FN_PRN
-                        ( l:StrExpr A_COMMA r:StrExpr   { l = ex_bin(l,r,TOK_A_COMMA); }
-                                  ( A_COMMA r:NumExpr   { l = ex_bin(l,r,TOK_A_COMMA); } )?
+ParInstrExpr      = L_PRN
+                        ( l:StrExpr COMMA r:StrExpr     { l = ex_bin(l,r,TOK_A_COMMA); }
+                                  ( COMMA r:NumExpr     { l = ex_bin(l,r,TOK_A_COMMA); } )?
                                     R_PRN               { $$ = l; }
                         | < ERROREXP > { print_error("string, string (,numeric) expressions", yytext); }
                         )
 
 # Parameters to functions with one string expression in parenthesis
-ParStrExpr        = FN_PRN l:StrExprErr R_PRN           { $$ = l; }
+ParStrExpr        = L_PRN l:StrExprErr R_PRN           { $$ = l; }
 
 # Spacing...
 SPC              = [ \t]*
@@ -540,4 +540,28 @@ NumExp           = ( 'e' | 'E' ) ( '+' | '-' )? [0-9] [0-9]?
 
 # Parse special REMs
 REM_C            = "'" SPC
+
+# Simple TOKENS
+COMMA           = ',' SPC
+SEMICOLON       = ';' SPC
+SHARP           = '#' SPC
+LEQ             = '<=' SPC
+NEQ             = '<>' SPC
+GEQ             = '>=' SPC
+LE              = '<' SPC
+GE              = '>' SPC
+EQ              = '=' SPC
+CARET           = '^' SPC
+STAR            = '*' SPC
+PLUS            = '+' SPC
+MINUS           = '-' SPC
+SLASH           = '/' SPC
+L_PRN           = '(' SPC
+R_PRN           = ')' SPC
+ANDPER          = '&' SPC
+EXCLAM          = '!' SPC
+PER_0           = '%0' SPC
+PER_1           = '%1' SPC
+PER_2           = '%2' SPC
+PER_3           = '%3' SPC
 

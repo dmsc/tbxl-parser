@@ -1,94 +1,94 @@
-QUOTE				0x10
-DUMMY				0x11
-COMMA	,	,	, 	0x12
-DOLAR				0x13
-COLON				0x14
-SEMICOLON	;	;	; 	0x15
-EOL				0x16
-ON_GOTO	GOTO	GOTO	 goto 	0x17
-ON_GOSUB	GOSUB	GOSUB	 gosub 	0x18
-FOR_TO	TO	TO	 to 	0x19
-STEP	STEP	STEP	 step 	0x1a
-THEN	THEN	THEN	 then 	0x1b
-SHARP	#	#	#	0x1c
-N_LEQ	<=	<=	 <= 	0x1d
-N_NEQ	<>	<>	 <> 	0x1e
-N_GEQ	>=	>=	 >= 	0x1f
-N_LE	<	<	 < 	0x20
-N_GE	>	>	 > 	0x21
-N_EQ	=	=	 = 	0x22
-CARET	^	^	 ^ 	0x23
-STAR	*	*	 * 	0x24
-PLUS	+	+	 + 	0x25
-MINUS	-	-	 - 	0x26
-SLASH	/	/	 / 	0x27
-NOT	NOT	NOT	not 	0x28
-OR	OR	OR	 or 	0x29
-AND	AND	AND	 and 	0x2a
-L_PRN	(	(	( 	0x2b
-R_PRN	)	)	 )	0x2c
-F_ASGN	=	=	 = 	0x2d
-S_ASGN	=	=	 = 	0x2e
-S_LEQ	<=	<=	 <= 	0x2f
-S_NEQ	<>	<>	 <> 	0x30
-S_GEQ	>=	>=	 >= 	0x31
-S_LE	<	<	 < 	0x32
-S_GE	>	>	 > 	0x33
-S_EQ	=	=	 = 	0x34
-UPLUS	+	+	+	0x35
-UMINUS	-	-	-	0x36
-S_L_PRN	(	(	( 	0x37
-A_L_PRN	(			0x38
-D_L_PRN	(			0x39
-FN_PRN	(	(	( 	0x3a
-DS_L_PRN	(	(	( 	0x3b
-A_COMMA	,	,	, 	0x3c
-STRP	STR$	STR$	str$	0x3d
-CHRP	CHR$	CHR$	chr$	0x3e
-USR	USR	USR	usr	0x3f
-ASC	ASC	ASC	asc	0x40
-VAL	VAL	VAL	val	0x41
-LEN	LEN	LEN	len	0x42
-ADR	ADR	ADR	adr	0x43
-ATN	ATN	ATN	atn	0x44
-COS	COS	COS	cos	0x45
-PEEK	PEEK	PEEK	peek	0x46
-SIN	SIN	SIN	sin	0x47
-RND	RND	RND	rnd	0x48
-FRE	FRE	FRE	fre	0x49
-EXP	EXP	EXP	exp	0x4a
-LOG	LOG	LOG	log	0x4b
-CLOG	CLOG	CLOG	clog	0x4c
-SQR	SQR	SQR	sqr	0x4d
-SGN	SGN	SGN	sgn	0x4e
-ABS	ABS	ABS	abs	0x4f
-INT	INT	INT	int	0x50
-PADDLE	PADDLE	PADDLE	paddle	0x51
-STICK	STICK	STICK	stick	0x52
-PTRIG	PTRIG	PTRIG	ptrig	0x53
-STRIG	STRIG	STRIG	strig	0x54
-DPEEK	DPEEK	DPEEK	dpeek	0x55
-ANDPER	&	&	 & 	0x56
-EXCLAM	!	!	 ! 	0x57
-INSTR	INSTR	INSTR	instr	0x58
-INKEYP	INKEY$	INKEY$	inkey$	0x59
-EXOR	EXOR	EXOR	 exor 	0x5a
-HEXP	HEX$	HEX$	hex$	0x5b
-DEC	DEC	DEC	dec	0x5c
-DIV	DIV	DIV	 div 	0x5d
-FRAC	FRAC	FRAC	frac	0x5e
-TIMEP	TIME$	TIME$	time$	0x5f
-TIME	TIME	TIME	time	0x60
-MOD	MOD	MOD	 mod 	0x61
-ON_EXEC	EXEC	EXEC	 exec 	0x62
-RND_S	RND	RND	rnd	0x63
-RAND	RAND	RAND	rand	0x64
-TRUNC	TRUNC	TRUNC	trunc	0x65
-PER_0	%0	%0	%0	0x66
-PER_1	%1	%1	%1	0x67
-PER_2	%2	%2	%2	0x68
-PER_3	%3	%3	%3	0x69
-ON_GOSHARP	GO#	GO#	 go# 	0x6a
-UINSTR	UINSTR	UINSTR	uinstr	0x6b
-ERR	ERR	ERR	err	0x6c
-ERL	ERL	ERL	erl	0x6d
+QUOTE				0x10	0
+DUMMY				0x11	0
+COMMA	,	,	, 	0x12	0
+DOLAR				0x13	0
+COLON				0x14	0
+SEMICOLON	;	;	; 	0x15	0
+EOL				0x16	0
+ON_GOTO	GOTO	GOTO	 goto 	0x17	1
+ON_GOSUB	GOSUB	GOSUB	 gosub 	0x18	1
+FOR_TO	TO	TO	 to 	0x19	1
+STEP	STEP	STEP	 step 	0x1a	1
+THEN	THEN	THEN	 then 	0x1b	1
+SHARP	#	#	#	0x1c	0
+N_LEQ	<=	<=	 <= 	0x1d	0
+N_NEQ	<>	<>	 <> 	0x1e	0
+N_GEQ	>=	>=	 >= 	0x1f	0
+N_LE	<	<	 < 	0x20	0
+N_GE	>	>	 > 	0x21	0
+N_EQ	=	=	 = 	0x22	0
+CARET	^	^	 ^ 	0x23	0
+STAR	*	*	 * 	0x24	0
+PLUS	+	+	 + 	0x25	0
+MINUS	-	-	 - 	0x26	0
+SLASH	/	/	 / 	0x27	0
+NOT	NOT	NOT	not 	0x28	1
+OR	OR	OR	 or 	0x29	1
+AND	AND	AND	 and 	0x2a	1
+L_PRN	(	(	( 	0x2b	0
+R_PRN	)	)	 )	0x2c	0
+F_ASGN	=	=	 = 	0x2d	0
+S_ASGN	=	=	 = 	0x2e	0
+S_LEQ	<=	<=	 <= 	0x2f	0
+S_NEQ	<>	<>	 <> 	0x30	0
+S_GEQ	>=	>=	 >= 	0x31	0
+S_LE	<	<	 < 	0x32	0
+S_GE	>	>	 > 	0x33	0
+S_EQ	=	=	 = 	0x34	0
+UPLUS	+	+	+	0x35	0
+UMINUS	-	-	-	0x36	0
+S_L_PRN	(	(	( 	0x37	0
+A_L_PRN	(			0x38	0
+D_L_PRN	(			0x39	0
+FN_PRN	(	(	( 	0x3a	0
+DS_L_PRN	(	(	( 	0x3b	0
+A_COMMA	,	,	, 	0x3c	0
+STRP	STR$	STR$	str$	0x3d	1
+CHRP	CHR$	CHR$	chr$	0x3e	1
+USR	USR	USR	usr	0x3f	1
+ASC	ASC	ASC	asc	0x40	1
+VAL	VAL	VAL	val	0x41	1
+LEN	LEN	LEN	len	0x42	1
+ADR	ADR	ADR	adr	0x43	1
+ATN	ATN	ATN	atn	0x44	1
+COS	COS	COS	cos	0x45	1
+PEEK	PEEK	PEEK	peek	0x46	1
+SIN	SIN	SIN	sin	0x47	1
+RND	RND	RND	rnd	0x48	1
+FRE	FRE	FRE	fre	0x49	1
+EXP	EXP	EXP	exp	0x4a	1
+LOG	LOG	LOG	log	0x4b	1
+CLOG	CLOG	CLOG	clog	0x4c	1
+SQR	SQR	SQR	sqr	0x4d	1
+SGN	SGN	SGN	sgn	0x4e	1
+ABS	ABS	ABS	abs	0x4f	1
+INT	INT	INT	int	0x50	1
+PADDLE	PADDLE	PADDLE	paddle	0x51	1
+STICK	STICK	STICK	stick	0x52	1
+PTRIG	PTRIG	PTRIG	ptrig	0x53	1
+STRIG	STRIG	STRIG	strig	0x54	1
+DPEEK	DPEEK	DPEEK	dpeek	0x55	1
+ANDPER	&	&	 & 	0x56	0
+EXCLAM	!	!	 ! 	0x57	0
+INSTR	INSTR	INSTR	instr	0x58	1
+INKEYP	INKEY$	INKEY$	inkey$	0x59	1
+EXOR	EXOR	EXOR	 exor 	0x5a	1
+HEXP	HEX$	HEX$	hex$	0x5b	1
+DEC	DEC	DEC	dec	0x5c	1
+DIV	DIV	DIV	 div 	0x5d	1
+FRAC	FRAC	FRAC	frac	0x5e	1
+TIMEP	TIME$	TIME$	time$	0x5f	1
+TIME	TIME	TIME	time	0x60	1
+MOD	MOD	MOD	 mod 	0x61	1
+ON_EXEC	EXEC	EXEC	 exec 	0x62	1
+RND_S	RND	RND	rnd	0x63	1
+RAND	RAND	RAND	rand	0x64	1
+TRUNC	TRUNC	TRUNC	trunc	0x65	1
+PER_0	%0	%0	%0	0x66	0
+PER_1	%1	%1	%1	0x67	0
+PER_2	%2	%2	%2	0x68	0
+PER_3	%3	%3	%3	0x69	0
+ON_GOSHARP	GO#	GO#	 go# 	0x6a	1
+UINSTR	UINSTR	UINSTR	uinstr	0x6b	1
+ERR	ERR	ERR	err	0x6c	1
+ERL	ERL	ERL	erl	0x6d	1

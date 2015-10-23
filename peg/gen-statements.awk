@@ -36,19 +36,17 @@ BEGIN {
     s=$2;
     q=length($3);
     f=length(s);
-    ad=$4
+    dopeg=$4
 
     if( substr($3,q,1) == "." )
         q = q - 1;
 
     short = toupper($3);
-    if( ad != "" )
-        short = ad;
-    else if ( length($3) == length(s) )
+    if ( length($3) == length(s) )
         short = toupper(s);
 
     # PEG file, calls test function, if valid, print
-    if( length(s) )
+    if( dopeg )
         printf "%-16s= &{ testStatement( STMT_%s ) } SPC\n", n, n, n > peg;
 
     # Header - enum definition

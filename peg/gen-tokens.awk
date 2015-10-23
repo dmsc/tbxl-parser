@@ -36,6 +36,7 @@ BEGIN {
     s=$2;
     m=$3;
     l=$4;
+    dopeg=$6;
 
     spc = " SPC";
     if( s == "\"" ) {
@@ -44,7 +45,7 @@ BEGIN {
     }
 
     # PEG file, calls test function, if valid, print
-    if( length(s) )
+    if( dopeg )
         printf "%-16s= &{ testToken( TOK_%s ) } %s\n", n, n, spc, n > peg;
 
     # Header - enum definition
