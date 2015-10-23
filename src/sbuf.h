@@ -17,12 +17,10 @@
  */
 #pragma once
 
+#include <stdio.h>
+
 // A string buffer, used for printing
-typedef struct string_buf {
-    int len;
-    int size;
-    char *data;
-} string_buf;
+typedef struct string_buf string_buf;
 
 // Creates a new string buffer
 string_buf * sb_new(void);
@@ -30,6 +28,16 @@ string_buf * sb_new(void);
 void sb_init(string_buf *s);
 // Deletes an string buffer
 void sb_delete(string_buf *s);
+
+// Returns the length
+unsigned sb_len(const string_buf *s);
+
+// Returns the length
+const char *sb_data(const string_buf *s);
+
+// Sets a character inside the string buffer.
+// If pos is < 0, count from the end.
+void sb_set_char(string_buf *s, int pos, char c);
 
 // Appends one char
 void sb_put(string_buf *s, char c);
@@ -46,3 +54,13 @@ void sb_put_dec(string_buf *s, int n);
 // Appends a hexadecimal number of "dig" digits.
 void sb_put_hex(string_buf *s, int n, int dig);
 
+// Removes characters from the given range, so that the character
+// at "end" is moved to "start", "end+1" is moved to "start+1" and
+// so on.
+void sb_erase(string_buf *s, unsigned start, unsigned end);
+
+// Removes all characters.
+void sb_clear(string_buf *s);
+
+// Writes the string buffer to a C FILE
+unsigned sb_fwrite(string_buf *s, FILE *f);

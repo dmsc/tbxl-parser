@@ -22,6 +22,7 @@
 #include "program.h"
 #include "dbg.h"
 #include "defs.h"
+#include "darray.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <math.h>
@@ -31,64 +32,6 @@
     do { warn_print(expr_get_file_name(ex), expr_get_file_line(ex), __VA_ARGS__); } while(0)
 #define error(...) \
     do { err_print(expr_get_file_name(ex), expr_get_file_line(ex), __VA_ARGS__); } while(0)
-
-static void memory_error(void)
-{
-    fprintf(stderr,"INTERNAL ERROR: memory allocation failure.\n");
-    abort();
-}
-
-// TODO: move to header - based on "dlist.h" on CCAN
-#define darray(type)     struct {type *data; size_t len; size_t size;}
-static void darray_fill(void *arr, size_t sz, size_t init)
-{
-    darray(char) *ret = arr;
-    if( !ret || !(ret->data = malloc(sz * init)) )
-        memory_error();
-    ret->len = 0;
-    ret->size = init;
-}
-
-static void *darray_alloc(size_t sz, size_t init)
-{
-    darray(char) *ret = malloc(sizeof(darray(char)));
-    darray_fill(ret, sz, init);
-    return ret;
-}
-
-static void darray_grow(void *arr, size_t sz, size_t newsize)
-{
-    darray(char) *p = arr;
-    while( newsize > p->size )
-    {
-        p->size *= 2;
-        if( !p->size || !(p->data = realloc(p->data, sz * p->size)) )
-            memory_error();
-    }
-}
-
-static void darray_free(void *arr)
-{
-    darray(char) *p = arr;
-    free(p->data);
-    free(p);
-}
-
-static void darray_delete(void *arr)
-{
-    darray(char) *p = arr;
-    free(p->data);
-}
-
-#define darray_init(arr, init_size) darray_fill(arr, sizeof((arr)->data[0]), init_size)
-#define darray_new(type, init_size) darray_alloc(sizeof(type), init_size)
-#define darray_add(arr, val) do { \
-    darray_grow((arr),sizeof((arr)->data[0]), (arr)->len+1); \
-    (arr)->data[(arr)->len] = val; \
-    (arr)->len ++; \
-} while(0)
-#define darray_len(arr) ((arr)->len)
-#define darray_i(arr,i) ((arr)->data[i])
 
 // Store a PROC parameter
 typedef struct {

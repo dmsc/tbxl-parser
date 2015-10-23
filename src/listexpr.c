@@ -279,7 +279,7 @@ static void print_comment_ascii(string_buf *b, const uint8_t *txt, unsigned len)
         sb_put(tmp, c);
     }
     // Print
-    print_comment(b, (uint8_t *)tmp->data, tmp->len);
+    print_comment(b, (const uint8_t *)sb_data(tmp), sb_len(tmp));
     sb_delete(tmp);
 }
 

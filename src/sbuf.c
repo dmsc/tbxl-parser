@@ -16,57 +16,31 @@
  *  with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 #include "sbuf.h"
+#include "darray.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
-static void memory_error(void)
-{
-    fprintf(stderr,"INTERNAL ERROR: memory allocation failure.\n");
-    abort();
-}
+darray_struct(char, string_buf);
 
 string_buf *sb_new(void)
 {
-    string_buf *s = malloc(sizeof(string_buf));
-    if( !s )
-        memory_error();
-    sb_init(s);
-    return s;
+    return darray_new(char, 256);
 }
 
 void sb_init(string_buf *s)
 {
-    s->len = 0;
-    s->size = 256;
-    s->data = malloc(256);
-    if( !s->data )
-        memory_error();
+    darray_init(s, 256);
 }
 
 void sb_delete(string_buf *s)
 {
-    free(s->data);
-    free(s);
-}
-
-static void sb_check_size(string_buf *s)
-{
-    if( s->len == s->size )
-    {
-        s->size *= 2;
-        if( !s->size )
-            memory_error();
-        s->data = realloc(s->data, s->size);
-        if( !s->data )
-            memory_error();
-    }
+    darray_free(s);
 }
 
 void sb_put(string_buf *s, char c)
 {
-    sb_check_size(s);
-    s->data[s->len] = c;
-    s->len++;
+    darray_add(s, c);
 }
 
 void sb_write(string_buf *s, const unsigned char *buf, unsigned cnt)
@@ -136,3 +110,36 @@ void sb_put_hex(string_buf *s, int n, int dig)
         sb_put(s, hx[ (n >> (4*dig-4)) & 0x0F ]);
 }
 
+unsigned sb_len(const string_buf *s)
+{
+    return s->len;
+}
+
+const char *sb_data(const string_buf *s)
+{
+    return s->data;
+}
+
+void sb_set_char(string_buf *s, int pos, char c)
+{
+    if( pos < 0 )
+        s->data[s->len + pos] = c;
+    else
+        s->data[pos] = c;
+}
+
+void sb_clear(string_buf *s)
+{
+    s->len = 0;
+}
+
+void sb_erase(string_buf *s, unsigned start, unsigned end)
+{
+    memmove(s->data+start, s->data+end, s->len - end);
+    s->len -= end - start;
+}
+
+unsigned sb_fwrite(string_buf *s, FILE *f)
+{
+    return fwrite( sb_data(s), sb_len(s), 1, f);
+}

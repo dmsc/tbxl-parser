@@ -21,6 +21,7 @@
 #include "vars.h"
 #include "dbg.h"
 #include "program.h"
+#include "darray.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,12 +30,6 @@
 // Simplify printing warnings
 #define warn(...) \
     do { warn_print(expr_get_file_name(ex), expr_get_file_line(ex), __VA_ARGS__); } while(0)
-
-static void memory_error(void)
-{
-    fprintf(stderr,"INTERNAL ERROR: memory allocation failure.\n");
-    abort();
-}
 
 // Struct to hold constant value and count
 typedef struct {
@@ -190,39 +185,7 @@ static int cvalue_sort_abs_comp(const void *pa, const void *pb)
 }
 
 // List of cvalue
-typedef struct {
-    cvalue *data;
-    unsigned len;
-    unsigned size;
-} cvalue_list;
-
-static cvalue_list *cvalue_list_new(void)
-{
-    cvalue_list *l = malloc(sizeof(cvalue_list));
-    if( !l || !(l->data = malloc(sizeof(cvalue) * 256)) )
-        memory_error();
-    l->len = 0;
-    l->size = 256;
-    return l;
-}
-
-static void cvalue_list_delete(cvalue_list *l)
-{
-    free(l->data);
-    free(l);
-}
-
-static void cvalue_list_add(cvalue_list *l, cvalue *nv)
-{
-    if( l->len == l->size )
-    {
-        l->size *= 2;
-        if( !l->size || !(l->data = realloc(l->data, sizeof(cvalue) * l->size)) )
-            memory_error();
-    }
-    memcpy(l->data + l->len, nv, sizeof(*nv));
-    l->len ++;
-}
+typedef darray(cvalue) cvalue_list;
 
 static cvalue *cvalue_list_find(cvalue_list *l, cvalue *nv)
 {
@@ -283,7 +246,7 @@ static int update_cvalue(const expr *ex, cvalue_list *l)
     {
         // Insert new value with count == 1
         val.count = 1;
-        cvalue_list_add(l, &val);
+        darray_add(l, val);
         return 1;
     }
 }
@@ -532,13 +495,13 @@ void opt_replace_const(expr *prog)
 
     // Search all constant values in the program and store
     // the value and number of times repeated
-    cvalue_list *lst = cvalue_list_new();
+    cvalue_list *lst = darray_new(cvalue,256);
     int num = update_cvalue(prog, lst);
 
     // If no constant values, exit.
     if( !num )
     {
-        cvalue_list_delete(lst);
+        darray_delete(lst);
         return;
     }
 
@@ -652,7 +615,7 @@ void opt_replace_const(expr *prog)
 
     add_to_prog(prog, init);
 
-    cvalue_list_delete(lst);
+    darray_delete(lst);
     return;
 }
 

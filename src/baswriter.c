@@ -45,7 +45,7 @@ struct bw {
 static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line, int replace_colon,
                         const char *fname, int file_line)
 {
-    if( !tok_line->len && !valid )
+    if( !sb_len(tok_line) && !valid )
         return 0; // Skip
 
     // Verify line number
@@ -56,7 +56,7 @@ static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line,
     }
 
     // Check for empty lines
-    if( !tok_line->len )
+    if( !sb_len(tok_line) )
     {
         // Output at least a single "--" comment to preserve the line number
         // as we don't know if it is used in some GOTO
@@ -66,10 +66,10 @@ static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line,
     // Transform last COLON to EOL if needed
     // TODO: this should be done at statement build time, here it is a hack
     else if( replace_colon )
-        tok_line->data[tok_line->len-1] = 0x10 + TOK_EOL;
+        sb_set_char(tok_line, -1, 0x10 + TOK_EOL);
 
     // Write the complete line
-    unsigned ln = tok_line->len + 3;
+    unsigned ln = sb_len(tok_line) + 3;
     if( ln > 0xFF )
     {
         err_print(fname, file_line, "line %d too long\n", num);
@@ -208,7 +208,7 @@ int bas_write_program(FILE *f, program *pgm, int variables)
         if( ex->type == et_lnum )
         {
             // Append old line
-            int old_len = bin_line->len;
+            int old_len = sb_len(bin_line);
             if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_colon, fname, file_line) )
                 return 1;
             sb_delete(bin_line);
@@ -244,11 +244,11 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             // Serialize statement
             int old_last_colon = last_colon;
             string_buf *sb = expr_get_bas(ex, &last_colon, &no_split);
-            if( sb->len >= 0xFB )
+            if( sb_len(sb) >= 0xFB )
             {
                 string_buf *prn = expr_print_alone(ex);
                 err_print(fname, ex->file_line, "statement too long at line %d:\n", cur_line);
-                err_print(fname, ex->file_line, "'%.*s'\n", prn->len, prn->data);
+                err_print(fname, ex->file_line, "'%.*s'\n", sb_len(prn), sb_data(prn));
                 sb_delete(bin_line);
                 sb_delete(prn);
                 sb_delete(sb);
@@ -257,10 +257,10 @@ int bas_write_program(FILE *f, program *pgm, int variables)
                 sb_delete(bw.toks);
                 return 1;
             }
-            if( sb->len )
+            if( sb_len(sb) )
             {
-                unsigned ln = sb->len + bin_line->len + 4;
-                if( ln > 0xFF || (expr_is_label(ex) && bin_line->len>0) )
+                unsigned ln = sb_len(sb) + sb_len(bin_line) + 4;
+                if( ln > 0xFF || (expr_is_label(ex) && sb_len(bin_line)>0) )
                 {
                     if( no_split > 0 )
                     {
@@ -284,9 +284,9 @@ int bas_write_program(FILE *f, program *pgm, int variables)
                     bin_line = sb_new();
                     cur_line = cur_line + 1;
                     line_valid = 0;
-                    ln = sb->len + bin_line->len + 4;
+                    ln = sb_len(sb) + sb_len(bin_line) + 4;
                 }
-                if( sb->len )
+                if( sb_len(sb) )
                 {
                     sb_put(bin_line, ln);
                     sb_cat(bin_line, sb);
@@ -302,26 +302,26 @@ int bas_write_program(FILE *f, program *pgm, int variables)
     // Now, adds a standard immediate line: SAVE "D:X"
     sb_write(bw.toks, (unsigned char *)"\x00\x80\x0b\x0b\x19\x0f\x03\x44\x3a\x58\x16", 11);
     // Verify sizes
-    if( vvt->len + vnt->len + bw.toks->len > 0x9500 )
+    if( sb_len(vvt) + sb_len(vnt) + sb_len(bw.toks) > 0x9500 )
     {
-        unsigned len = vvt->len + vnt->len + bw.toks->len;
+        unsigned len = sb_len(vvt) + sb_len(vnt) + sb_len(bw.toks);
         err_print(fname, 0, "program too big, %d bytes ($%04X)\n", len, len);
-        err_print(fname, 0, "VNT SIZE:%u\n", vnt->len);
-        err_print(fname, 0, "VVT SIZE:%u\n", vvt->len);
-        err_print(fname, 0, "TOK SIZE:%u\n", bw.toks->len);
+        err_print(fname, 0, "VNT SIZE:%u\n", sb_len(vnt));
+        err_print(fname, 0, "VVT SIZE:%u\n", sb_len(vvt));
+        err_print(fname, 0, "TOK SIZE:%u\n", sb_len(bw.toks));
         return 1;
     }
     // Write
     put16(f, 0);
     put16(f, 0x100);
-    put16(f, 0x0FF + vnt->len);
-    put16(f, 0x100 + vnt->len);
-    put16(f, 0x100 + vnt->len + vvt->len);
-    put16(f, 0x100 + vnt->len + vvt->len + bw.toks->len - 11);
-    put16(f, 0x100 + vnt->len + vvt->len + bw.toks->len);
-    fwrite( vnt->data, vnt->len, 1, f);
-    fwrite( vvt->data, vvt->len, 1, f);
-    fwrite( bw.toks->data, bw.toks->len, 1, f);
+    put16(f, 0x0FF + sb_len(vnt));
+    put16(f, 0x100 + sb_len(vnt));
+    put16(f, 0x100 + sb_len(vnt) + sb_len(vvt));
+    put16(f, 0x100 + sb_len(vnt) + sb_len(vvt) + sb_len(bw.toks) - 11);
+    put16(f, 0x100 + sb_len(vnt) + sb_len(vvt) + sb_len(bw.toks));
+    sb_fwrite(vnt, f);
+    sb_fwrite(vvt, f);
+    sb_fwrite(bw.toks, f);
 
     // Output summary info
     if( do_debug )
@@ -334,8 +334,8 @@ int bas_write_program(FILE *f, program *pgm, int variables)
                        " TOK (tokenized program)   : %u bytes\n"
                        " Total program size: %d bytes\n",
                        bw.num_lines, bw.max_len, bw.max_num,
-                       vnt->len, vvt->len, bw.toks->len,
-                       14 + vnt->len + vvt->len + bw.toks->len);
+                       sb_len(vnt), sb_len(vvt), sb_len(bw.toks),
+                       14 + sb_len(vnt) + sb_len(vvt) + sb_len(bw.toks));
     }
     sb_delete(vnt);
     sb_delete(vvt);

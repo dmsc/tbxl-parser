@@ -195,7 +195,7 @@ int expr_get_bas_len(const expr *e)
 {
     int ec = 0, ns = 0;
     string_buf *b = expr_get_bas(e, &ec, &ns);
-    int len = b->len;
+    int len = sb_len(b);
     sb_delete(b);
     return len;
 }

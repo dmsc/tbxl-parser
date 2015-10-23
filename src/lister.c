@@ -39,7 +39,7 @@ int lister_list_program_long(FILE *f, program *pgm, int conv_ascii)
         if( sb )
         {
             fprintf(f, "\t' Definitions\n");
-            fwrite(sb->data, sb->len, 1, f);
+            sb_fwrite(sb, f);
             putc('\n', f);
             sb_delete(sb);
         }
@@ -59,10 +59,10 @@ int lister_list_program_long(FILE *f, program *pgm, int conv_ascii)
         {
             // Statement
             string_buf *sb = expr_print_long(ex, &indent, conv_ascii);
-            if( sb && sb->len )
+            if( sb && sb_len(sb) )
             {
                 putc('\t', f);
-                fwrite(sb->data, sb->len, 1, f);
+                sb_fwrite(sb, f);
                 putc('\n', f);
             }
             sb_delete(sb);
@@ -116,7 +116,7 @@ static void ls_write_line(struct ls *ls, int len, int tok_len)
     if( len < 0 )
     {
         // Full line
-        len = ls->out->len;
+        len = sb_len(ls->out);
         if( len && ls->last_colon )
             len --;
     }
@@ -133,19 +133,16 @@ static void ls_write_line(struct ls *ls, int len, int tok_len)
 
     // Write line to output
     fprintf(ls->f, "%d",ls->cur_line);
-    fwrite(ls->out->data, len, 1, ls->f);
+    fwrite(sb_data(ls->out), len, 1, ls->f);
     if( !len )
         fputc('.', ls->f); // Write a REM in an otherwise empty line
     fputc(0x9b, ls->f);
 
     // Delete from buffer and unset line number
-    if( ls->out->len - len > 1 )
-    {
-        memmove(ls->out->data, ls->out->data + len + 1, ls->out->len - len - 1);
-        ls->out->len -= (len + 1);
-    }
+    if( sb_len(ls->out) - len > 1 )
+        sb_erase(ls->out, 0, len + 1);
     else
-        ls->out->len = 0;
+        sb_clear(ls->out);
     ls_set_linenum(ls, ls->cur_line + 1);
     ls->user_num = 0;
     ls->last_colon = 0;
@@ -180,7 +177,7 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
             // Statement
             int skip_colon = 0;
             string_buf *sb = expr_print_short(ex, &skip_colon, &no_split);
-            if( sb->len )
+            if( sb_len(sb) )
             {
                 // If we have statements before any line, start at '0'
                 if( ls.cur_line < 0 )
@@ -199,21 +196,23 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 {
                     string_buf *prn = expr_print_alone(ex);
                     err_print(ls.fname, ls.file_line, "statement too long at line %d:\n", ls.cur_line);
-                    err_print(ls.fname, ls.file_line, "'%.*s'\n", prn->len, prn->data);
+                    err_print(ls.fname, ls.file_line, "'%.*s'\n", sb_len(prn), sb_data(prn));
                     sb_delete(prn);
                     return_error = 1;
                 }
 
                 // Split before a label (write full curren line)
-                if( expr_is_label(ex) && ls.out->len )
+                if( expr_is_label(ex) && sb_len(ls.out) )
                     ls_write_line(&ls, -1, ls.tok_len);
                 // See if line is too big to join with last line
                 else if( ((ls.tok_len + 1 + bas_len) > 0xFC) ||
-                         ((ls.out->len + ls.num_len - !skip_colon + sb->len) > max_line_len) )
+                         ((sb_len(ls.out) + ls.num_len - !skip_colon + sb_len(sb)) > max_line_len) )
                 {
                     if( !last_split )
                     {
-                        err_print(ls.fname, ls.file_line, "can't split line %d to shorter size (current len %d chars, %d bytes)\n", ls.cur_line, ls.out->len + sb->len, ls.tok_len + 1 + bas_len);
+                        err_print(ls.fname, ls.file_line,
+                                  "can't split line %d to shorter size (current len %d chars, %d bytes)\n",
+                                  ls.cur_line, sb_len(ls.out) + sb_len(sb), ls.tok_len + 1 + bas_len);
                         return_error = 1;
                     }
                     else
@@ -228,7 +227,7 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 ls.last_colon = !skip_colon;
                 if( !no_split )
                 {
-                    last_split = ls.out->len - ls.last_colon;
+                    last_split = sb_len(ls.out) - ls.last_colon;
                     last_tok_len = ls.tok_len;
                 }
             }
@@ -249,12 +248,12 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 ls.user_num = 1;
             }
             // Set split point to current position
-            last_split = ls.out->len;
+            last_split = sb_len(ls.out);
             last_tok_len = ls.tok_len;
         }
     }
     // Output last line
-    if( ls.out->len || ls.user_num )
+    if( sb_len(ls.out) || ls.user_num )
         ls_write_line(&ls, -1, ls.tok_len);
 
     sb_delete(ls.out);

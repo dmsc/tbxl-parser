@@ -33,6 +33,7 @@ SOURCES=\
  basic.c\
  baswriter.c\
  convertbas.c\
+ darray.c\
  defs.c\
  expr.c\
  lister.c\
