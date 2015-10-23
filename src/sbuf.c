@@ -139,6 +139,19 @@ void sb_erase(string_buf *s, unsigned start, unsigned end)
     s->len -= end - start;
 }
 
+void sb_insert(string_buf *s, int pos, const string_buf *src)
+{
+    if( pos < 0 )
+        pos = s->len - pos;
+    // Grow
+    darray_grow(s,sizeof(s->data[0]), s->len + src->len);
+    // Move
+    memmove(s->data + pos + src->len, s->data + pos, s->len - pos);
+    // Copy
+    memcpy(s->data + pos, src->data, src->len);
+    s->len += src->len;
+}
+
 unsigned sb_fwrite(string_buf *s, FILE *f)
 {
     return fwrite( sb_data(s), sb_len(s), 1, f);

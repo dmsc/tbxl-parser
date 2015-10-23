@@ -59,6 +59,12 @@ void sb_put_hex(string_buf *s, int n, int dig);
 // so on.
 void sb_erase(string_buf *s, unsigned start, unsigned end);
 
+// Inserts another string_buf at the given position of this, pushing
+// all existing characters forward.
+// If pos = 0, insert at the beginning.
+// If pos < 0, count the position from the end.
+void sb_insert(string_buf *s, int pos, const string_buf *src);
+
 // Removes all characters.
 void sb_clear(string_buf *s);
 
