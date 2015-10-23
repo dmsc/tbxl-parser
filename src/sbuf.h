@@ -24,8 +24,6 @@ typedef struct string_buf string_buf;
 
 // Creates a new string buffer
 string_buf * sb_new(void);
-// Inits an allocated string buffer
-void sb_init(string_buf *s);
 // Deletes an string buffer
 void sb_delete(string_buf *s);
 

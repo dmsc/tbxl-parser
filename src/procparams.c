@@ -58,7 +58,7 @@ static void proc_init(proc *p, const char *name, int label)
     p->name = name;
     p->label = label;
     p->num_args = 0;
-    darray_init(&p->params, 16);
+    darray_init(p->params, 16);
 }
 
 // Swap variables inside proc with local replacements
@@ -458,7 +458,7 @@ int convert_proc_exec(expr *ex)
 
     // Free memory
     for(size_t i=0; i<darray_len(plist); i++)
-        darray_delete( &darray_i(plist,i).params );
+        darray_delete(darray_i(plist,i).params);
     darray_free( plist );
 
     return err;

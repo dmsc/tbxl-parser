@@ -501,7 +501,7 @@ void opt_replace_const(expr *prog)
     // If no constant values, exit.
     if( !num )
     {
-        darray_delete(lst);
+        darray_free(lst);
         return;
     }
 
@@ -615,7 +615,7 @@ void opt_replace_const(expr *prog)
 
     add_to_prog(prog, init);
 
-    darray_delete(lst);
+    darray_free(lst);
     return;
 }
 

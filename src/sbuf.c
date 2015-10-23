@@ -28,11 +28,6 @@ string_buf *sb_new(void)
     return darray_new(char, 256);
 }
 
-void sb_init(string_buf *s)
-{
-    darray_init(s, 256);
-}
-
 void sb_delete(string_buf *s)
 {
     darray_free(s);

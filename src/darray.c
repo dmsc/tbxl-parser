@@ -25,7 +25,7 @@ static void memory_error(void)
     abort();
 }
 
-void darray_fill(void *arr, size_t sz, size_t init)
+void darray_fill_ptr(void *arr, size_t sz, size_t init)
 {
     darray(char) *ret = arr;
     if( !ret || !(ret->data = malloc(sz * init)) )
@@ -37,7 +37,7 @@ void darray_fill(void *arr, size_t sz, size_t init)
 void *darray_alloc(size_t sz, size_t init)
 {
     darray(char) *ret = malloc(sizeof(darray(char)));
-    darray_fill(ret, sz, init);
+    darray_fill_ptr(ret, sz, init);
     return ret;
 }
 
@@ -59,7 +59,7 @@ void darray_free(void *arr)
     free(p);
 }
 
-void darray_delete(void *arr)
+void darray_delete_ptr(void *arr)
 {
     darray(char) *p = arr;
     free(p->data);

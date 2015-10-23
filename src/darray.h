@@ -27,9 +27,10 @@
 #define darray(type)     darray_struct(type,)
 
 // Internal interface - don't call those directly.
-void darray_fill(void *, size_t, size_t);
+void darray_fill_ptr(void *, size_t, size_t);
 void *darray_alloc(size_t, size_t);
 void darray_grow(void *, size_t, size_t);
+void darray_delete_ptr(void *);
 
 // Allocate a new dynamic array of the given type with the given initial size
 #define darray_new(type, init_size) darray_alloc(sizeof(type), init_size)
@@ -37,9 +38,9 @@ void darray_grow(void *, size_t, size_t);
 void darray_free(void *);
 
 // Initialize an already allocated dynamic array with the given initial size
-#define darray_init(arr, init_size) darray_fill(arr, sizeof((arr)->data[0]), init_size)
+#define darray_init(arr, init_size) darray_fill_ptr(&(arr), sizeof((arr).data[0]), init_size)
 // Deallocates memory for a dynamic array initialized with darray_init()
-void darray_delete(void *);
+#define darray_delete(arr) darray_delete_ptr(&(arr))
 
 // Adds one element "val" to the dynamic array "arr".
 #define darray_add(arr, val) do { \
