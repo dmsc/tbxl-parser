@@ -315,21 +315,36 @@ static int set_exec_params(proc *pc, expr *ex, expr *cur_stmt, size_t n)
     if( n >= pc->num_args )
         return 1;
 
-    // Create an assignment statement....
     expr_mngr *mngr = ex->mngr;
     param *p = &darray_i(&pc->params,n);
-    expr *toks;
-    if( p->sdim )
-        toks = expr_new_bin(mngr, expr_new_var_str(mngr, p->new_var), ex, TOK_S_ASGN);
-    else
-        toks = expr_new_bin(mngr, expr_new_var_num(mngr, p->new_var), ex, TOK_F_ASGN);
+
+    // Check argument type and create assignment statement
+    assert(ex->type == et_tok && (ex->tok == TOK_F_ASGN || ex->tok == TOK_S_ASGN) && ex->lft==0);
+    if( ex->tok == TOK_F_ASGN )
+    {
+        if( p->sdim )
+        {
+            error("expected string parameter #%d ('%s$') to PROC '%s', got numeric.\n", 1+(int)n, p->name, pc->name);
+            return 1;
+        }
+        ex->lft = expr_new_var_num(mngr, p->new_var);
+    }
+    else if( ex->tok == TOK_S_ASGN )
+    {
+        if( !p->sdim )
+        {
+            error("expected numeric parameter #%d ('%s') to PROC '%s', got string.\n", 1+(int)n, p->name, pc->name);
+            return 1;
+        }
+        ex->lft = expr_new_var_str(mngr, p->new_var);
+    }
 
     // Search statement *BEFORE* our stmm
     expr *st = pgm_get_expr(expr_mngr_get_program(mngr));
     while( st && st->lft != cur_stmt )
         st = st->lft;
     // Add to statements
-    expr *stmt = expr_new_stmt(mngr, st, toks, STMT_LET_INV);
+    expr *stmt = expr_new_stmt(mngr, st, ex, STMT_LET_INV);
     stmt->lft = cur_stmt;
     return 0;
 }
@@ -349,8 +364,6 @@ static int do_search_exec(expr *ex, proc_list *pl)
 
         if( ex->stmt == STMT_EXEC_PAR || ex->stmt == STMT_EXEC )
         {
-            // TODO: Check type of arguments
-
             // For each parameter, generate code to assign parameter
             expr *label;
             expr *params;

@@ -300,8 +300,10 @@ ProcVarList      = COMMA? SEMICOLON r:ProcVariableList  { $$ = ex_bin(0,r,TOK_SE
 LabelProcVarList = l:Label r:ProcVarList                { $$ = ex_comma(l,r); }
 
 # Parse EXEC with parameters: EXEC label, param1, param2, paramN
-AnyExprList      = l:AnyExpr ( COMMA r:AnyExpr          { l = ex_comma(l,r); }
-                             )*                         { $$ = l; }
+ExecParExpr      = r:NumExpr                            { $$ = ex_bin(0,r,TOK_F_ASGN); }
+                 | r:StrExpr                            { $$ = ex_bin(0,r,TOK_S_ASGN); }
+AnyExprList      = l:ExecParExpr ( COMMA r:ExecParExpr  { l = ex_comma(l,r); }
+                                 )*                     { $$ = l; }
 
 LabelExecParList = l:Label COMMA r:AnyExprList          { $$ = ex_comma(l,r); }
 
