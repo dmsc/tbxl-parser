@@ -110,10 +110,15 @@ int bas_write_program(FILE *f, program *pgm, int variables)
 
     // First, serialize variables
     vars *v = pgm_get_vars(pgm);
+    int nvar = vars_get_total(v);
+    if( nvar > 255 )
+    {
+        err_print(fname, 0, "too many variables, BAS format support only 256.\n");
+        return 1;
+    }
     string_buf *vnt = sb_new();
     string_buf *vvt = sb_new();
-    int i, nvar = vars_get_total(v);
-    for(i=0; i<nvar; i++)
+    for(int i=0; i<nvar; i++)
     {
         // We write all variables undimmed, BASIC fills the
         // correct values on RUN.

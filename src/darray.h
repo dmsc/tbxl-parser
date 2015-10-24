@@ -55,3 +55,7 @@ void darray_free(void *);
 // Access the i-eth element of the dynamic array.
 #define darray_i(arr,i) ((arr)->data[i])
 
+// Traverses all elements in the array
+#define darray_foreach(itm, arr) \
+    for( (itm)=&darray_i(arr,0); (itm)<&darray_i(arr,darray_len(arr)); (itm)++ )
+

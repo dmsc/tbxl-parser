@@ -19,6 +19,7 @@
 #include "tokens.h"
 #include "statements.h"
 #include "dbg.h"
+#include "darray.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -28,28 +29,29 @@ struct var {
     enum var_type type; // Type
 };
 
-// TurboBasic allows for 256 variables
-#define maxVars 256
+typedef darray(struct var) var_list;
 
 struct vars_struct {
-  struct var vlist[maxVars]; // Array with all variables
-  unsigned num[vtMaxType];   // Number of variables of each type
+    var_list vlist;          // Array with all variables
+    unsigned num[vtMaxType]; // Number of variables of each type
 };
 
 vars * vars_new()
 {
     vars *v = calloc(1, sizeof(struct vars_struct));
+    darray_init(v->vlist, 64);
     return v;
 }
 
 void vars_delete(vars *v)
 {
-    int i;
-    for(i=0; i<maxVars && v->vlist[i].name; i++)
+    struct var *vr;
+    darray_foreach(vr, &v->vlist)
     {
-        free(v->vlist[i].name);
-        free(v->vlist[i].sname);
+        free(vr->name);
+        free(vr->sname);
     }
+    darray_delete(v->vlist);
     free(v);
 }
 
@@ -115,37 +117,36 @@ static char *get_short_name(int n)
 
 int vars_search(vars *v, const char *name, enum var_type type)
 {
-    int i;
-    for(i=0; i<maxVars && v->vlist[i].name; i++)
-        if( v->vlist[i].type == type && !case_name_cmp(name, v->vlist[i].name) )
-            return i;
+    struct var *vr;
+    darray_foreach(vr, &v->vlist)
+        if( vr->type == type && !case_name_cmp(name, vr->name) )
+            return vr - &darray_i(&v->vlist,0);
     return -1;
 }
 
 int vars_get_total(const vars *v)
 {
-    int i;
-    for(i=0; i<maxVars && v->vlist[i].name; i++);
-    return i;
+    return darray_len(&v->vlist);
 }
 
 int vars_new_var(vars *v, const char *name, enum var_type type, const char *file_name, int file_line)
 {
-    int i;
-
     // Search in available variables
-    for(i=0; i<maxVars && v->vlist[i].name; i++)
-        if( v->vlist[i].type == type && !case_name_cmp(name, v->vlist[i].name) )
-            return i;
+    int i = vars_search(v, name, type);
+    if( i>=0 )
+        return i;
 
     char *sname = get_short_name( v->num[type] );
 
-    if( i == maxVars || !sname )
-        return -1;
+    struct var vr;
 
-    v->vlist[i].name = strdup(name);
-    v->vlist[i].sname = sname;
-    v->vlist[i].type = type;
+    vr.name = strdup(name);
+    vr.sname = sname;
+    vr.type = type;
+    // Get variable number and add to the list
+    i = darray_len(&v->vlist);
+    darray_add(&v->vlist, vr);
+    // Increment number of variables of given type
     v->num[type] ++;
 
     // End if called from outside program, don't check name.
@@ -190,17 +191,17 @@ int vars_get_count(vars *v, enum var_type type)
 
 const char *vars_get_long_name(vars *v, int id)
 {
-    return v->vlist[id].name;
+    return darray_i(&v->vlist,id).name;
 }
 
 const char *vars_get_short_name(vars *v, int  id)
 {
-    return v->vlist[id].sname;
+    return darray_i(&v->vlist,id).sname;
 }
 
 enum var_type vars_get_type(vars *v, int id)
 {
-    return v->vlist[id].type;
+    return darray_i(&v->vlist,id).type;
 }
 
 const char *var_type_name(enum var_type t)
