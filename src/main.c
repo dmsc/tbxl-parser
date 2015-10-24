@@ -196,6 +196,10 @@ int main(int argc, char **argv)
         if( ok && (out_type == out_short || out_type == out_binary) )
             ok = !convert_to_turbobas(parse_get_current_pgm());
 
+        // Run the optimizer if specified by the user or not in long output
+        if( ok && (out_type != out_long || parser_get_optimize()) )
+            optimize_program(parse_get_current_pgm(),parser_get_optimize());
+
         // Update "all_ok" variable
         all_ok = ok ? all_ok : 0;
 
@@ -223,10 +227,6 @@ int main(int argc, char **argv)
                 fprintf(stderr,"%s: error %s\n", outFname, strerror(errno));
                 exit(EXIT_FAILURE);
             }
-
-            // Run the optimizer if specified by the user
-            if( ok && parser_get_optimize() )
-                optimize_program(parse_get_current_pgm(),parser_get_optimize());
 
             if( do_debug )
                 show_vars_stats();

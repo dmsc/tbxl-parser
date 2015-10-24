@@ -516,20 +516,8 @@ static int print_expr_short_rec(string_buf *out, const expr *e)
             print_string_short((const char *)e->str, e->slen, out );
             break;
         case et_def_number:
-            {
-                const defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
-                double val = defs_get_numeric(d, e->var);
-                atari_bcd n = atari_bcd_from_double(val);
-                atari_bcd_print(n, out);
-            }
-            break;
         case et_def_string:
-            {
-                const defs *d = pgm_get_defs(expr_mngr_get_program(e->mngr));
-                int len;
-                const char *str = defs_get_string(d, e->var, &len);
-                print_string_short(str, len, out);
-            }
+            assert(0 /* defs not supported */);
             break;
         case et_var_number:
         case et_var_string:
