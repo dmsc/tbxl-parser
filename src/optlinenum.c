@@ -232,7 +232,7 @@ static int do_search_stmt(expr *ex, uint8_t *keep, uint8_t *avail)
 }
 
 
-void opt_remove_line_num(expr *prog)
+int opt_remove_line_num(expr *prog)
 {
     // Search all line numbers and mark available ones
     uint8_t *avail = calloc(32768/8,1);
@@ -250,6 +250,8 @@ void opt_remove_line_num(expr *prog)
                 bitmap_set(avail, (int)(ex->num + 0.5));
         }
 
+    if( err )
+        return 1;
     // Search goto/gosub/trap/restore targets in the program
     for(expr *ex = prog; ex != 0; ex = ex->lft )
         if( ex->type == et_stmt )
@@ -260,7 +262,7 @@ void opt_remove_line_num(expr *prog)
     {
         free(avail);
         free(keep);
-        return;
+        return 0;
     }
 
     // Now, remove all line numbers *not* marked as keep:
@@ -286,4 +288,5 @@ void opt_remove_line_num(expr *prog)
 
     free(avail);
     free(keep);
+    return 0;
 }

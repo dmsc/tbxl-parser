@@ -198,7 +198,7 @@ int main(int argc, char **argv)
 
         // Run the optimizer if specified by the user or not in long output
         if( ok && (out_type != out_long || parser_get_optimize()) )
-            optimize_program(parse_get_current_pgm(),parser_get_optimize());
+            ok = !optimize_program(parse_get_current_pgm(),parser_get_optimize());
 
         // Update "all_ok" variable
         all_ok = ok ? all_ok : 0;

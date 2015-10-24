@@ -416,12 +416,13 @@ static int do_constprop(expr *ex)
     return x;
 }
 
-void opt_constprop(expr *ex)
+int opt_constprop(expr *ex)
 {
     // Apply rules over the tree until stops changing
     int changed = 1;
     while(changed)
         changed = do_constprop(ex);
+    return 0;
 }
 
 
@@ -449,12 +450,13 @@ static int do_convert_tok(expr *ex)
     return x;
 }
 
-void opt_convert_tok(expr *ex)
+int opt_convert_tok(expr *ex)
 {
     // Apply rules over the tree until stops changing
     int changed = 1;
     while(changed)
         changed = do_convert_tok(ex);
+    return 0;
 }
 
 // Computes the maximum height of the tree
@@ -549,12 +551,13 @@ static int do_commute(expr *ex)
     return x;
 }
 
-void opt_commute(expr *ex)
+int opt_commute(expr *ex)
 {
     // Apply rules over the tree until stops changing
     int changed = 1;
     while(changed)
         changed = do_commute(ex);
+    return 0;
 }
 
 static int do_replace_defs(expr *ex, const defs *d)
@@ -581,15 +584,16 @@ static int do_replace_defs(expr *ex, const defs *d)
     return x;
 }
 
-void opt_replace_defs(expr *ex)
+int opt_replace_defs(expr *ex)
 {
     if( !ex )
-        return;
+        return 0;
 
     // Apply rules over the tree until stops changing
     const defs *d = pgm_get_defs(expr_mngr_get_program(ex->mngr));
     int changed = 1;
     while(changed)
         changed = do_replace_defs(ex,d);
+    return 0;
 }
 

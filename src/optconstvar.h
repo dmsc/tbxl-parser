@@ -20,5 +20,5 @@
 typedef struct expr_struct expr;
 
 // Replace constants with variables
-void opt_replace_const(expr *ex);
+int opt_replace_const(expr *ex);
 

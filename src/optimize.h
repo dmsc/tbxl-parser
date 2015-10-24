@@ -27,6 +27,7 @@ enum optimize_levels {
     OPT_CONST_VARS = 16
 };
 
-// Generates a new, optimized, program
-void optimize_program(program *pgm, int level);
+// Optimizes the program.
+// returns 0 if ok.
+int optimize_program(program *pgm, int level);
 

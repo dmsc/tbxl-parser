@@ -26,29 +26,31 @@
 #include "statements.h"
 #include <stdio.h>
 
-void optimize_program(program *pgm, int level)
+int optimize_program(program *pgm, int level)
 {
     // Convert program to expression tree
     expr *ex = pgm_get_expr(pgm);
+    int err = 0;
 
 
     // Optimize:
-    opt_replace_defs(ex);
+    err = opt_replace_defs(ex);
 
     if( level & OPT_CONST_FOLD )
-        opt_constprop(ex);
+        err |= opt_constprop(ex);
 
     if( level & OPT_COMMUTE )
-        opt_commute(ex);
+        err |= opt_commute(ex);
 
     if( level & OPT_LINE_NUM )
-        opt_remove_line_num(ex);
+        err |= opt_remove_line_num(ex);
 
     if( level & OPT_NUMBER_TOK )
-        opt_convert_tok(ex);
+        err |= opt_convert_tok(ex);
 
     if( level & OPT_CONST_VARS )
-        opt_replace_const(ex);
+        err |= opt_replace_const(ex);
 
     pgm_set_expr(pgm, ex);
+    return err;
 }

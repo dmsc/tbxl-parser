@@ -20,5 +20,5 @@
 typedef struct expr_struct expr;
 
 // Remove unused line numbers in a program
-void opt_remove_line_num(expr *ex);
+int opt_remove_line_num(expr *ex);
 

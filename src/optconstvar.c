@@ -27,10 +27,6 @@
 #include <string.h>
 #include <math.h>
 
-// Simplify printing warnings
-#define warn(...) \
-    do { warn_print(expr_get_file_name(ex), expr_get_file_line(ex), __VA_ARGS__); } while(0)
-
 // Struct to hold constant value and count
 typedef struct {
     unsigned count;  // Times repeated
@@ -477,10 +473,10 @@ static void add_to_prog(expr *prog, expr *e)
     prog->lft = e;
 }
 
-void opt_replace_const(expr *prog)
+int opt_replace_const(expr *prog)
 {
     if( !prog )
-        return;
+        return 0;
 
     // Get current number of variables, used to estimate the
     // memory usage of each new constant added to the program
@@ -491,7 +487,7 @@ void opt_replace_const(expr *prog)
 
     // If not enough variables, exit
     if( nvar > 255 )
-        return;
+        return 0;
 
     // Search all constant values in the program and store
     // the value and number of times repeated
@@ -502,7 +498,7 @@ void opt_replace_const(expr *prog)
     if( !num )
     {
         darray_free(lst);
-        return;
+        return 0;
     }
 
     // Now, sort constant values by "usage gain"
@@ -616,6 +612,6 @@ void opt_replace_const(expr *prog)
     add_to_prog(prog, init);
 
     darray_free(lst);
-    return;
+    return 0;
 }
 
