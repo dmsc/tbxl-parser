@@ -118,7 +118,9 @@ static int expr_get_bas_rec(string_buf *out, expr *e)
         case et_var_string:
         case et_var_array:
         case et_var_label:
-            assert(e->var>=0 && e->var<256);
+            // Don't check var# here, as the "lister" calls this to estimate
+            // the basic statement length
+            //assert(e->var>=0 && e->var<256);
             if( e->var > 127 )
                 sb_put(out, 0);
             sb_put(out, (e->var) ^ 0x80);
