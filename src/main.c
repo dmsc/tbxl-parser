@@ -32,7 +32,7 @@
 
 int do_debug = 1;
 
-static void show_vars_stats(void)
+static void show_vars_stats(int renamed, int bin)
 {
     unsigned i;
     fprintf(stderr,"Variables information:\n");
@@ -41,7 +41,11 @@ static void show_vars_stats(void)
     {
         int n = vars_get_count(v,i);
         if( n != 0 )
-            fprintf(stderr," %d variables of type %s\n", n, var_type_name(i));
+        {
+            fprintf(stderr," Variables of type %s: %d\n", var_type_name(i), n);
+            if( (bin || renamed) && do_debug > 1 )
+                vars_show_summary(v,i,bin);
+        }
     }
 }
 
@@ -229,7 +233,9 @@ int main(int argc, char **argv)
             }
 
             if( do_debug )
-                show_vars_stats();
+                show_vars_stats(out_type == out_short ||
+                                (out_type == out_binary && !bin_variables),
+                                bin_variables);
 
             // Write output
             int err = 0;

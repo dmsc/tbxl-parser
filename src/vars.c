@@ -204,6 +204,23 @@ enum var_type vars_get_type(vars *v, int id)
     return darray_i(&v->vlist,id).type;
 }
 
+void vars_show_summary(vars *v, enum var_type t, int bin)
+{
+    const struct var *vr;
+    int id = -1;
+    darray_foreach(vr, &v->vlist)
+    {
+        id++;
+        if( vr->type == t && case_name_cmp(vr->name, vr->sname) )
+        {
+            if( bin )
+                fprintf(stderr, "\t%03X\t%s\n", id, vr->name);
+            else
+                fprintf(stderr, "\t%-2s\t%s\n", vr->sname, vr->name);
+        }
+    }
+}
+
 const char *var_type_name(enum var_type t)
 {
     switch( t )

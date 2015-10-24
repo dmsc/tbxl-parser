@@ -138,8 +138,6 @@ expr *add_ident(const char *name, enum var_type type)
             parse_error++;
             return 0;
         }
-        info_print(file_name, file_line, "renaming %s var '%s' -> '%s'\n",
-                   var_type_name(type), name, vars_get_short_name(v, id));
     }
     switch(type)
     {

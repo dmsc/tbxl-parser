@@ -54,3 +54,5 @@ enum var_type vars_get_type(vars *v, int id);
 // Returns a printable name for the var_type.
 const char *var_type_name(enum var_type);
 
+// Shows a summary of renamed variables
+void vars_show_summary(vars *v, enum var_type t, int bin);
