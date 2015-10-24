@@ -65,10 +65,21 @@ static void var_list_assign_new_id(var_list *vl, vars *nvar, const char *fname)
     for(int i=nused; i<num; i++)
         idx[i] = -1;
 
-    // TODO: Sort variables to reduce generated program size
-
     if( num != nused )
         info_print(fname, 0, "removing %d unused variables.\n", num - nused);
+
+    // Only sort variables if there is a gain in doing so, in this case, only
+    // if we have more than 127 variables.
+    if( nused > 127 )
+    {
+        for(int i=1; i<nused; i++)
+        {
+            int j = i, tmp = idx[j], total = darray_i(vl, tmp).total;
+            for( ; j>0 && darray_i(vl, idx[j-1]).total < total; j--)
+                idx[j] = idx[j-1];
+            idx[j] = tmp;
+        }
+    }
 
     // Now we have the variable indexes sorted in "idx", use them
     // to assign new index
