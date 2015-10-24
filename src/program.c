@@ -74,6 +74,13 @@ void pgm_set_expr(program *p, expr *e)
     p->expr = e;
 }
 
+void pgm_set_vars(program *p, vars *v)
+{
+    if( p->variables )
+        vars_delete(p->variables);
+    p->variables = v;
+}
+
 expr_mngr *pgm_get_expr_mngr(program *p)
 {
     return p->mngr;

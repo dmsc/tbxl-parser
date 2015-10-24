@@ -17,19 +17,8 @@
  */
 #pragma once
 
-typedef struct program_struct program;
 typedef struct expr_struct expr;
-typedef struct expr_mngr_struct expr_mngr;
-typedef struct vars_struct vars;
-typedef struct defs_struct defs;
 
-program *program_new(const char *fname);
-void program_delete(program *p);
+// Remove unused variables in the program
+int opt_remove_unused_vars(expr *ex);
 
-void pgm_set_expr(program *p, expr *e);
-void pgm_set_vars(program *p, vars *v);
-vars *pgm_get_vars(program *p);
-defs *pgm_get_defs(program *p);
-expr *pgm_get_expr(program *p);
-expr_mngr *pgm_get_expr_mngr(program *p);
-const char *pgm_get_file_name(program *p);

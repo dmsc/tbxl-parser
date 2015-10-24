@@ -21,6 +21,7 @@
 #include "optconst.h"
 #include "optlinenum.h"
 #include "optconstvar.h"
+#include "optrmvars.h"
 #include "vars.h"
 #include "program.h"
 #include "statements.h"
@@ -47,6 +48,8 @@ int optimize_program(program *pgm, int level)
 
     if( level & OPT_NUMBER_TOK )
         err |= opt_convert_tok(ex);
+
+    err |= opt_remove_unused_vars(ex);
 
     if( level & OPT_CONST_VARS )
         err |= opt_replace_const(ex);
