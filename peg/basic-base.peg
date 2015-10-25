@@ -159,9 +159,9 @@ Statement        =
                  | WHILE  t:NumExprErr          { add_stmt(STMT_WHILE,t); }
                  | WEND                         { add_stmt(STMT_WEND,0); }
                  | XIO    t:XioExpr             { add_stmt(STMT_XIO,t); }
-                 | F_F                          { add_stmt(STMT_F_F,0); }
-                 | F_L                          { add_stmt(STMT_F_L,0); }
-                 | F_B                          { add_stmt(STMT_F_B,0); }
+                 | F_F    {t=0;} t:FlagExpr?    { add_stmt(STMT_F_F,t); }
+                 | F_L    {t=0;} t:FlagExpr?    { add_stmt(STMT_F_L,t); }
+                 | F_B    {t=0;} t:FlagExpr?    { add_stmt(STMT_F_B,t); }
                  | P_PUT  t:PutExpr             { add_stmt(STMT_P_PUT,t); }
                  | P_GET  t:GetExpr             { add_stmt(STMT_P_GET,t); }
                  | SHARP  t:Label               { add_stmt(STMT_LBL_S,t); }
@@ -208,6 +208,8 @@ PrintExpr        = {l=0;} l:AnyExpr?
                         | SEMICOLON                     { l = ex_bin(l,0,TOK_SEMICOLON); }
                         )*                              { $$ = l; }
 
+FlagExpr         = MINUS                                { $$ = ex_bin(0,0,TOK_MINUS); }
+                 | PLUS                                 { $$ = ex_bin(0,0,TOK_PLUS); }
 # FOR statement expression:
 ForStmtExpr      = l:PVarNum EQ r:NumExprErr            { l = ex_bin(l,r,TOK_F_ASGN); }
                    FOR_TO r:NumExprErr                  { l = ex_bin(l,r,TOK_FOR_TO); }
