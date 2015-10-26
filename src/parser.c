@@ -446,7 +446,7 @@ void push_extended_string(const char *data, unsigned len)
     // Interprets the string:
     unsigned i, rlen = 0;
     char *buf = &last_const_string[0];
-    int state = 0, inverse = 0, count = 0, nameStart = 0, hex = 0;
+    int state = 0, inverse = 0, count = 0, keyStart = 0, nameStart = 0, hex = 0;
 
     for(i=0; i<len && rlen < 256; i++)
     {
@@ -466,6 +466,7 @@ void push_extended_string(const char *data, unsigned len)
                 if( c == '{' )
                 {
                     state = 1;
+                    keyStart = i;
                     count = 0;
                 }
                 else if( c == '~' )
@@ -481,7 +482,11 @@ void push_extended_string(const char *data, unsigned len)
                 break;
             case 1: // Special character - count
                 if( c >= '0' && c <= '9' )
+                {
                     count = count * 10 + (c - '0');
+                    if( count > 65536 )
+                        count = 65536;
+                }
                 else if( c == '*' )
                 {
                     state = 2;
@@ -514,8 +519,8 @@ void push_extended_string(const char *data, unsigned len)
                     }
                     else if( count > 0xFF || count + rlen > 0xFF )
                     {
-                        err_print(file_name, file_line, "too many characters inside extended string '%.*s'\n",
-                                  len, data);
+                        err_print(file_name, file_line, "too many character repetitions in extended string '%.*s'\n",
+                                  1 + i - keyStart, data + keyStart);
                         parse_error++;
                         return;
                     }
