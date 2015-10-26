@@ -447,6 +447,7 @@ void push_extended_string(const char *data, unsigned len)
     unsigned i, rlen = 0;
     char *buf = &last_const_string[0];
     int state = 0, inverse = 0, count = 0, keyStart = 0, nameStart = 0, hex = 0;
+    last_const_string_len = 0;
 
     for(i=0; i<len && rlen < 256; i++)
     {
