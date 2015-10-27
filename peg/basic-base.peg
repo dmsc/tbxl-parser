@@ -69,7 +69,7 @@ Statement        =
                  | CLR                          { add_stmt(STMT_CLR,0); }
                  | CLS   {t=0;} t:IOChanErr?    { add_stmt(STMT_CLS,t); }
                  | CLOAD                        { add_stmt(STMT_CLOAD,0); }
-                 | CIRCLE t:NumExpr3            { add_stmt(STMT_CIRCLE,t); }
+                 | CIRCLE t:CircleExpr          { add_stmt(STMT_CIRCLE,t); }
                  | CSAVE                        { add_stmt(STMT_CSAVE,0); }
                  | DATA   < NotEOL* >           { add_stmt(STMT_DATA,add_data_stmt(yytext, yyleng)); add_force_line(); }
                  | DEG                          { add_stmt(STMT_DEG,0); }
@@ -190,6 +190,9 @@ NumExpr3         = l:NumExpr2 COMMA r:NumExprErr        { $$ = ex_bin(l,r,TOK_CO
                   | < ERROR > { print_error("3 numeric expressions", yytext); }
 NumExpr4         = l:NumExpr3 COMMA r:NumExprErr        { $$ = ex_bin(l,r,TOK_COMMA); }
                   | < ERROR > { print_error("4 numeric expressions", yytext); }
+CircleExpr       = l:NumExpr3                           { $$ = l; }
+                           (COMMA r:NumExprErr          { $$ = ex_bin(l,r,TOK_COMMA); }
+                           )?
 IOChan           = SHARP r:NumExprErr                   { $$ = ex_bin(0,r,TOK_SHARP); }
 IOChanErr        = IOChan
                   | < ERROREXP >                        { print_error("I/O channel (#)", yytext); $$ = 0; }
