@@ -22,6 +22,7 @@
 #include "sbuf.h"
 #include "vars.h"
 #include "defs.h"
+#include "darray.h"
 #include "tokens.h"
 #include "statements.h"
 #include "ataribcd.h"
@@ -79,30 +80,17 @@ static void print_string_short(const char *str, int len, string_buf *s)
 }
 
 // Used to store information about printed definitions
-typedef struct {
-    int *num;
-    unsigned len;
-    unsigned size;
-} defprint;
+typedef darray(int) darray_int;
 
-static void add_used_def(defprint *dp, int id)
+static void add_used_def(darray_int *dp, int id)
 {
-    for(unsigned i=0; i<dp->len; i++)
-        if( dp->num[i] == id )
+    for(unsigned i=0; i<darray_len(dp); i++)
+        if( darray_i(dp, i) == id )
             return;
-    if( dp->len == dp->size )
-    {
-        if( !dp->size )
-            dp->size = 256;
-        else
-            dp->size *= 2;
-        dp->num = realloc(dp->num, sizeof(dp->num[0]) * dp->size);
-    }
-    dp->num[dp->len] = id;
-    dp->len ++;
+    darray_add(dp, id);
 }
 
-static void get_used_def(defprint *dp, const expr *e)
+static void get_used_def(darray_int *dp, const expr *e)
 {
     if( !e )
         return;
@@ -140,18 +128,21 @@ string_buf *expr_print_used_defs(const expr *ex)
     if( !ex )
         return 0;
 
-    defprint dp;
-    memset(&dp,0,sizeof(dp));
+    darray_int dp;
+    darray_init(dp, 16);
     get_used_def(&dp, ex);
 
-    if( !dp.len )
+    if( !darray_len(&dp) )
+    {
+        darray_delete(dp);
         return 0;
+    }
 
     string_buf *s = sb_new();
     const defs *d = pgm_get_defs(expr_mngr_get_program(ex->mngr));
-    for(unsigned i=0; i<dp.len; i++)
-        print_def_orig(s, d, dp.num[i]);
-    free(dp.num);
+    for(unsigned i=0; i<darray_len(&dp); i++)
+        print_def_orig(s, d, darray_i(&dp,i));
+    darray_delete(dp);
     return s;
 }
 
