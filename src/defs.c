@@ -19,6 +19,7 @@
 #include "tokens.h"
 #include "statements.h"
 #include "dbg.h"
+#include "darray.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -30,27 +31,24 @@ struct def {
     double val; // Value if numeric
 };
 
-#define MAX_DEFS  (512)  // Currently, a fixed limit
-
-struct defs_struct {
-  struct def dlist[MAX_DEFS]; // Array with all definitions
-};
+// List of all definitions
+darray_struct(struct def, defs_struct);
 
 defs * defs_new()
 {
-    return calloc(1, sizeof(struct defs_struct));
+    return darray_new(struct def, 16);
 }
 
 void defs_delete(defs *d)
 {
     int i;
-    for(i=0; i<MAX_DEFS && d->dlist[i].name; i++)
+    for(i=0; i<darray_len(d); i++)
     {
-        free(d->dlist[i].name);
-        if( d->dlist[i].data )
-            free(d->dlist[i].data);
+        free(darray_i(d,i).name);
+        if( darray_i(d,i).data )
+            free(darray_i(d,i).data);
     }
-    free(d);
+    darray_free(d);
 }
 
 static int case_name_cmp(const char *a, const char *b)
@@ -82,8 +80,8 @@ static int case_name_cmp_str(const char *a, const char *b)
 int defs_search(const defs *d, const char *name)
 {
     int i;
-    for(i=0; i<MAX_DEFS && d->dlist[i].name; i++)
-        if( !case_name_cmp(name, d->dlist[i].name) )
+    for(i=0; i<darray_len(d); i++)
+        if( !case_name_cmp(name, darray_i(d,i).name) )
             return i;
     return -1;
 }
@@ -91,15 +89,12 @@ int defs_search(const defs *d, const char *name)
 int defs_new_def(defs *d, const char *name, const char *file_name, int file_line)
 {
     int i;
-    for(i=0; i<MAX_DEFS && d->dlist[i].name; i++)
-        if( !case_name_cmp(name, d->dlist[i].name) )
+    for(i=0; i<darray_len(d); i++)
+        if( !case_name_cmp(name, darray_i(d,i).name) )
             return i;
-    if( i >= MAX_DEFS )
-    {
-        err_print(file_name, file_line, "too many definitions.\n");
-        return 0;
-    }
-    d->dlist[i].name = strdup(name);
+    struct def df;
+    df.name = strdup(name);
+    darray_add(d,df);
 
     // Search in token list, to avoid defining variables identical to tokens
     int j;
@@ -127,39 +122,39 @@ int defs_new_def(defs *d, const char *name, const char *file_name, int file_line
 
 void defs_set_string(defs *d, int id, const char *data, int len)
 {
-    assert( id >= 0 && id < MAX_DEFS && d->dlist[id].name );
-    d->dlist[id].data = malloc(len);
-    memcpy(d->dlist[id].data, data, len);
-    d->dlist[id].len = len;
+    assert( id >= 0 && id < darray_len(d) );
+    darray_i(d,id).data = malloc(len);
+    memcpy(darray_i(d,id).data, data, len);
+    darray_i(d,id).len = len;
 }
 
 void defs_set_numeric(defs *d, int id, double val)
 {
-    assert( id >= 0 && id < MAX_DEFS && d->dlist[id].name );
-    d->dlist[id].val = val;
+    assert( id >= 0 && id < darray_len(d) );
+    darray_i(d,id).val = val;
 }
 
 const char *defs_get_string(const defs *d, int id, int *len)
 {
-    assert( id >= 0 && id < MAX_DEFS && d->dlist[id].name && d->dlist[id].data );
-    *len  = d->dlist[id].len;
-    return d->dlist[id].data;
+    assert( id >= 0 && id < darray_len(d) && darray_i(d,id).data );
+    *len  = darray_i(d,id).len;
+    return darray_i(d,id).data;
 }
 
 double defs_get_numeric(const defs *d, int id)
 {
-    assert( id >= 0 && id < MAX_DEFS && d->dlist[id].name && !d->dlist[id].data );
-    return d->dlist[id].val;
+    assert( id >= 0 && id < darray_len(d) && !darray_i(d,id).data );
+    return darray_i(d,id).val;
 }
 
 int defs_get_type(const defs *d, int id)
 {
-    assert( id >= 0 && id < MAX_DEFS && d->dlist[id].name );
-    return d->dlist[id].data != 0;
+    assert( id >= 0 && id < darray_len(d) );
+    return darray_i(d,id).data != 0;
 }
 
 const char * defs_get_name(const defs *d, int id)
 {
-    assert( id >= 0 && id < MAX_DEFS && d->dlist[id].name );
-    return d->dlist[id].name;
+    assert( id >= 0 && id < darray_len(d) );
+    return darray_i(d,id).name;
 }
