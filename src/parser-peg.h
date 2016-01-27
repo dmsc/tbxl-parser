@@ -49,7 +49,10 @@ void push_extended_string(const char *data, unsigned len);
 
 // Used to add binary includes
 void add_definition(const char *var_name);
-void add_incbin_file(const char *bin_file_name);
+void set_incbin_filename(const char *bin_file_name);
+void set_incbin_offset(long bin_file_off);
+void set_incbin_length(long bin_file_len);
+void add_incbin_file(void);
 void set_numdef_value(double);
 void set_strdef_value(void);
 

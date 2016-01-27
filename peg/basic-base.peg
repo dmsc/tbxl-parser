@@ -527,7 +527,7 @@ Number           = HexNumber                                   { $$ = add_hex_nu
                  | DecNumber                                   { $$ = add_number( strtod(yytext,0) ); }
 
 HexNumber        = '$' < [a-fA-F0-9]+ > SPC
-
+IntNumber        = < [0-9]+ > SPC
 DecNumber        = < '-'? [0-9]+ ( '.' [0-9]* )? NumExp? > SPC
                  | < '-'? '.' [0-9]+ NumExp? > SPC
 

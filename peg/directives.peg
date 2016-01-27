@@ -20,11 +20,16 @@ DirectiveLine  = ( OptionsDirective
 IncBinaryDirect   = 'incbin' SPC (
                        StrDefName        { add_definition(yytext); }
                        SPC ','
-                       SPC IncFileName   { add_incbin_file(yytext); }
+                       SPC IncFileName SPC  ( ',' SPC IncFileOffset ( ',' SPC IncFileLength )? )?
+                                         { add_incbin_file(); }
                      | < ERROR >         { print_error("$incbin def and file name", yytext); }
                      )
 
-IncFileName       = '"' < ( !'"' . )+ > '"'
+IncFileName       = '"' < ( !'"' . )+ > '"' { set_incbin_filename(yytext); }
+IncFileOffset     = HexNumber               { set_incbin_offset(strtol(yytext, 0, 16)); }
+                  | IntNumber               { set_incbin_offset(strtol(yytext, 0, 10)); }
+IncFileLength     = HexNumber               { set_incbin_length(strtol(yytext, 0, 16)); }
+                  | IntNumber               { set_incbin_length(strtol(yytext, 0, 10)); }
 
 # ------ Definitions ------
 DefineVariable   = 'define' SPC (

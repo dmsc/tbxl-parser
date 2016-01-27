@@ -255,7 +255,11 @@ This directive allows including data from a binary file to a new string
 definition. The content of the file is read at parsing time and the full
 content is stored in the define. The syntax of the directive is:
 
-  $incbin *defineName$* , "*fileName*"
+  $incbin *defineName$* , "*fileName*"  [ , *offset* [, *length* ] ]
+
+The optional *offset* parameter specifies a starting offset in bytes for
+the included data, and the optional *length* parameter specifies the number
+of bytes to read. If *length* is not given, the file read completely.
 
 This is an example usage of the `$incbin` directive:
 

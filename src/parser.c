@@ -26,6 +26,7 @@
 #include "parser-peg.h"
 #include "expr.h"
 #include <string.h>
+#include <stdlib.h>
 
 static int parse_error;
 static const char *file_name;
@@ -34,6 +35,9 @@ static program *cur_program;
 static enum parser_mode parser_mode;
 static int parser_optimize;
 static int last_def;
+static long incbin_offset;
+static long incbin_length;
+static char *incbin_file_name;
 static char last_const_string[256]; // Holds last processed string
 static int  last_const_string_len;  // and its length
 static expr_mngr *mngr;
@@ -222,30 +226,88 @@ void add_definition(const char *def_name)
     last_def = defs_new_def(d, def_name, file_name, file_line);
 }
 
-void add_incbin_file(const char *bin_file_name)
+void set_incbin_filename(const char *bin_file_name)
+{
+    if( incbin_file_name )
+        free(incbin_file_name);
+    incbin_file_name = strdup(bin_file_name);
+    incbin_offset = 0;
+    incbin_length = -1;
+}
+
+void set_incbin_offset(long bin_file_off)
+{
+    incbin_offset = bin_file_off;
+}
+
+void set_incbin_length(long bin_file_len)
+{
+    incbin_length = bin_file_len;
+}
+
+void add_incbin_file(void)
 {
     if( last_def == -1 )
         return; // Ignore error, already flagged.
 
-    FILE *bf = fopen(bin_file_name, "rb");
+    // Check errors
+    if( incbin_length >= 248 )
+    {
+        err_print(file_name, file_line, "error, maximum length of included binary is 247 bytes.");
+        parse_error++;
+        return;
+    }
+    if( incbin_length != -1 && incbin_length < 1 )
+    {
+        err_print(file_name, file_line, "error, length must be at least 1 byte.");
+        parse_error++;
+        return;
+    }
+
+    FILE *bf = fopen(incbin_file_name, "rb");
     if( !bf )
     {
-        err_print(file_name, file_line, "error opening file '%s'.\n", bin_file_name);
+        err_print(file_name, file_line, "error opening file '%s'.\n", incbin_file_name);
         parse_error++;
         return;
     }
+
+    // Seek to offset
+    if( incbin_offset && fseek(bf, incbin_offset, SEEK_SET) )
+    {
+        err_print(file_name, file_line, "error, can not skip to offset %ld in file '%s'.\n",
+                  incbin_offset, incbin_file_name);
+        parse_error++;
+        fclose(bf);
+        return;
+
+    }
+
+    // Read buffer (max 255 bytes)
     char buf[256];
     int len = fread(buf, 1, 255, bf);
+    fclose(bf);
+
+    // Check data read
     if( len <= 0 )
     {
-        err_print(file_name, file_line, "error reading file '%s'.\n", bin_file_name);
+        err_print(file_name, file_line, "error reading file '%s', no bytes.\n", incbin_file_name);
         parse_error++;
         return;
     }
-    fclose(bf);
-    if( len >= 248 )
+    if( incbin_length != -1 )
     {
-        err_print(file_name, file_line, "binary file '%s' is too big, truncating.\n", bin_file_name);
+        if( len < incbin_length )
+        {
+            err_print(file_name, file_line, "error reading file '%s', file is too short.\n", incbin_file_name);
+            parse_error++;
+            return;
+        }
+        len = incbin_length;
+    }
+    else if( len >= 248 )
+    {
+        err_print(file_name, file_line, "binary file '%s' is too big, truncating.\n", incbin_file_name);
         parse_error++;
         len = 247;
     }
