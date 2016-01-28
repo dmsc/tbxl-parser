@@ -155,6 +155,7 @@ static int do_constprop(expr *ex)
         case TOK_NOT:
             if( r_inum )
                 return set_number(ex, 0 != ex->rgt->num);
+            // TODO: NOT A OP B => A NOP B
             return x;
         case TOK_PLUS:
             if( l_inum && r_inum )
@@ -382,9 +383,17 @@ static int do_constprop(expr *ex)
         case TOK_ERL:
         case TOK_RND_S:
 
+            // Assembly tokens
+        case TOK_REG_AX:
+        case TOK_REG_AL:
+
             // Not operators/functions:
         case TOK_F_ASGN:
         case TOK_S_ASGN:
+        case TOK_I_ASGN:
+        case TOK_F_XSTO:
+        case TOK_I_XSTO:
+        case TOK_B_ASGN:
         case TOK_FOR_TO:
         case TOK_STEP:
         case TOK_THEN:

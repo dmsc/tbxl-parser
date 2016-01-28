@@ -162,6 +162,8 @@ static void print_var_long(string_buf *s, vars *v, int id)
         sb_put(s, '$');
     else if( type == vtArray )
         sb_puts(s, "( ");
+    else if( type == vtAsmLabel )
+        sb_puts(s, "~");
 }
 
 static int print_var_short(string_buf *s, vars *v, int id)
@@ -180,6 +182,9 @@ static int print_var_short(string_buf *s, vars *v, int id)
             return 0;
         case vtArray:
             sb_put(s, '(');
+            return 0;
+        case vtAsmLabel:
+            sb_put(s, '~');
             return 0;
     }
     return 0;
@@ -343,6 +348,7 @@ static int print_expr_long_rec(string_buf *out, const expr *e, int skip_then)
         case et_var_string:
         case et_var_array:
         case et_var_label:
+        case et_var_asmlabel:
             print_var_long(out, pgm_get_vars(expr_mngr_get_program(e->mngr)), e->var);
             break;
         case et_void:
@@ -514,6 +520,7 @@ static int print_expr_short_rec(string_buf *out, const expr *e)
         case et_var_string:
         case et_var_array:
         case et_var_label:
+        case et_var_asmlabel:
             add_space = print_var_short(out, pgm_get_vars(expr_mngr_get_program(e->mngr)), e->var);
             break;
         case et_void:

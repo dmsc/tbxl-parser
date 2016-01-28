@@ -109,6 +109,7 @@ static int do_search_stmt(expr *ex, uint8_t *keep, uint8_t *avail)
         case STMT_ENDPROC:
         case STMT_ENTER:
         case STMT_EXEC:
+        case STMT_EXEC_ASM:
         case STMT_EXEC_PAR:
         case STMT_EXIT:
         case STMT_F_B:
@@ -124,6 +125,7 @@ static int do_search_stmt(expr *ex, uint8_t *keep, uint8_t *avail)
         case STMT_IF_MULTILINE:
         case STMT_IF_THEN:
         case STMT_INPUT:
+        case STMT_JUMP_COND:
         case STMT_LBL_S:
         case STMT_LET:
         case STMT_LET_INV:

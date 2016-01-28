@@ -92,3 +92,9 @@ ON_GOSHARP	GO#	GO#	 go# 	0x6a	1
 UINSTR	UINSTR	UINSTR	uinstr	0x6b	1
 ERR	ERR	ERR	err	0x6c	1
 ERL	ERL	ERL	erl	0x6d	1
+REG_AX	@RAX	@RAX	@rax	0x80	0
+REG_AL	@RAL	@RAL	@ral	0x81	0
+I_ASGN	=	=	 = 	0x82	0
+B_ASGN	=	@B=	 @b= 	0x83	0
+F_XSTO	=	(*)=	 (*)= 	0x84	0
+I_XSTO	=	(*)=	 (*)= 	0x85	0

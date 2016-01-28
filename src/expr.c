@@ -130,6 +130,14 @@ expr *expr_new_label(expr_mngr *mngr, int vn)
     return n;
 }
 
+expr *expr_new_asm_label(expr_mngr *mngr, int vn)
+{
+    expr *n = expr_new(mngr);
+    n->type = et_var_asmlabel;
+    n->var = vn;
+    return n;
+}
+
 expr *expr_new_def_num(expr_mngr *mngr, int dn)
 {
     expr *n = expr_new(mngr);

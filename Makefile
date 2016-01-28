@@ -18,7 +18,7 @@
 CROSS=
 EXT=
 CC=$(CROSS)gcc
-CFLAGS=-Wall -O2 -g -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS=-Wall -Og -g -Wstrict-prototypes -Wmissing-prototypes
 DEPFLAGS=-MMD -MP
 LDFLAGS=
 LDLIBS=-lm
@@ -33,11 +33,13 @@ SOURCES=\
  basic.c\
  baswriter.c\
  convertbas.c\
+ codegen.c\
  darray.c\
  defs.c\
  expr.c\
  lister.c\
  listexpr.c\
+ lowerexpr.c\
  main.c\
  optconst.c\
  optconstvar.c\
@@ -48,6 +50,7 @@ SOURCES=\
  procparams.c\
  program.c\
  sbuf.c\
+ stmtreplace.c\
  vars.c\
 
 # Word lists, in "peg" directory

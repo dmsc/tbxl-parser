@@ -43,7 +43,8 @@ typedef darray(var_usage) var_list;
 static int expr_is_var(const expr *ex)
 {
     return ex->type == et_var_number || ex->type == et_var_string ||
-           ex->type == et_var_label  || ex->type == et_var_array;
+           ex->type == et_var_label  || ex->type == et_var_array ||
+           ex->type == et_var_asmlabel;
 }
 
 // Assign new IDs to variables, most used variables first

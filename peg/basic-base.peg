@@ -176,7 +176,8 @@ ERROR            = [^:\233\015\n\t ][^:\015\n\233]*
 ERROREXP         = [^:\233\015\n\t ][^,:\015\n\233]*
 
 # BPUT / BGET / POINT
-IONumExpr2       = l:IOChanErr COMMA r:NumExpr2         { $$ = ex_bin(l,r,TOK_COMMA); }
+IONumExpr2       = l:IOChanErr COMMA r:NumExpr          { l  = ex_bin(l,r,TOK_COMMA); }
+                               COMMA r:NumExpr          { $$ = ex_bin(l,r,TOK_COMMA); }
 
 # Assignments
 LetExpr          = LetExprStr | LetExprNum

@@ -129,6 +129,7 @@ int bas_write_program(FILE *f, program *pgm, int variables)
         {
             case vtNone:
             case vtMaxType:
+            case vtAsmLabel:
                 break;     // Skip
             case vtFloat:
                 sb_put(vvt, 0x00); // Type

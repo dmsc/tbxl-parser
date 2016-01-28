@@ -25,6 +25,7 @@
 #include "version.h"
 #include "optimize.h"
 #include "convertbas.h"
+#include "codegen.h"
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -71,6 +72,7 @@ int main(int argc, char **argv)
     enum {
         out_short,
         out_long,
+        out_assembly,
         out_binary } out_type = out_binary;
     int do_conv_ascii = 0;
     char *output = 0;
@@ -78,7 +80,7 @@ int main(int argc, char **argv)
     int max_line_len = 120;
     int bin_variables = 0;
 
-    while ((opt = getopt(argc, argv, "habvsqlco:n:fxO")) != -1)
+    while ((opt = getopt(argc, argv, "habvsSqlco:n:fxO")) != -1)
     {
         switch (opt)
         {
@@ -96,6 +98,9 @@ int main(int argc, char **argv)
                 break;
             case 's':
                 out_type = out_short;
+                break;
+            case 'S':
+                out_type = out_assembly;
                 break;
             case 'a':
                 do_conv_ascii = 1;
@@ -201,7 +206,9 @@ int main(int argc, char **argv)
             ok = !convert_to_turbobas(parse_get_current_pgm());
 
         // Run the optimizer if specified by the user or not in long output
-        if( ok && (out_type != out_long || parser_get_optimize()) )
+        // or assembly output.
+        if( ok && (out_type != out_assembly) &&
+                  (out_type != out_long || parser_get_optimize()) )
             ok = !optimize_program(parse_get_current_pgm(),parser_get_optimize());
 
         // Update "all_ok" variable
@@ -245,6 +252,8 @@ int main(int argc, char **argv)
                 err = lister_list_program_long(outFile, parse_get_current_pgm(), do_conv_ascii);
             else if( out_type == out_binary )
                 err = bas_write_program(outFile, parse_get_current_pgm(), bin_variables);
+            else if( out_type == out_assembly )
+                err = codegen_generate_code(outFile, parse_get_current_pgm());
 
             // Remember if there was an error:
             all_ok = err ? 0 : all_ok;

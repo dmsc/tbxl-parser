@@ -38,6 +38,7 @@ static int expr_get_bas_rec(string_buf *out, expr *e)
         case et_lnum:
         case et_stmt:
         case et_data:
+        case et_var_asmlabel:
             assert(0 /* unexpected expr type */);
             return 0;
         case et_tok:

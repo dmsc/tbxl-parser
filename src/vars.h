@@ -26,6 +26,7 @@ enum var_type {
     vtString,
     vtArray,
     vtLabel,
+    vtAsmLabel,
     vtMaxType
 };
 

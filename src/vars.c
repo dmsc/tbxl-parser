@@ -233,6 +233,8 @@ const char *var_type_name(enum var_type t)
             return "array";
         case vtLabel:
             return "label";
+        case vtAsmLabel:
+            return "asmlabel";
         default:
             return "<ERROR>";
     }

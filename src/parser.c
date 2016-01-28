@@ -154,6 +154,7 @@ expr *add_ident(const char *name, enum var_type type)
         case vtLabel:
             return expr_new_label(mngr,id);
         case vtNone:
+        case vtAsmLabel:
         case vtMaxType:
             return 0;
     }
