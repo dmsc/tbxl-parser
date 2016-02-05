@@ -18,6 +18,10 @@ make CROSS=i686-w64-mingw32- EXT=.exe CFLAGS='-Wall -std=c99 -O2 -flto -DNDEBUG'
 mv build/${out}.zip ../${out}-win32.zip
 
 rm -rf build/
+make CROSS=x86_64-apple-darwin15- EXT= CFLAGS='-Wall -O2 -flto -DNDEBUG' dist
+mv build/${out}.zip ../${out}-maxosx.zip
+
+rm -rf build/
 make CROSS= EXT= CFLAGS='-Wall -O2 -flto -DNDEBUG' dist
 mv build/${out}.zip ../${out}-linux64.zip
 
