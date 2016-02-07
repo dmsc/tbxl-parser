@@ -20,6 +20,7 @@
 #include "statements.h"
 #include "dbg.h"
 #include "darray.h"
+#include "parser.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -55,7 +56,10 @@ void vars_delete(vars *v)
     free(v);
 }
 
-static int case_name_cmp(const char *a, const char *b)
+// Compares A and B ignoring case and inverse video.
+// Returns 1 if A != B, 0 if A == B.
+// If "prefix" is 1, returns 0 also if B is a prefix of A.
+static int case_name_cmp(const char *a, const char *b, int prefix)
 {
     for( ; *a ; ++a, ++b )
     {
@@ -63,12 +67,13 @@ static int case_name_cmp(const char *a, const char *b)
         ca = (ca>='a' && ca<='z') ? ca+'A'-'a' : ca;
         cb = (cb>='a' && cb<='z') ? cb+'A'-'a' : cb;
         if( ca != cb )
-            return 1;
+            return !prefix || *b != 0;
     }
     return *b != 0;
 }
 
 // Compare a variable name without the "$" to a name *with* the "$"
+// Returns 1 if A+"$" != B, 0 if A+"$" == B.
 static int case_name_cmp_str(const char *a, const char *b)
 {
     for( ; *a ; ++a, ++b )
@@ -119,7 +124,7 @@ int vars_search(vars *v, const char *name, enum var_type type)
 {
     struct var *vr;
     darray_foreach(vr, &v->vlist)
-        if( vr->type == type && !case_name_cmp(name, vr->name) )
+        if( vr->type == type && !case_name_cmp(name, vr->name, 0) )
             return vr - &darray_i(&v->vlist,0);
     return -1;
 }
@@ -154,19 +159,22 @@ int vars_new_var(vars *v, const char *name, enum var_type type, const char *file
         return i;
 
     // Search in token list, to avoid defining variables identical to tokens
+    int warned = 0;
     if( type == vtFloat || type == vtArray )
     {
         int j;
         for(j=0; j<TOK_LAST_TOKEN; j++)
-            if( !case_name_cmp(name, tokens[j].tok_in) )
+            if( !case_name_cmp(name, tokens[j].tok_in, 0) )
             {
                 warn_print(file_name, file_line, "variable name '%s' is a token\n", name);
+                warned = 1;
                 break;
             }
         for(j=0; j<STMT_ENDIF_INVISIBLE; j++)
-            if( !case_name_cmp(name, statements[j].stm_long) )
+            if( !case_name_cmp(name, statements[j].stm_long, 0) )
             {
                 warn_print(file_name, file_line, "variable name '%s' is a statement\n", name);
+                warned = 1;
                 break;
             }
     }
@@ -177,6 +185,21 @@ int vars_new_var(vars *v, const char *name, enum var_type type, const char *file
             if( !case_name_cmp_str(name, tokens[j].tok_in) )
             {
                 warn_print(file_name, file_line, "variable name '%s$' is a token\n", name);
+                warned = 1;
+                break;
+            }
+    }
+    // If we are parsing in "compatible" mode, warn if variable name is a prefix
+    // of a statement
+    if( !warned && type != vtLabel && parser_get_mode() != parser_mode_extended )
+    {
+        int j;
+        for(j=0; j<STMT_ENDIF_INVISIBLE; j++)
+            if( statements[j].stm_long[0] && !case_name_cmp(name, statements[j].stm_long, 1) )
+            {
+                warn_print(file_name, file_line,
+                        "variable name '%s%s' starts with statement '%s'\n",
+                        name, type == vtString ? "$" : "", statements[j].stm_long);
                 break;
             }
     }
@@ -211,7 +234,7 @@ void vars_show_summary(vars *v, enum var_type t, int bin)
     darray_foreach(vr, &v->vlist)
     {
         id++;
-        if( vr->type == t && case_name_cmp(vr->name, vr->sname) )
+        if( vr->type == t && case_name_cmp(vr->name, vr->sname, 0) )
         {
             if( bin )
                 fprintf(stderr, "\t%03X\t%s\n", id, vr->name);
