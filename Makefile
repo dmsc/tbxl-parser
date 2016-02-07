@@ -17,7 +17,7 @@
 #
 CROSS=
 EXT=
-CC=$(CROSS)gcc
+CC=gcc
 CFLAGS=-Wall -O2 -g -Wstrict-prototypes -Wmissing-prototypes
 DEPFLAGS=-MMD -MP
 LDFLAGS=
@@ -102,17 +102,17 @@ $(ODIRS):
 
 # Compile main program
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
+	$(CROSS)$(CC) $(CFLAGS) $(INCLUDES) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 # Force generating of header files *before* compilation of depending sources
 $(OBJS): $(VERSION_H) $(W_INC) $(P_SRC)
 
 # Compile C source
 $(B)/obj/%.o: src/%.c
-	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEPFLAGS) -o $@ $<
+	$(CROSS)$(CC) -c $(CFLAGS) $(INCLUDES) $(DEPFLAGS) -o $@ $<
 
 $(B)/obj/%.o: $(B)/src/%.c
-	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEPFLAGS) -o $@ $<
+	$(CROSS)$(CC) -c $(CFLAGS) $(INCLUDES) $(DEPFLAGS) -o $@ $<
 
 # Generate C source from PEG
 $(P_SRC): %_peg.c: %.peg
