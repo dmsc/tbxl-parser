@@ -180,3 +180,21 @@ int expr_get_bas_len(const expr *e)
     sb_delete(b);
     return len;
 }
+
+unsigned expr_get_bas_maxlen(const expr *e)
+{
+    assert( e->type == et_stmt );
+
+    // Statements with interpreter bugs:
+    if(
+       // IF/THEN
+       (e->stmt == STMT_IF_MULTILINE ) ||
+       // FOR without STEP
+       (e->stmt == STMT_FOR && e->rgt->tok != TOK_STEP) ||
+       // CIRCLE with 3 parameters
+       (e->stmt == STMT_CIRCLE && e->rgt->lft->lft->type != et_tok) )
+        // Only 254 bytes of max length
+        return 254;
+    else
+        return 255;
+}

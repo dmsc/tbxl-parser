@@ -192,7 +192,8 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 ls.file_line = ex->file_line;
                 // Get tokenized length
                 int bas_len = expr_get_bas_len(ex);
-                if( bas_len >= 0xFB )
+                unsigned maxlen = expr_get_bas_maxlen(ex);
+                if( bas_len + 4 >= maxlen )
                 {
                     string_buf *prn = expr_print_alone(ex);
                     err_print(ls.fname, ls.file_line, "statement too long at line %d:\n", ls.cur_line);
@@ -205,7 +206,7 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
                 if( expr_is_label(ex) && sb_len(ls.out) )
                     ls_write_line(&ls, -1, ls.tok_len);
                 // See if line is too big to join with last line
-                else if( ((ls.tok_len + 1 + bas_len) > 0xFC) ||
+                else if( ((ls.tok_len + 4 + bas_len) > maxlen) ||
                          ((sb_len(ls.out) + ls.num_len - !skip_colon + sb_len(sb)) > max_line_len) )
                 {
                     if( !last_split )

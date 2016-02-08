@@ -249,7 +249,9 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             // Serialize statement
             int old_last_colon = last_colon;
             string_buf *sb = expr_get_bas(ex, &last_colon, &no_split);
-            if( sb_len(sb) >= 0xFB )
+            unsigned maxlen = expr_get_bas_maxlen(ex);
+            // Check: tokens + 4 (line number (2) + length + EOL) >= max line len.
+            if( sb_len(sb) + 4 >= maxlen )
             {
                 string_buf *prn = expr_print_alone(ex);
                 err_print(fname, ex->file_line, "statement too long at line %d:\n", cur_line);
@@ -264,8 +266,9 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             }
             if( sb_len(sb) )
             {
+                // Total length = old tokens + new tokens + 4 (line number + length + EOL)
                 unsigned ln = sb_len(sb) + sb_len(bin_line) + 4;
-                if( ln > 0xFF || (expr_is_label(ex) && sb_len(bin_line)>0) )
+                if( ln > maxlen || (expr_is_label(ex) && sb_len(bin_line)>0) )
                 {
                     if( no_split > 0 )
                     {
