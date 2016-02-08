@@ -366,12 +366,12 @@ int tok_need_parens(enum enum_tokens tk)
     }
 }
 
-const char *expr_get_file_name(expr *e)
+const char *expr_get_file_name(const expr *e)
 {
     return expr_mngr_get_file_name(e->mngr);
 }
 
-int expr_get_file_line(expr *e)
+int expr_get_file_line(const expr *e)
 {
     return e->file_line;
 }
