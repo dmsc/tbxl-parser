@@ -234,9 +234,9 @@ void vars_show_summary(vars *v, enum var_type t, int bin)
     darray_foreach(vr, &v->vlist)
     {
         id++;
-        if( vr->type == t && case_name_cmp(vr->name, vr->sname, 0) )
+        if( vr->type == t && (!vr->sname || case_name_cmp(vr->name, vr->sname, 0)) )
         {
-            if( bin )
+            if( bin || !vr->sname )
                 fprintf(stderr, "\t%03X\t%s\n", id, vr->name);
             else
                 fprintf(stderr, "\t%-2s\t%s\n", vr->sname, vr->name);

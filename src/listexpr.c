@@ -27,6 +27,7 @@
 #include "statements.h"
 #include "ataribcd.h"
 #include "program.h"
+#include "dbg.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -164,9 +165,16 @@ static void print_var_long(string_buf *s, vars *v, int id)
         sb_puts(s, "( ");
 }
 
-static int print_var_short(string_buf *s, vars *v, int id)
+static int print_var_short(string_buf *s, vars *v, int id, const expr *e)
 {
-    sb_puts(s, vars_get_short_name(v, id));
+    const char *sn = vars_get_short_name(v, id);
+    if( !sn )
+    {
+        err_print(expr_get_file_name(e), expr_get_file_line(e),
+                  "invalid short variable name.\n");
+        sn = "ERROR";
+    }
+    sb_puts(s, sn);
     enum var_type type = vars_get_type(v, id);
     switch(type)
     {
@@ -514,7 +522,7 @@ static int print_expr_short_rec(string_buf *out, const expr *e)
         case et_var_string:
         case et_var_array:
         case et_var_label:
-            add_space = print_var_short(out, pgm_get_vars(expr_mngr_get_program(e->mngr)), e->var);
+            add_space = print_var_short(out, pgm_get_vars(expr_mngr_get_program(e->mngr)), e->var, e);
             break;
         case et_void:
             return 0;
