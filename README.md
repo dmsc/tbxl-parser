@@ -16,7 +16,8 @@ and produces any of three outputs:
 - A minimized listing, replacing variable names with single letters, using
   abbreviations, removing spaces and using Atari end of lines.
 
-  This mode is selected with the `-s` command line switch.
+  This mode is selected with the `-s` command line switch. Adding the `-f`
+  option keeps the names of variables with 2 or less characters.
 
 - A pretty printed expanded listing, with one statement per line and
   indentation, and standard ASCII line endings.
@@ -149,7 +150,8 @@ Options:
   unlistable.
 
 - `-f`  In binary output mode, writes the full variable names, this eases
-  debugging the program.
+  debugging the program. In short listing mode, keeps the names of variables
+  with less than two characters, renaming all longer or invalid names.
 
 - `-a`  In long output, replace Atari characters in comments with
   approximating characters.

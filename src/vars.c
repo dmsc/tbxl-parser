@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX_SHORT_NAMES 1021
+
 struct var {
     char *name;    // Long name
     char *sname;   // Short name
@@ -89,7 +91,7 @@ static int case_name_cmp_str(const char *a, const char *b)
 
 static char *get_short_name(int n)
 {
-    if( n > 1020 )
+    if( n >= MAX_SHORT_NAMES )
     {
         // Error, too many variables!
         return 0;
@@ -120,6 +122,62 @@ static char *get_short_name(int n)
     return out;
 }
 
+// Gets the "index" of the character (A-Z + _ + 0-9)
+static int get_char_index(char c, int digit)
+{
+    int add = digit ? 10 : 0;
+    if( c >= 'A' && c <= 'Z' )
+        return c - 'A' + add;
+    else if( c >= 'a' && c <= 'z' )
+        return c - 'a' + add;
+    else if( c == '_' )
+        return 26 + add;
+    else if( digit && c >= '0' && c <= '9' )
+        return c - '0';
+    else
+        return -1; // Unknown character
+}
+
+// This is exact inverse of above function
+static int get_short_index(const char *name)
+{
+    if( !name || !name[0] || (name[0] && name[1] && name[2]) )
+        return -1; // Name too long or null
+
+    if( !name[1] )
+        return get_char_index(name[0], 0);
+    else
+    {
+        int i1 = get_char_index(name[0], 0);
+        int i2 = get_char_index(name[1], 1);
+        if( i1 < 0 || i2 < 0 )
+            return -1;
+        int n = 27 + 37 * i1 + i2;
+        if( n < 162 )
+            return n;
+        else if( n == 162 )
+            return -1; // "DO"
+        else if( n < 338 )
+            return n - 1;
+        else if( n == 338 )
+            return -1; // "IF"
+        else if( n < 568 )
+            return n - 2;
+        else if( n == 568 )
+            return -1; // "ON"
+        else if( n < 572 )
+            return n - 3;
+        else if( n == 572 )
+            return -1; // "OR"
+        else if( n < 754 )
+            return n - 4;
+        else if( n == 754 )
+            return -1; // "TO"
+        else
+            return n - 5;
+    }
+}
+
 int vars_search(vars *v, const char *name, enum var_type type)
 {
     struct var *vr;
@@ -132,6 +190,58 @@ int vars_search(vars *v, const char *name, enum var_type type)
 int vars_get_total(const vars *v)
 {
     return darray_len(&v->vlist);
+}
+
+// Assign the short names to variables
+void vars_assign_short_names(vars *v)
+{
+    char used[vtMaxType][MAX_SHORT_NAMES]; // Stores if variable is already used
+    int index[vtMaxType];
+    struct var *vr;
+    // Cleanup
+    memset(used, 0, sizeof(used));
+    memset(index, 0, sizeof(index));
+    // First, delete old names
+    darray_foreach(vr, &v->vlist)
+    {
+        free(vr->sname);
+        vr->sname = 0;
+    }
+    // Now, try assigning names that are of 1 or 2 chars:
+    darray_foreach(vr, &v->vlist)
+    {
+        int id = get_short_index( vr->name );
+        if( id >= 0 && id < MAX_SHORT_NAMES && !used[vr->type][id] )
+        {
+            vr->sname = get_short_name(id);
+            used[vr->type][id] = 1;
+        }
+    }
+    // And assign the rest
+    darray_foreach(vr, &v->vlist)
+    {
+        if( !vr->sname )
+        {
+            int id = index[vr->type];
+            for( ; id < MAX_SHORT_NAMES ; id++ )
+            {
+                if( used[vr->type][id] )
+                    continue;
+                vr->sname = get_short_name(id);
+                used[vr->type][id] = 1;
+                break;
+            }
+            index[vr->type] = id;
+        }
+    }
+    // Check errors
+    int t=0;
+    for(t=0; t<vtMaxType; t++)
+    {
+        if( index[t] >= MAX_SHORT_NAMES )
+            err_print("", 0, "too many variables of type %s, could not assign short names\n",
+                      var_type_name(t));
+    }
 }
 
 int vars_new_var(vars *v, const char *name, enum var_type type, const char *file_name, int file_line)

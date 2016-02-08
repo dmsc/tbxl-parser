@@ -232,10 +232,14 @@ int main(int argc, char **argv)
                 exit(EXIT_FAILURE);
             }
 
+            // Reassign short variable names if requested
+            if( out_type == out_short && bin_variables > 0 )
+                vars_assign_short_names( pgm_get_vars( parse_get_current_pgm() ) );
+
             if( do_debug )
                 show_vars_stats(out_type == out_short ||
                                 (out_type == out_binary && !bin_variables),
-                                bin_variables);
+                                bin_variables < 0);
 
             // Write output
             int err = 0;
