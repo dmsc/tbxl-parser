@@ -491,7 +491,6 @@ static int do_commute(expr *ex)
         case TOK_OR:
         case TOK_AND:
         case TOK_N_NEQ:
-        case TOK_N_GE:
         case TOK_N_EQ:
         case TOK_PLUS:
         case TOK_STAR:
@@ -507,6 +506,7 @@ static int do_commute(expr *ex)
         case TOK_N_LEQ:
         case TOK_N_GEQ:
         case TOK_N_LE:
+        case TOK_N_GE:
         case TOK_S_LEQ:
         case TOK_S_GEQ:
         case TOK_S_LE:
