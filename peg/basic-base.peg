@@ -34,7 +34,7 @@ ProgramLine      = !EndOfFile SPC
 
 # One statement line, with multiple statements separated by ':'
 StatementLine    = Statement ( ':' SPC Statement
-                             | ':' SPC EndOfLine        { print_error("statement", yytext); }
+                             | <':'> SPC                { print_error("statement", yytext); }
                              | < ERROR >                { print_error("end of line/statement", yytext); }
                              )*
 
