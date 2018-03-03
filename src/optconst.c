@@ -485,6 +485,7 @@ static int do_commute(expr *ex)
 
     // See if our TOKEN is commutative
     enum enum_tokens tk = ex->tok;
+    enum enum_tokens tkcom = tk; // Token to commute
     switch(tk)
     {
         // Commutative numeric operators
@@ -504,15 +505,29 @@ static int do_commute(expr *ex)
 
         // Non-equality comparisons, can be replaced by the inverse operation
         case TOK_N_LEQ:
+            tkcom = TOK_N_GEQ;
+            break;
         case TOK_N_GEQ:
+            tkcom = TOK_N_LEQ;
+            break;
         case TOK_N_LE:
+            tkcom = TOK_N_GE;
+            break;
         case TOK_N_GE:
+            tkcom = TOK_N_LE;
+            break;
         case TOK_S_LEQ:
+            tkcom = TOK_S_GEQ;
+            break;
         case TOK_S_GEQ:
+            tkcom = TOK_S_LEQ;
+            break;
         case TOK_S_LE:
+            tkcom = TOK_S_GE;
+            break;
         case TOK_S_GE:
-            // TODO:
-            return x;
+            tkcom = TOK_S_LE;
+            break;
 
         // Non commutative numeric binary operators.
         case TOK_MINUS:
@@ -545,6 +560,7 @@ static int do_commute(expr *ex)
         expr *tmp = ex->lft;
         ex->lft = ex->rgt;
         ex->rgt = tmp;
+        ex->tok = tkcom;
         return 1;
     }
 
