@@ -39,6 +39,10 @@ expr * add_strdef_val(const char *);
 expr * add_numdef_val(const char *);
 void print_error(const char *, const char *);
 
+// Disable and re-enable storing of statements (to ignore a code region)
+void disable_parsing(void);
+void enable_parsing(void);
+
 // Expressions...
 expr *ex_comma(expr *l, expr *r);
 expr *ex_bin(expr *l, expr *r, enum enum_tokens k);

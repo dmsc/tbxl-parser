@@ -287,7 +287,8 @@ standard TurboBasic XL and Atari Basic parsers:
   sequence (`\**`, with `*` an hexadecimal number in uppercase) or two backslashes
   are interpreted differently.
 
-- Extra statements after an `IF`/`THEN`/`LineNumber` are converted to a comment.
+- Extra statements after an `IF`/`THEN`/`LineNumber` are converted to a comment,
+  with the exception of DATA statements.
   In the original, those statements are never executed, so this is not a problem
   with proper code.
 

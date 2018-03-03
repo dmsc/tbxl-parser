@@ -25,10 +25,13 @@
 #include "dbg.h"
 #include "parser-peg.h"
 #include "expr.h"
+#include "listexpr.h"
+#include "sbuf.h"
 #include <string.h>
 #include <stdlib.h>
 
 static int parse_error;
+static int parsing_disabled;
 static const char *file_name;
 static int file_line;
 static program *cur_program;
@@ -116,7 +119,27 @@ expr *add_string(void)
 
 void add_stmt(enum enum_statements st, expr *toks)
 {
-    set_last_stmt(expr_new_stmt(mngr, last_stmt, toks, st));
+    // Create new statement
+    expr * e = expr_new_stmt(mngr, last_stmt, toks, st);
+
+    if( parsing_disabled && st != STMT_DATA )
+    {
+        // List to a REM statement
+       string_buf *sb = expr_print_alone(e);
+       e = expr_new_stmt(mngr, last_stmt, add_comment(sb_data(sb), sb_len(sb)), STMT_REM);
+       sb_delete(sb);
+    }
+    set_last_stmt(e);
+}
+
+void enable_parsing(void)
+{
+    parsing_disabled = 0;
+}
+
+void disable_parsing(void)
+{
+    parsing_disabled = 1;
 }
 
 expr *add_ident(const char *name, enum var_type type)
@@ -352,6 +375,7 @@ void parse_init(const char *fname)
 {
     last_def = -1;
     parse_error = 0;
+    parsing_disabled = 0;
     file_line = 1;
     file_name = fname;
     program *pgm = program_new(fname);
