@@ -307,8 +307,9 @@ int bas_write_program(FILE *f, program *pgm, int variables)
     if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_colon, fname, file_line) )
         return 1;
     sb_delete(bin_line);
-    // Now, adds a standard immediate line: SAVE "D:X"
-    sb_write(bw.toks, (unsigned char *)"\x00\x80\x0b\x0b\x19\x0f\x03\x44\x3a\x58\x16", 11);
+    // Now, adds a standard immediate line: CSAVE
+    static unsigned char immediate_line[] = { 0x00, 0x80, 0x06, 0x06, 0x34, 0x16 };
+    sb_write(bw.toks, immediate_line, sizeof(immediate_line));
     // Verify sizes
     if( sb_len(vvt) + sb_len(vnt) + sb_len(bw.toks) > 0x9500 )
     {
@@ -325,7 +326,7 @@ int bas_write_program(FILE *f, program *pgm, int variables)
     put16(f, 0x0FF + sb_len(vnt));
     put16(f, 0x100 + sb_len(vnt));
     put16(f, 0x100 + sb_len(vnt) + sb_len(vvt));
-    put16(f, 0x100 + sb_len(vnt) + sb_len(vvt) + sb_len(bw.toks) - 11);
+    put16(f, 0x100 + sb_len(vnt) + sb_len(vvt) + sb_len(bw.toks) - sizeof(immediate_line));
     put16(f, 0x100 + sb_len(vnt) + sb_len(vvt) + sb_len(bw.toks));
     sb_fwrite(vnt, f);
     sb_fwrite(vvt, f);
