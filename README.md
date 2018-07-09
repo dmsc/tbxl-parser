@@ -153,6 +153,9 @@ Options:
   debugging the program. In short listing mode, keeps the names of variables
   with less than two characters, renaming all longer or invalid names.
 
+- `-k`  In binary output mode, keeps comments in the output. Note that only
+  standard comments are included, not new style (`'`) comments.
+
 - `-a`  In long output, replace Atari characters in comments with
   approximating characters.
 

@@ -42,8 +42,8 @@ StatementLine    = Statement ( ':' SPC Statement
 Statement        =
                  # Start with comments, *except* REM, as we try to support variable
                  # names starting with "rem".
-                   < REM_C NotEOL* >            { add_stmt(STMT_REM, add_comment(yytext, yyleng)); }
-                 | < REM_ SPC NotEOL* >         { add_stmt(STMT_REM_, add_comment(yytext, yyleng)); }
+                   REM_C SPC < NotEOL* >        { add_stmt(STMT_REM, add_comment(yytext, yyleng)); }
+                 | REM_ SPC < NotEOL* >         { add_stmt(STMT_REM_, add_comment(yytext, yyleng)); }
                  # Special case: TIME$= is a statement, but has an '=' sign, so must
                  # test before testing variables.
                  | TIME_S t:StrExprErr          { add_stmt(STMT_TIME_S,t); }
@@ -55,7 +55,7 @@ Statement        =
                  | t:LetExprStr  !THEN          { add_stmt(STMT_LET_INV,t); }
                  | t:LetExprNum  !THEN !FOR_TO  { add_stmt(STMT_LET_INV,t); }
                  # Standard REM comments
-                 | < REM  NotEOL* >             { add_stmt(STMT_REM, add_comment(yytext, yyleng)); }
+                 | REM SPC < NotEOL* >          { add_stmt(STMT_REM, add_comment(yytext, yyleng)); }
                  # Follows the standard statements, listed here in alphabetical order
                  | BYE                          { add_stmt(STMT_BYE,0); }
                  | BPUT   t:IONumExpr2          { add_stmt(STMT_BPUT,t); }

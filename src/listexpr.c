@@ -237,18 +237,17 @@ static void print_indent(string_buf *s, int i)
 }
 
 // Prints a comment to the string_buf
-static void print_comment(string_buf *b, const uint8_t *txt, unsigned len)
+static void print_comment(string_buf *b, const uint8_t *txt, unsigned len, int full)
 {
-    // See if the text already has a "REM" or "'":
-    if( ( !len  || (txt[0] != '\'' && txt[0] != '.') ) &&
-        ( len<2 || strncasecmp("r.", (const char *)txt, 2) ) &&
-        ( len<3 || strncasecmp("rem", (const char *)txt, 3) ) )
+    if( full )
         sb_puts(b, "rem ");
+    else
+        sb_puts(b, "' ");
     sb_write(b, txt, len);
 }
 
 // Print comment converting to ASCII
-static void print_comment_ascii(string_buf *b, const uint8_t *txt, unsigned len)
+static void print_comment_ascii(string_buf *b, const uint8_t *txt, unsigned len, int full)
 {
     // First, convert to ASCII
     string_buf *tmp = sb_new();
@@ -278,7 +277,7 @@ static void print_comment_ascii(string_buf *b, const uint8_t *txt, unsigned len)
         sb_put(tmp, c);
     }
     // Print
-    print_comment(b, (const uint8_t *)sb_data(tmp), sb_len(tmp));
+    print_comment(b, (const uint8_t *)sb_data(tmp), sb_len(tmp), full);
     sb_delete(tmp);
 }
 
@@ -392,13 +391,13 @@ string_buf *expr_print_long(const expr *e, int *indent, int conv_ascii)
         for(i=0; i<30; i++)
             sb_put(b, '-');
     }
-    else if( e->stmt == STMT_REM )
+    else if( e->stmt == STMT_REM || e->stmt == STMT_REM_HIDDEN )
     {
         assert(e->rgt && e->rgt->type == et_data);
         if( conv_ascii )
-            print_comment_ascii(b, e->rgt->str, e->rgt->slen);
+            print_comment_ascii(b, e->rgt->str, e->rgt->slen, e->stmt == STMT_REM );
         else
-            print_comment(b, e->rgt->str, e->rgt->slen);
+            print_comment(b, e->rgt->str, e->rgt->slen, e->stmt == STMT_REM );
     }
     else if( e->stmt == STMT_DATA )
     {
@@ -557,7 +556,7 @@ string_buf *expr_print_short(const expr *e, int *skip_colon, int *no_split)
         (*no_split) --;
         return b;
     }
-    else if( e->stmt == STMT_REM_ || e->stmt == STMT_REM || e->stmt == STMT_BAS_ERROR )
+    else if( e->stmt == STMT_REM_ || e->stmt == STMT_REM || e->stmt == STMT_REM_HIDDEN || e->stmt == STMT_BAS_ERROR )
         return b;
 
     *skip_colon = 0;

@@ -131,11 +131,17 @@ string_buf *expr_get_bas(const expr *e, int *end_colon, int *no_split)
     assert( e->type == et_stmt );
 
     string_buf *b = sb_new();
-    if( e->stmt == STMT_REM_ || e->stmt == STMT_REM || e->stmt == STMT_BAS_ERROR )
+    if( e->stmt == STMT_REM_ )
+    {
+        sb_put(b, e->stmt);
+        *end_colon = 0;
+        return b;
+    }
+    else if( e->stmt == STMT_BAS_ERROR || e->stmt == STMT_REM_HIDDEN )
     {
         return b;
     }
-    else if( e->stmt == STMT_DATA )
+    else if( e->stmt == STMT_REM || e->stmt == STMT_DATA )
     {
         sb_put(b, e->stmt);
         assert(e->rgt && e->rgt->type == et_data);

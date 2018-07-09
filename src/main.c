@@ -77,8 +77,9 @@ int main(int argc, char **argv)
     const char *extension = 0;
     int max_line_len = 120;
     int bin_variables = 0;
+    int keep_comments = 0;
 
-    while ((opt = getopt(argc, argv, "habvsqlco:n:fxO")) != -1)
+    while ((opt = getopt(argc, argv, "hkabvsqlco:n:fxO")) != -1)
     {
         switch (opt)
         {
@@ -105,6 +106,9 @@ int main(int argc, char **argv)
                 break;
             case 'x':
                 bin_variables = -1;
+                break;
+            case 'k':
+                keep_comments = 1;
                 break;
             case 'c':
                 output = strdup("-");
@@ -138,6 +142,7 @@ int main(int argc, char **argv)
                                 "\t-s  Output short listing program.\n"
                                 "\t-n  In short listing, sets the max line length before splitting (%d).\n"
                                 "\t-f  Output full (long) variable names in binary output.\n"
+                                "\t-k  Keeps comments in binary output.\n"
                                 "\t-x  Makes binary output protected (un-listable).\n"
                                 "\t-a  In long output, convert comments to pure ASCII.\n"
                                 "\t-v  Shows more parsing information (verbose mode).\n"
@@ -198,7 +203,7 @@ int main(int argc, char **argv)
 
         // Convert to TurboBasic compatible if output is BAS or short LST
         if( ok && (out_type == out_short || out_type == out_binary) )
-            ok = !convert_to_turbobas(parse_get_current_pgm());
+            ok = !convert_to_turbobas(parse_get_current_pgm(), keep_comments);
 
         // Run the optimizer if specified by the user or not in long output
         if( ok && (out_type != out_long || parser_get_optimize()) )

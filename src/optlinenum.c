@@ -156,6 +156,7 @@ static int do_search_stmt(expr *ex, uint8_t *keep, uint8_t *avail)
         case STMT_READ:
         case STMT_REM_:
         case STMT_REM:
+        case STMT_REM_HIDDEN:
         case STMT_RENAME:
         case STMT_REPEAT:
         case STMT_RETURN:
@@ -274,11 +275,11 @@ int opt_remove_line_num(expr *prog)
             if( !bitmap_get(keep, inum) )
             {
                 char buf[256];
-                int len = sprintf(buf, ". old line %d", inum);
+                int len = sprintf(buf, "old line %d", inum);
                 expr *rem = expr_new_data(ex->mngr, (const uint8_t *)buf, len);
                 ex->type = et_stmt;
                 ex->num = 0;
-                ex->stmt = STMT_REM;
+                ex->stmt = STMT_REM_HIDDEN;
                 ex->rgt = rem;
                 info_print(expr_get_file_name(ex), expr_get_file_line(ex),
                            "removing line number %d.\n", inum);

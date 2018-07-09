@@ -21,5 +21,5 @@ typedef struct program_struct program;
 
 // Converts program to TurboBasic XL compatible
 // Returns != 0 if any error.
-int convert_to_turbobas(program *p);
+int convert_to_turbobas(program *p, int keep_comments);
 

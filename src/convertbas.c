@@ -21,13 +21,29 @@
 #include "expr.h"
 #include "program.h"
 
-int convert_to_turbobas(program *p)
+static int remove_comments(expr *ex)
+{
+    // For each line/statement:
+    for(; ex != 0 ; ex = ex->lft)
+    {
+        // Hide REM and '--'
+        if( ex->type == et_stmt && (ex->stmt == STMT_REM_ || ex->stmt == STMT_REM ) )
+            ex->stmt = STMT_REM_HIDDEN;
+    }
+    return 0;
+}
+
+int convert_to_turbobas(program *p, int keep_comments)
 {
     int err = 0;
     expr *ex = pgm_get_expr(p);
 
     // Converts PROC/EXEC with parameters and local variables to standard PROC/EXEC.
     err |= convert_proc_exec(ex);
+
+    // Remove comments, replace with "hidden comment"
+    if( !keep_comments )
+        err |= remove_comments(ex);
 
     return err;
 }
