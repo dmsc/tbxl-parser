@@ -47,3 +47,7 @@ rm -rf build/
 make CROSS= EXT= CFLAGS='-Wall -m32 -O2 -flto -DNDEBUG' dist
 mv build/${out}.zip ../${out}-linux32.zip
 
+# Makes PDF using "pandoc"
+pandoc README.md -o ../${out}-manual.pdf \
+       --from markdown-raw_tex --template ~/eisvogel.tex --listings
+
