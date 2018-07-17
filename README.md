@@ -49,7 +49,7 @@ The input listing format is very flexible:
 
   Arguments follow the PROC label after a comma, and local variables follow
   after a semicolon:
-  ```
+  ```purebasic
     D = 3
     EXEC Testing, D+5, "Hello"
     PRINT D
@@ -99,7 +99,7 @@ Example Programs
 There are two sample programs, located in the `samples` folder that illustrate
 the free-form input format.
 
-```
+```purebasic
   ' Example program
 
   ' One statement per line:
@@ -185,6 +185,7 @@ Bellow is a description of available directives.
 
 The options directive alter the way the parsing is done, accepting a list of
 comma separated options, valid for the current file. Valid options:
+
 - `mode=compatible`: Disable features to be more compatible with the
   _TurboBasic XL_ parser.
 - `mode=extended`: Makes the parser to accept more extended features.
@@ -196,6 +197,7 @@ comma separated options, valid for the current file. Valid options:
 - `optimize=-`*suboption*: Disable the particular optimization option.
 
 The optimization sub-options are:
+
 - `const_folding`: Replace operations on constants with the result.
 - `convert_percent`: Replace small integers with the `%*` equivalent.
 - `commute`: Swap arguments to binary operations to minimize runtime.
@@ -208,7 +210,7 @@ The optimization sub-options are:
 Note that options can be changed at any place in the file, this is an example
 of changing the parser mode in the middle of the file:
 
-```
+```purebasic
   ' Example program using directives
   $ options optimize, mode=default
   error1 = 2
@@ -232,9 +234,9 @@ This directive defines new symbols that are replaced at parsing time with the
 values, like C macros.
 
 Replacement names are prefixed by `@` to differentiate from variables, and
-as variables, string defines end in `$`, the syntax of the directive is
+as variables, string defines end in `$`, the syntax of the directive is:
 
-  $define *defineName* = *value*
+  `$define` *defineName* `=` *value*
 
 Keep in mind that as the value is replaced each time the variable is used, it
 is probably best to assign them to a variable instead if the value will be
@@ -243,7 +245,7 @@ simplified at parsing time.
 
 This is an example usage of the `$define` directive:
 
-```
+```purebasic
   ' Example usage of defines
   $options +optimize
   $define Message$ = "Hello world!"
@@ -260,7 +262,7 @@ This directive allows including data from a binary file to a new string
 definition. The content of the file is read at parsing time and the full
 content is stored in the define. The syntax of the directive is:
 
-  $incbin *defineName$* , "*fileName*"  [ , *offset* [, *length* ] ]
+  `$incbin` *defineName$* `, "`*fileName*`"`  [ , *offset* [, *length* ] ]
 
 The optional *offset* parameter specifies a starting offset in bytes for
 the included data, and the optional *length* parameter specifies the number
@@ -268,12 +270,12 @@ of bytes to read. If *length* is not given, the file read completely.
 
 This is an example usage of the `$incbin` directive:
 
-```
+```purebasic
   $options +optimize
   $incbin asmBin$, "myasm.bin"
 
-  asmRut = adr( @asmBin$ )  : ' Store address in variable to use multiple times.
-  ? usr(asmRut, 1, 2)       : ' Call routine. Should be relocatable and less than 242 bytes.
+  asmRut = adr( @asmBin$ ) : ' Store address in variable to use multiple times.
+  ? usr(asmRut, 1, 2)      : ' Call routine. Should be relocatable and less than 242 bytes.
 ```
 
 Limitations and Incompatibilities
@@ -300,7 +302,7 @@ standard TurboBasic XL and Atari Basic parsers:
 
   The following code is valid:
 
-  ```
+  ```purebasic
     PRINTED = 0     : ' Invalid in Atari Basic, as starts with "PRINT"
     DONE = 3        : ' Invalid in TurboBasic XL, as starts with "DO"
   ```
@@ -315,7 +317,7 @@ standard TurboBasic XL and Atari Basic parsers:
 - In long format listing output, `IF`/`THEN` are converted to `IF`/`ENDIF`
   statements. This introduces an incompatibility with the following code:
 
-  ```
+  ```purebasic
     FOR A = 0 TO 2
       ? "A="; A; " - ";
       IF A <> 0
