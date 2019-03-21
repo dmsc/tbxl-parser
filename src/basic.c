@@ -44,8 +44,9 @@ typedef struct expr_struct expr;
 #define YYSTYPE expr *
 
 // Checks the input searching for a statement
-static int testStatement(enum enum_statements e);
-static int testToken(enum enum_tokens e);
+static int testStatement(int turbo_stmt, enum enum_statements e);
+static int testToken(int turbo_tok, enum enum_tokens e);
+static int parsingTurbo(void);
 
 #include "basic_peg.c"
 
@@ -68,14 +69,25 @@ static int matchIgnoreCase(yycontext *yy, int c)
   return 0;
 }
 
+// Checks if we are parsing TurboBasicXL
+static int parsingTurbo(void)
+{
+    return (parser_get_dialect() == parser_dialect_turbo);
+}
+
 // Checks the input searching for a statement
-static int testStatement(enum enum_statements e)
+static int testStatement(int turbo_stmt, enum enum_statements e)
 {
     const struct statements *s = &statements[e];
     int i;
     yycontext *yy = yyctx;
     int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
     enum parser_mode mode = parser_get_mode();
+    enum parser_dialect d = parser_get_dialect();
+
+    // Skip if dialect is not turbo and statement is
+    if( turbo_stmt && d != parser_dialect_turbo )
+        return 0;
 
     // Special case PRINT:
     if( e == STMT_PRINT && yymatchChar(yy, '?') )
@@ -110,13 +122,18 @@ static int testStatement(enum enum_statements e)
 }
 
 // Checks the input searching for a token
-static int testToken(enum enum_tokens e)
+static int testToken(int turbo_tok, enum enum_tokens e)
 {
     const struct tokens *t = &tokens[e];
     int i;
     yycontext *yy = yyctx;
     int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
     enum parser_mode mode = parser_get_mode();
+    enum parser_dialect d = parser_get_dialect();
+
+    // Skip if dialect is not turbo and token is
+    if( turbo_tok && d != parser_dialect_turbo )
+        return 0;
 
     // Check each character
     for(i=0; 0 != t->tok_in[i]; i++)

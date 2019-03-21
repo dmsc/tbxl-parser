@@ -48,7 +48,7 @@ Statement        =
                  # test before testing variables.
                  | TIME_S t:StrExprErr          { add_stmt(STMT_TIME_S,t); }
                  # Allows a space after TIME$, this makes parser less confusing.
-                 | &{ testToken( TOK_TIMEP ) } SPC '=' SPC t:StrExprErr
+                 | &{ testToken( 1, TOK_TIMEP ) } SPC '=' SPC t:StrExprErr
                                                 { add_stmt(STMT_TIME_S,t); }
                  # Test variable assignment, this fails (and goes to the rest of
                  # statements if there is no '=' sign after the variable name.
@@ -114,7 +114,8 @@ Statement        =
                  | IF     t:IfThenExpr          { add_stmt(STMT_IF_THEN,t); }
                     StatementLine               { add_stmt(STMT_ENDIF_INVISIBLE,0); add_force_line(); }
                  # 3- A multi-line IF
-                 | IF     t:NumExprErr          { add_stmt(STMT_IF_MULTILINE,t); }
+                 | &{ parsingTurbo() }
+                   IF     t:NumExprErr          { add_stmt(STMT_IF_MULTILINE,t); }
                  | LIST  { t=0; } t:ListExpr?   { add_stmt(STMT_LIST,t); }
                  | LET    t:LetExpr             { add_stmt(STMT_LET,t); }
                  | LOAD   t:StrExprErr          { add_stmt(STMT_LOAD,t); }
@@ -557,10 +558,10 @@ MINUS           = '-' SPC
 SLASH           = '/' SPC
 L_PRN           = '(' SPC
 R_PRN           = ')' SPC
-ANDPER          = '&' SPC
-EXCLAM          = '!' SPC
-PER_0           = '%0' SPC
-PER_1           = '%1' SPC
-PER_2           = '%2' SPC
-PER_3           = '%3' SPC
+ANDPER          = &{ parsingTurbo() } '&' SPC
+EXCLAM          = &{ parsingTurbo() } '!' SPC
+PER_0           = &{ parsingTurbo() } '%0' SPC
+PER_1           = &{ parsingTurbo() } '%1' SPC
+PER_2           = &{ parsingTurbo() } '%2' SPC
+PER_3           = &{ parsingTurbo() } '%3' SPC
 

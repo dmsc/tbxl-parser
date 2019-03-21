@@ -78,8 +78,9 @@ int main(int argc, char **argv)
     int max_line_len = 120;
     int bin_variables = 0;
     int keep_comments = 0;
+    enum parser_dialect parser_dialect = parser_dialect_turbo;
 
-    while ((opt = getopt(argc, argv, "hkabvsqlco:n:fxO")) != -1)
+    while ((opt = getopt(argc, argv, "hkaAbvsqlco:n:fxO")) != -1)
     {
         switch (opt)
         {
@@ -100,6 +101,9 @@ int main(int argc, char **argv)
                 break;
             case 'a':
                 do_conv_ascii = 1;
+                break;
+            case 'A':
+                parser_dialect = parser_dialect_atari;
                 break;
             case 'f':
                 bin_variables = 1;
@@ -145,6 +149,7 @@ int main(int argc, char **argv)
                                 "\t-k  Keeps comments in binary output.\n"
                                 "\t-x  Makes binary output protected (un-listable).\n"
                                 "\t-a  In long output, convert comments to pure ASCII.\n"
+                                "\t-A  Parse and outputs Atari Basic dialect instead of TurboBasicXL.\n"
                                 "\t-v  Shows more parsing information (verbose mode).\n"
                                 "\t-q  Don't show parsing information (quiet mode).\n"
                                 "\t-o  Sets the output file name or extension (if starts with a dot).\n"
@@ -199,6 +204,7 @@ int main(int argc, char **argv)
 
         // Parse input file
         parser_set_optimize(do_optimize);
+        parser_set_dialect(parser_dialect);
         int ok = parse_file(inFname);
 
         // Convert to TurboBasic compatible if output is BAS or short LST

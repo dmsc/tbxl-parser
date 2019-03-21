@@ -47,7 +47,7 @@ BEGIN {
 
     # PEG file, calls test function, if valid, print
     if( dopeg )
-        printf "%-16s= &{ testStatement( STMT_%s ) } SPC\n", n, n, n > peg;
+        printf "%-16s= &{ testStatement( %d, STMT_%s ) } SPC\n",n, dopeg-1, n, n > peg;
 
     # Header - enum definition
     enums = enums sprintf("    %s,\n", "STMT_" n);

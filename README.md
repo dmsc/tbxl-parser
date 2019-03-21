@@ -146,6 +146,10 @@ Options:
   output file name is the same as input with `.bas` extension added. Note that
   this is the default behaviour.
 
+- '-A'  Accept (and produce) standard Atari Basic language, instead of the
+        extended TurboBasicXL syntax. Note that the optimizer currently is not
+        usable in this mode, as it assumes TurboBasicXL interpreter.
+
 - `-x`  In binary output mode, writes null variable names, making the program
   unlistable.
 

@@ -36,6 +36,7 @@ static const char *file_name;
 static int file_line;
 static program *cur_program;
 static enum parser_mode parser_mode;
+static enum parser_dialect parser_dialect;
 static int parser_optimize;
 static int last_def;
 static long incbin_offset;
@@ -403,6 +404,16 @@ void parser_set_mode(enum parser_mode mode)
                mode==parser_mode_compatible ? "compatible" :
                mode==parser_mode_extended ? "extended" : "unknown");
     parser_mode = mode;
+}
+
+enum parser_dialect parser_get_dialect(void)
+{
+    return parser_dialect;
+}
+
+void parser_set_dialect(enum parser_dialect dialect)
+{
+    parser_dialect = dialect;
 }
 
 void parser_set_optimize(int opt)

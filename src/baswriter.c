@@ -20,6 +20,7 @@
 #include "expr.h"
 #include "basexpr.h"
 #include "listexpr.h"
+#include "parser.h"
 #include "program.h"
 #include "sbuf.h"
 #include "dbg.h"
@@ -111,9 +112,14 @@ int bas_write_program(FILE *f, program *pgm, int variables)
     // First, serialize variables
     vars *v = pgm_get_vars(pgm);
     int nvar = vars_get_total(v);
+    if( nvar > 127 && parser_get_dialect() != parser_dialect_turbo )
+    {
+        err_print(fname, 0, "too many variables, Atari BAS format support only 128.\n");
+        return 1;
+    }
     if( nvar > 255 )
     {
-        err_print(fname, 0, "too many variables, BAS format support only 256.\n");
+        err_print(fname, 0, "too many variables, Turbo BAS format support only 256.\n");
         return 1;
     }
     string_buf *vnt = sb_new();

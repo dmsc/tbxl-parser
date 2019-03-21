@@ -30,9 +30,17 @@ enum parser_mode {
     parser_mode_extended
 };
 
+// Parser dialect
+enum parser_dialect {
+    parser_dialect_turbo,
+    parser_dialect_atari
+};
+
 // Set parser options
 enum parser_mode parser_get_mode(void);
 void parser_set_mode(enum parser_mode mode);
+enum parser_dialect parser_get_dialect(void);
+void parser_set_dialect(enum parser_dialect d);
 int parser_get_optimize(void);
 void parser_set_optimize(int);
 void parser_add_optimize(int level, int set);
