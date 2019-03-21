@@ -276,7 +276,7 @@ int opt_remove_line_num(expr *prog)
             {
                 char buf[256];
                 int len = sprintf(buf, "old line %d", inum);
-                expr *rem = expr_new_data(ex->mngr, (const uint8_t *)buf, len);
+                expr *rem = expr_new_data(ex->mngr, (const uint8_t *)buf, len, 0);
                 ex->type = et_stmt;
                 ex->num = 0;
                 ex->stmt = STMT_REM_HIDDEN;

@@ -42,8 +42,8 @@ StatementLine    = Statement ( ':' SPC Statement
 Statement        =
                  # Start with comments, *except* REM, as we try to support variable
                  # names starting with "rem".
-                   REM_C SPC < NotEOL* >        { add_stmt(STMT_REM, add_comment(yytext, yyleng)); }
-                 | REM_ SPC < NotEOL* >         { add_stmt(STMT_REM_, add_comment(yytext, yyleng)); }
+                   t:RemExpr1                   { add_stmt(STMT_REM,t); }
+                 | t:RemExpr2                   { add_stmt(STMT_REM_,t); }
                  # Special case: TIME$= is a statement, but has an '=' sign, so must
                  # test before testing variables.
                  | TIME_S t:StrExprErr          { add_stmt(STMT_TIME_S,t); }
@@ -55,7 +55,7 @@ Statement        =
                  | t:LetExprStr  !THEN          { add_stmt(STMT_LET_INV,t); }
                  | t:LetExprNum  !THEN !FOR_TO  { add_stmt(STMT_LET_INV,t); }
                  # Standard REM comments
-                 | REM SPC < NotEOL* >          { add_stmt(STMT_REM, add_comment(yytext, yyleng)); }
+                 | t:RemExpr3                   { add_stmt(STMT_REM,t); }
                  # Follows the standard statements, listed here in alphabetical order
                  | BYE                          { add_stmt(STMT_BYE,0); }
                  | BPUT   t:IONumExpr2          { add_stmt(STMT_BPUT,t); }
@@ -170,9 +170,9 @@ Statement        =
                  | P_GET  t:GetExpr             { add_stmt(STMT_P_GET,t); }
                  | SHARP  t:Label               { add_stmt(STMT_LBL_S,t); }
                  # A basic ERROR- line, parsed for compatibility
-                 | < BAS_ERROR ERROR >          { add_stmt(STMT_BAS_ERROR, add_comment(yytext,yyleng)); print_error("statement", yytext); }
+                 | < BAS_ERROR ERROR >          { add_stmt(STMT_BAS_ERROR, add_comment(yytext,yyleng,0)); print_error("statement", yytext); }
                  # And, if not any of the above, we declare a parsing error
-                 | < ERROR >                    { add_stmt(STMT_BAS_ERROR, add_comment(yytext,yyleng)); print_error("statement", yytext); }
+                 | < ERROR >                    { add_stmt(STMT_BAS_ERROR, add_comment(yytext,yyleng,0)); print_error("statement", yytext); }
 
 # Catches errors and skips to end of statement
 ERROR            = [^:\233\015\n\t ][^:\015\n\233]*
@@ -537,6 +537,15 @@ DecNumber        = < '-'? [0-9]+ ( '.' [0-9]* )? NumExp? > SPC
 
 # The exponent of a floating point number
 NumExp           = ( 'e' | 'E' ) ( '+' | '-' )? [0-9] [0-9]?
+
+# Parse REMs
+RemExpr1        = l:RemStmt1 < NotEOL* >                        { $$ = add_comment(yytext, yyleng, l); }
+RemExpr2        = l:RemStmt2 < NotEOL* >                        { $$ = add_comment(yytext, yyleng, l); }
+RemExpr3        = l:RemStmt3 < NotEOL* >                        { $$ = add_comment(yytext, yyleng, l); }
+
+RemStmt1        = < REM_C SPC >                                 { $$ = add_comment(yytext, yyleng, 0); }
+RemStmt2        = < REM_  SPC >                                 { $$ = add_comment(yytext, yyleng, 0); }
+RemStmt3        = < REM   SPC >                                 { $$ = add_comment(yytext, yyleng, 0); }
 
 # Parse special REMs
 REM_C            = "'" SPC

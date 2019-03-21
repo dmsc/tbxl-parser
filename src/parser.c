@@ -69,14 +69,14 @@ static void set_last_stmt(expr *ex)
     last_stmt = ex;
 }
 
-expr *add_comment(const char *str, int len)
+expr *add_comment(const char *str, int len, expr *l)
 {
-    return expr_new_data(mngr, (const uint8_t *)str, len);
+    return expr_new_data(mngr, (const uint8_t *)str, len, l);
 }
 
 expr *add_data_stmt(const char *str, int len)
 {
-    return expr_new_data(mngr, (const uint8_t *)str, len);
+    return expr_new_data(mngr, (const uint8_t *)str, len, 0);
 }
 
 void add_force_line()
@@ -123,11 +123,13 @@ void add_stmt(enum enum_statements st, expr *toks)
     // Create new statement
     expr * e = expr_new_stmt(mngr, last_stmt, toks, st);
 
-    if( parsing_disabled && st != STMT_DATA )
+    if( parsing_disabled && st != STMT_DATA && st != STMT_REM && st != STMT_REM_ )
     {
         // List to a REM statement
        string_buf *sb = expr_print_alone(e);
-       e = expr_new_stmt(mngr, last_stmt, add_comment(sb_data(sb), sb_len(sb)), STMT_REM);
+       const char *hdr = ". Ignored - ";
+       e = add_comment(hdr, strlen(hdr), 0);
+       e = expr_new_stmt(mngr, last_stmt, add_comment(sb_data(sb), sb_len(sb), e), STMT_REM);
        sb_delete(sb);
     }
     set_last_stmt(e);

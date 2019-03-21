@@ -63,7 +63,7 @@ expr *expr_new_void(expr_mngr *);
 expr *expr_new_number(expr_mngr *, double x);
 expr *expr_new_hexnumber(expr_mngr *, double x);
 expr *expr_new_string(expr_mngr *, const uint8_t *str, unsigned len);
-expr *expr_new_data(expr_mngr *, const uint8_t *data, unsigned len);
+expr *expr_new_data(expr_mngr *, const uint8_t *data, unsigned len, expr *l);
 expr *expr_new_bin(expr_mngr *, expr *l, expr *r, enum enum_tokens tk);
 expr *expr_new_uni(expr_mngr *, expr *r, enum enum_tokens tk);
 expr *expr_new_tok(expr_mngr *, enum enum_tokens tk);

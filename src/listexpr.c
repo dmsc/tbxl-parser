@@ -237,17 +237,17 @@ static void print_indent(string_buf *s, int i)
 }
 
 // Prints a comment to the string_buf
-static void print_comment(string_buf *b, const uint8_t *txt, unsigned len, int full)
+static void print_comment(string_buf *b, const uint8_t *txt, unsigned len, const expr *r)
 {
-    if( full )
-        sb_puts(b, "rem ");
+    if( r && r->type == et_data )
+        sb_write(b, r->str, r->slen);
     else
-        sb_puts(b, "' ");
+        sb_puts(b, ". ");
     sb_write(b, txt, len);
 }
 
 // Print comment converting to ASCII
-static void print_comment_ascii(string_buf *b, const uint8_t *txt, unsigned len, int full)
+static void print_comment_ascii(string_buf *b, const uint8_t *txt, unsigned len, const expr *r)
 {
     // First, convert to ASCII
     string_buf *tmp = sb_new();
@@ -277,7 +277,7 @@ static void print_comment_ascii(string_buf *b, const uint8_t *txt, unsigned len,
         sb_put(tmp, c);
     }
     // Print
-    print_comment(b, (const uint8_t *)sb_data(tmp), sb_len(tmp), full);
+    print_comment(b, (const uint8_t *)sb_data(tmp), sb_len(tmp), r);
     sb_delete(tmp);
 }
 
@@ -395,9 +395,9 @@ string_buf *expr_print_long(const expr *e, int *indent, int conv_ascii)
     {
         assert(e->rgt && e->rgt->type == et_data);
         if( conv_ascii )
-            print_comment_ascii(b, e->rgt->str, e->rgt->slen, e->stmt == STMT_REM );
+            print_comment_ascii(b, e->rgt->str, e->rgt->slen, e->rgt->lft);
         else
-            print_comment(b, e->rgt->str, e->rgt->slen, e->stmt == STMT_REM );
+            print_comment(b, e->rgt->str, e->rgt->slen, e->rgt->lft);
     }
     else if( e->stmt == STMT_DATA )
     {

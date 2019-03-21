@@ -26,7 +26,7 @@ enum enum_tokens;
 enum var_type;
 typedef struct expr_struct expr;
 
-expr * add_comment(const char *, int);
+expr * add_comment(const char *, int, expr *);
 expr * add_data_stmt(const char *, int);
 void add_force_line(void);
 void add_linenum(double);

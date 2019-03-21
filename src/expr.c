@@ -172,12 +172,13 @@ expr *expr_new_string(expr_mngr *mngr, const uint8_t *str, unsigned len)
     return n;
 }
 
-expr *expr_new_data(expr_mngr *mngr, const uint8_t *data, unsigned len)
+expr *expr_new_data(expr_mngr *mngr, const uint8_t *data, unsigned len, expr *l)
 {
     expr *n = expr_new(mngr);
     n->type = et_data;
     n->str = malloc(len);
     n->slen = len;
+    n->lft = l;
     memcpy(n->str, data, len);
     return n;
 }
