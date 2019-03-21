@@ -107,8 +107,8 @@ Statement        =
                     # Try to skip statements but keep any DATA, this is not
                     # easy because we should parse "valid" statements here.
                     ( ':' SPC                   { disable_parsing(); }
-                      StatementLine             { enable_parsing(); add_force_line(); }
-                    )?
+                      StatementLine             { enable_parsing(); }
+                    )?                          { add_force_line(); }
                  # 2- IF/THEN followed by statements, adding an invisible ENDIF at
                  # the end of the statements and forcing a line-break.
                  | IF     t:IfThenExpr          { add_stmt(STMT_IF_THEN,t); }
