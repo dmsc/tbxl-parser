@@ -30,6 +30,12 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#ifndef WIN32
+# include <sys/stat.h>
+#else
+# include <windows.h>
+#endif
+
 int do_debug = 1;
 
 static void show_vars_stats(int renamed, int bin)
@@ -61,6 +67,47 @@ static char *get_out_filename(const char *inFname, const char *output, const cha
         *p = 0;
     strcat(out,ext);
     return out;
+}
+
+// Returns 1 if both files are the same
+static int is_same_file(const char *p1, const char *p2)
+{
+#ifndef WIN32
+    // Unix, use "stat"
+    struct stat s1, s2;
+    if( stat(p1, &s1) == -1 )
+        return 0;
+    if( stat(p2, &s2) == -1 )
+        return 0;
+    return s1.st_dev == s2.st_dev && s1.st_ino == s2.st_ino;
+#else
+    // Windows, use GetFileInformationByHandle
+    HANDLE h1, h2;
+    h1 = CreateFile(p1, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if( h1 == INVALID_HANDLE_VALUE )
+        return 0;
+    h2 = CreateFile(p2, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if( h2 == INVALID_HANDLE_VALUE )
+    {
+        CloseHandle(h1);
+        return 0;
+    }
+    // Retrieve information
+    BY_HANDLE_FILE_INFORMATION s1, s2;
+    if( GetFileInformationByHandle(h1, &s1) && GetFileInformationByHandle(h2, &s2) )
+    {
+        CloseHandle(h1);
+        CloseHandle(h2);
+        return s1.dwVolumeSerialNumber == s2.dwVolumeSerialNumber &&
+               s1.nFileIndexHigh == s2.nFileIndexHigh &&
+               s1.nFileIndexLow == s2.nFileIndexLow;
+    }
+    CloseHandle(h1);
+    CloseHandle(h2);
+    return 0;
+#endif
 }
 
 int main(int argc, char **argv)
@@ -189,7 +236,7 @@ int main(int argc, char **argv)
 
         // Get list output
         char *outFname = get_out_filename( inFname, output, extension );
-        if( !strcmp(inFname, outFname) )
+        if( is_same_file(inFname, outFname) )
         {
             err_print(inFname, 0, "output file '%s' is the same as input.\n", outFname);
             exit(EXIT_FAILURE);
