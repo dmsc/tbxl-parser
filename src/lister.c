@@ -104,10 +104,16 @@ static int ls_set_linenum(struct ls *ls, int num)
         return 1;
     }
     ls->cur_line = num;
-    ls->num_len  = num > 9999 ? 5 :
-                   num >  999 ? 4 :
-                   num >   99 ? 3 :
-                   num >    9 ? 2 : 1;
+    // We can use scientific notation for line numbers
+    if( num > 9999 && 0 == num % 10000 )
+        ls->num_len = 3;
+    else if( num > 999 && 0 == num % 1000 )
+        ls->num_len = num > 9999 ? 4 : 3;
+    else
+        ls->num_len  = num > 9999 ? 5 :
+                       num >  999 ? 4 :
+                       num >   99 ? 3 :
+                       num >    9 ? 2 : 1;
     return 0;
 }
 
@@ -132,7 +138,12 @@ static void ls_write_line(struct ls *ls, int len, int tok_len)
     ls->num_lines++;
 
     // Write line to output
-    fprintf(ls->f, "%d",ls->cur_line);
+    if( ls->cur_line > 9999 && ls->cur_line % 10000 == 0 )
+        fprintf(ls->f, "%dE4", ls->cur_line / 10000);
+    else if( ls->cur_line > 999 && ls->cur_line % 1000 == 0 )
+        fprintf(ls->f, "%dE3", ls->cur_line / 1000);
+    else
+        fprintf(ls->f, "%d",ls->cur_line);
     fwrite(sb_data(ls->out), len, 1, ls->f);
     if( !len )
         fputs(" .", ls->f); // Write a REM in an otherwise empty line
