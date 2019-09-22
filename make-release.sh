@@ -49,5 +49,4 @@ mv build/${out}.zip ../${out}-linux32.zip
 
 # Makes PDF using "pandoc"
 pandoc README.md -o ../${out}-manual.pdf \
-       --from markdown-raw_tex --template ~/eisvogel.tex --listings
-
+       --from markdown --template eisvogel.tex --top-level-division="chapter" --listings

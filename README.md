@@ -1,14 +1,25 @@
-TurboBasic XL parser tool
--------------------------
+---
+title: "Turbo-Basic XL and Atari BASIC parser tool"
+author: https://github.com/dmsc/tbxl-parser
+book: true
+classoption: [oneside]
+titlepage: true,
+titlepage-text-color: "FFFFFF"
+titlepage-rule-color: "FFFFFF"
+titlepage-rule-height: 0
+titlepage-background: "expr.pdf"
+...
 
-This program parses and tokenizes a _TurboBasic XL_ listing in a flexible format
-and produces any of three outputs:
+# Turbo-Basic XL and Atari BASIC parser tool
 
-- A tokenized binary file, directly loadable in the original _TurboBasic XL_
-  interpreter.  This mode also replaces variables with single letters by
-  default, but with the `-f` option writes the full variable names and
-  with the `-x` option writes invalid variable names, making the program
-  unable to be listed or edited.
+This program parses and tokenizes a _Turbo-Basic XL_ or _Atari BASIC_ listing in
+a flexible format and produces any of three outputs:
+
+- A tokenized binary file, directly loadable in the original _Turbo-Basic XL_
+  (or _Atari BASIC_ if the `-A` option is given) interpreter.  This mode also
+  replaces variables with single letters by default, but with the `-f` option
+  writes the full variable names and with the `-x` option writes empty variable
+  names, making the program unable to be listed or edited.
 
   This is the default operating mode, and also can be forced with the `-b`
   command line switch.
@@ -24,7 +35,7 @@ and produces any of three outputs:
 
   Note that this format can be read back again, but some statements are
   transformed in the process, this can lead to problems in non-standard
-  IF/THEN constructs.
+  `IF`/`THEN` constructs.
 
   Currently, `IF`/`THEN` with statements after the `THEN` are converted to
   multi-line `IF`/`ENDIF` statements.
@@ -45,9 +56,9 @@ The input listing format is very flexible:
 
   Also, line numbers can appear alone in a line, for better readability.
 
-- Adds parameters and local variables to PROC/EXEC.
+- Adds parameters and local variables to `PROC` and `EXEC`.
 
-  Arguments follow the PROC label after a comma, and local variables follow
+  Arguments follow the `PROC` label after a comma, and local variables follow
   after a semicolon:
   ```purebasic
     D = 3
@@ -60,21 +71,25 @@ The input listing format is very flexible:
   ```
 
   As the example shows, string variables must include the dimensioned length,
-  as the parser adds a DIM at the start of the program to initialize. The
+  as the parser adds a `DIM` at the start of the program to initialize. The
   dimensioned length must be an integer, a `$define` or a `%` number.
 
-  Also, setting the value of "D" inside the procedure does not alter the value
-  of the variable "D" outside the procedure.
+  Also, setting the value of variable "D" inside the procedure does not alter
+  the value of the variable "D" outside the procedure.
+
+  The parser transform this construct by creating new variables that hold the
+  parameters and local variables, so the resulting procedures don't support
+  recursion.
 
 - Inside strings, special characters can be specified by using a backslash
   followed by an hexadecimal number in upper-case, (i.e., `"\00\A0"` produces
   a string with a "hearth" and an inverse space), this allows editing special
-  characters on any ASCII editor. Note that to force a backslash before a
+  characters on any standard editor. Note that to force a backslash before a
   valid hex number, you can use two backslashes (i.e., ``"123\\456"`` produces
   ``123\456``).
 
-- Comments can be started by `'` in addition to the _TurboBasic_ `.`, `--` or
-  `rem`.
+- Comments can be started by `'` in addition to the _Turbo-Basic XL_ `.`, `--`
+  or `rem`.
 
 - The input is case insensitive (uppercase, lowercase and mixed case is
   supported).
@@ -93,8 +108,7 @@ The input listing format is very flexible:
   `down`, `left`, `right`, `diamond`, `spade`, `vline`, `clr`,
   `del`, `ins`, `tbar`, `rbar`, `eol`, `bell`.
 
-Example Programs
-----------------
+## Example Programs
 
 There are two sample programs, located in the `samples` folder that illustrate
 the free-form input format.
@@ -117,15 +131,21 @@ the free-form input format.
 
 ```
 
-To generate a BAS file, loadable by _TurboBasic_, simply type:
+To generate a tokenized BAS file, loadable by _Turbo-Basic XL_, simply type:
 
     basicParser samples/sample-1.txt
 
 This will generate a `sample-1.bas` file in the same folder.
 
+If on the other hand you want a minimized listing file in ATASCII format (suitable
+for `ENTER` into _Atari BASIC_, type:
 
-Program Usage
--------------
+    basicParser -l -A samples/sample-1.txt
+
+This will generate a `sample-1.lst` file in the same folder.
+
+
+## Program Usage
 
     basicParser [options] [-o output] filenames
 
@@ -136,48 +156,49 @@ Options:
             is output anyway.
             The default is 120 characters (the standard Atari Editor limit)
 
-- `-l`  Output long (readable) listing, suitable for editing, with ASCII
-  end of lines and lowercase statements.
+- `-l`  Output long (readable) listing, suitable for editing, with standard
+        end of lines and lowercase statements.
 
 - `-s`  Output a short, minimized listing, with ATASCII end of lines. The
-  default output file name is the same as input with `.lst` extension added.
+        default output file name is the same as input with `.lst` extension
+        added.
 
 - `-b`  Output a binary tokenized file instead of a listing. The  default
-  output file name is the same as input with `.bas` extension added. Note that
-  this is the default behaviour.
+        output file name is the same as input with `.bas` extension added. Note
+        that this is the default behaviour.
 
-- '-A'  Accept (and produce) standard Atari Basic language, instead of the
-        extended TurboBasicXL syntax. Note that some of the optimizations
-        are specific to TurboBasic XL and won't run in this mode.
+- '-A'  Accept (and produce) standard _Atari BASIC_ language, without the
+        extended statements and syntax. Note that some of the optimizations are
+        specific to _Turbo-Basic XL_ and won't run in this mode.
 
 - `-x`  In binary output mode, writes null variable names, making the program
-  unlistable.
+        unlistable. This options does nothing on listing output.
 
 - `-f`  In binary output mode, writes the full variable names, this eases
-  debugging the program. In short listing mode, keeps the names of variables
-  with less than two characters, renaming all longer or invalid names.
+        debugging the program. In short listing mode, keeps the names of
+        variables with less than two characters, renaming all longer or invalid
+        names.
 
 - `-k`  In binary output mode, keeps comments in the output. Note that only
-  standard comments are included, not new style (`'`) comments.
+        standard comments are included, not new style (`'`) comments.
 
 - `-a`  In long output, replace Atari characters in comments with
-  approximating characters.
+        approximating characters.
 
 - `-v`  Shows more parsing information, like name of renamed variables.
-  (verbose mode)
+        (verbose mode)
 
 - `-q`  Don't show any parsing output, only errors.  (quiet mode)
 
 - `-o`  Sets the output file name.  By default, the output is the name of the
-  input with `.lst` (listing) or `.bas` (tokenized) extension. If the given
-  name starts with a dot, use as output file name extension.
+        input with `.lst` (listing) or `.bas` (tokenized) extension. If the
+        given name starts with a dot, use as output file name extension.
 
 - `-c`  Output to standard output instead of a file.
 
 - `-h`  Shows help and exit.
 
-Parser directives
------------------
+## Parser directives
 
 Directives add extra features to the parser, much like C and C++. Directives
 start with a dollar as the first non blank character on a line, and continue
@@ -191,7 +212,7 @@ The options directive alter the way the parsing is done, accepting a list of
 comma separated options, valid for the current file. Valid options:
 
 - `mode=compatible`: Disable features to be more compatible with the
-  _TurboBasic XL_ parser.
+  _Turbo-Basic XL_ parser.
 - `mode=extended`: Makes the parser to accept more extended features.
 - `mode=default`: Returns the parser to the default mode.
 - `optimize` or `+optimize`: Allows the parser to optimize the output to
@@ -204,7 +225,7 @@ The optimization sub-options are:
 
 - `const_folding`: Replace operations on constants with the result.
 - `convert_percent`: Replace small integers with the `%*` equivalent, this is
-  only available in TurboBasic XL mode.
+  only available in _Turbo-Basic XL_ mode.
 - `commute`: Swap arguments to binary operations to minimize runtime.
 - `line_numbers`: Remove all Basic line numbers that are unused.
 - `const_replace`: Replace repeated constant values (numeric or string) with
@@ -219,19 +240,22 @@ of changing the parser mode in the middle of the file:
   ' Example program using directives
   $ options optimize, mode=default
   error1 = 2
-  ? error1   : ' This is parsed like TurboBasic XL, as ? ERR OR 1
+  ? error1   : ' This is parsed like Turbo-Basic XL, as ? ERR OR 1
   
   $options mode = extended
   ? error1   : ' This is parsed as ? error1
   Printa     : ' This is a parsing error.
 ```
 
-A good optimization mode for producing short listings is
-`$options +optimize, optimize=-convert_percent-const_replace` , this avoid
-converting numbers to `%` values and the replacement of constants, producing
-a smaller listing. Note that replacement of constants can be beneficial, so
-try enabling the optimization and running with "-v" option to see what
-variables are good candidates for replacement.
+A good optimization mode for producing short listings is:
+
+    $options +optimize, optimize=-convert_percent-const_replace
+
+The above line instructs the parser to avoid converting numbers to `%` values
+and the replacement of constants, producing a smaller listing. Note that
+replacement of constants can be beneficial, so try enabling the optimization
+and running with "-v" option to see what variables are good candidates for
+replacement.
 
 ### `$define` directive.
 
@@ -283,22 +307,21 @@ This is an example usage of the `$incbin` directive:
   ? usr(asmRut, 1, 2)      : ' Call routine. Should be relocatable and less than 242 bytes.
 ```
 
-Limitations and Incompatibilities
----------------------------------
+## Limitations and Incompatibilities
 
 There are some incompatibilities in the way the source is interpreted with the
-standard TurboBasic XL and Atari Basic parsers:
+standard _Turbo-Basic XL_ and _Atari BASIC_ parsers:
 
-- As the ASCII LF character (hexadecimal $10) is interpreted as end of line in
-  addition to the ATASCI EOL (hexadecimal $9B). This means that in string constants
-  and comments the LF character is not accepted.
+- The ASCII LF character (hexadecimal $10) is interpreted as end of line in
+  addition to the ATASCI EOL (hexadecimal $9B). This means that in `DATA`
+  statements and comments the LF character is not accepted.
 
 - The parsing of special characters inside strings means that a valid hexadecimal
   sequence (`\**`, with `*` an hexadecimal number in uppercase) or two backslashes
   are interpreted differently.
 
 - Extra statements after an `IF`/`THEN`/`LineNumber` are converted to a comment,
-  with the exception of DATA statements.
+  with the exception of `DATA` statements.
   In the original, those statements are never executed, so this is not a problem
   with proper code.
 
@@ -308,12 +331,12 @@ standard TurboBasic XL and Atari Basic parsers:
   The following code is valid:
 
   ```purebasic
-    PRINTED = 0     : ' Invalid in Atari Basic, as starts with "PRINT"
-    DONE = 3        : ' Invalid in TurboBasic XL, as starts with "DO"
+    PRINTED = 0     : ' Invalid in Atari BASIC, as starts with "PRINT"
+    DONE = 3        : ' Invalid in Turbo-Basic XL, as starts with "DO"
   ```
 
   This relaxed handling of variable naming creates an incompatibility, as the
-  first example above is parsed differently as the standard Atari Basic,
+  first example above is parsed differently as the standard _Atari BASIC_,
   where it means "`PRINT (ED = 0)`" instead of "`LET PRINTED = 0`".
 
   Note that currently, even full statements are accepted as variable names,
@@ -346,11 +369,10 @@ standard TurboBasic XL and Atari Basic parsers:
   of the first, giving the wrong result.
 
 - Parsing of `TIME$=` statement allows a space between `TIME$` and the equals
-  sign, but in TurboBasic XL this gives an error.
+  sign, but in _Turbo-Basic XL_ this gives an error.
 
 
-Compilation
------------
+## Compilation
 
 To compile from source, you need `gawk` and `peg`, both are available in any
 recent Debian or Ubuntu Linux distro, install with:
