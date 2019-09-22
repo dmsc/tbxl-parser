@@ -104,98 +104,136 @@ static void build_clen_list(clen_list *l, cvalue_list *v)
     }
 }
 
-static int get_clen_raw(clen_list *l, double val)
+static int exact_div(double x)
 {
-#define foreach(l, c) for( (c)=l->list; (c) < l->list + l->len; (c)++)
+    return x == 2 || x == 5 || x == 10;
+}
 
-    // Try ro get val using permutations of current variables
+static int get_clen_raw(const clen_list *l, double val)
+{
+    if( !l->len )
+        return 7;
+    // Try to get val using permutations of current variables
     const struct clen *c1, *c2, *c3;
+    // 0: NOT x
+    if( val == 0 )
+    {
+        for( c1 = l->list; c1 < l->list + l->len; c1++)
+            if( c1->val != 0 && c1->bytes < 5 )
+                return 1 + c1->bytes;
+    }
+    else if( val == 1 )
+    {
+        for( c1 = l->list; c1 < l->list + l->len; c1++)
+            if( c1->val == 0 && c1->bytes < 5 )
+                return 1 + c1->bytes;
+    }
     // 1: negated variables
-    foreach(l, c1)
+    for( c1 = l->list; c1 < l->list + l->len; c1++)
         if( c1->val != 0 && c1->bytes < 5 )
             if( val == -c1->val )
                 return 1 + c1->bytes;
     // 2: Operations on 2 values
-    foreach(l, c1)
+    for( c1 = l->list; c1 < l->list + l->len; c1++)
     {
         if( c1->val == 0 || c1->bytes > 4 )
             continue;
-        foreach(l, c2)
+        for( c2 = l->list; c2 <= c1; c2++)
         {
-            if( c2->val == 0 || (c1->bytes + c2->bytes) > 5 )
+            int n = c1->bytes + c2->bytes + 1;
+            double x = c1->val, y = c2->val;
+            if( y == 0 || n > 6 )
                 continue;
-            if( val ==  c1->val + c2->val )
-                return 1 + c1->bytes + c2->bytes;
-            if( val ==  c1->val - c2->val )
-                return 1 + c1->bytes + c2->bytes;
-            if( c2->val != 1 && c1->val != 1 )
-                if( val ==  c1->val * c2->val )
-                    return 1 + c1->bytes + c2->bytes;
-            if( c2->val == 2 || c2->val == 5 || c2->val == 10 )
-                if( val ==  c1->val / c2->val )
-                    return 1 + c1->bytes + c2->bytes;
+            if( val ==  x + y || val == x - y || val == y - x || val == x * y )
+                return n;
+            if( exact_div(y) && val ==  x / y )
+                return n;
+            if( exact_div(x) && val ==  y / x )
+                return n;
         }
     }
     // 3: Operations on 2 values with "-" first
-    foreach(l, c1)
+    for( c1 = l->list; c1 < l->list + l->len; c1++)
     {
         if( c1->val == 0 || c1->bytes > 3 )
             continue;
-        foreach(l, c2)
+        for( c2 = l->list; c2 <= c1; c2++)
         {
-            if( c2->val == 0 || (c1->bytes + c2->bytes) > 4 )
+            int n = c1->bytes + c2->bytes + 2;
+            double x = c1->val, y = c2->val;
+            if( y == 0 || n > 6 )
                 continue;
-            if( val ==  - c1->val - c2->val )
-                return 2 + c1->bytes + c2->bytes;
-            if( c2->val != 1 && c1->val != 1 )
-                if( val ==  - c1->val * c2->val )
-                    return 2 + c1->bytes + c2->bytes;
-            if( c2->val == 2 || c2->val == 5 || c2->val == 10 )
-                if( val ==  - c1->val / c2->val )
-                    return 2 + c1->bytes + c2->bytes;
+            if( val ==  - x - y || val == - x * y )
+                return n;
+            if( exact_div(y) && val ==  - x / y )
+                return n;
+            if( exact_div(x) && val == - y / x )
+                return n;
         }
     }
     // 4: Operations on 3 values
-    foreach(l, c1)
+    for( c1 = l->list; c1 < l->list + l->len; c1++)
     {
         if( c1->val == 0 || c1->bytes > 2 )
             continue;
-        foreach(l, c2)
+        for( c2 = l->list; c2 <= c1; c2++)
         {
             if( c2->val == 0 || (c1->bytes + c2->bytes) > 3 )
                 continue;
-            foreach(l, c3)
+            for( c3 = l->list; c3 <= c2; c3++)
             {
-                int n = c1->bytes + c2->bytes + c3->bytes;
-                if( c3->val == 0 || n > 4 )
+                int n = c1->bytes + c2->bytes + c3->bytes + 2;
+                double x = c1->val, y = c2->val, z = c3->val;
+                if( z == 0 || n > 6 )
                     continue;
-                if( val ==  c1->val + c2->val + c3->val )
-                    return 2 + n;
-                if( val ==  c1->val + c2->val - c3->val )
-                    return 2 + n;
-                if( c2->val != 1 && c1->val != 1 )
-                {
-                    if( val ==  c1->val * c2->val + c3->val )
-                        return 2 + n;
-                    if( val ==  c1->val * c2->val - c3->val )
-                        return 2 + n;
-                    if( val ==  c1->val - c2->val * c3->val )
-                        return 2 + n;
-                }
-                if( c2->val == 2 || c2->val == 5 || c2->val == 10 )
-                {
-                    if( val ==  c1->val / c2->val + c3->val )
-                        return 2 + n;
-                    if( val ==  c1->val / c2->val - c3->val )
-                        return 2 + n;
-                    if( val ==  c3->val - c1->val / c2->val )
-                        return 2 + n;
-                }
+                if( val == x + y + z || val == x + y - z || val == x + z - y || val == y + z - x ||
+                    val == x - y - z || val == y - x - z || val == z - x - y || val == x * y * z ||
+                    val == x * y + z || val == x * z + y || val == y * z + x || val == x * y - z ||
+                    val == x * z - y || val == y * z - x || val == x - y * z || val == y - x * z ||
+                    val == z - x * y )
+                    return n;
+                if( exact_div(z) && (val == x + y / z || val == x - y / z || val == y / z - x ||
+                    val == y + x / z || val == y - x / z || val == x / z - y) )
+                    return n;
+                if( exact_div(y) && (val == x + z / y || val == x - z / y || val == z / y - x ||
+                    val == z + x / y || val == z - x / y || val == x / y - z) )
+                    return n;
+                if( exact_div(x) && (val == z + y / x || val == z - y / x || val == y / x - z ||
+                    val == y + z / x || val == y - z / x || val == z / x - y) )
+                    return n;
             }
         }
     }
+#if 1
+    // 5: Operations on 3 values with "-" before
+    for( c1 = l->list; c1 < l->list + l->len; c1++)
+    {
+        if( c1->val == 0 || c1->bytes > 2 )
+            continue;
+        for( c2 = l->list; c2 <= c1; c2++)
+        {
+            if( c2->val == 0 || (c1->bytes + c2->bytes) > 3 )
+                continue;
+            for( c3 = l->list; c3 <= c2; c3++)
+            {
+                int n = c1->bytes + c2->bytes + c3->bytes + 2;
+                double x = c1->val, y = c2->val, z = c3->val;
+                if( z == 0 || n > 6 )
+                    continue;
+                if( val == - x - y - z || val == - x * y * z || val == - x - y * z ||
+                    val == - y - x * z || val == - z - x * y )
+                    return n;
+                if( exact_div(z) && (val == - x - y / z || val == - y - x / z) )
+                    return n;
+                if( exact_div(y) && (val == - x + z / y || val == - z - x / y) )
+                    return n;
+                if( exact_div(x) && (val == - z + y / x || val == - y - z / x) )
+                    return n;
+            }
+        }
+    }
+#endif
     return 7;
-#undef foreach
 }
 
 static int get_clen(clen_list *l, double val)
@@ -423,17 +461,23 @@ static expr *create_num(expr_mngr *m, const cvalue_list *l, double n)
 
     // First, try value already in the table:
     for(unsigned i=0; i < vnum; i++)
-    {
         if( n == val[i] )
             return expr_from_vid(m, vid[i]);
-    }
+
+    // Special cases for "0" and "1": NOT x
+    if( n == 0 )
+        for(unsigned i=0; i < vnum; i++)
+            if( val[i] != 0 )
+                return expr_new_uni(m, expr_from_vid(m, vid[i]), TOK_NOT);
+    if( n == 1 )
+        for(unsigned i=0; i < vnum; i++)
+            if( val[i] == 0 )
+                return expr_new_uni(m, expr_from_vid(m, vid[i]), TOK_NOT);
 
     // Now, try with "MINUS" and a value:
     for(unsigned i=0; i < vnum; i++)
-    {
         if( n == -val[i] )
             return expr_new_uni(m, expr_from_vid(m, vid[i]), TOK_UMINUS);
-    }
 
     // Now, try with operations between two simple values:
     for(unsigned i=0; i < vnum; i++)
