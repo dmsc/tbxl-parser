@@ -83,10 +83,9 @@ static int testStatement(int turbo_stmt, enum enum_statements e)
     yycontext *yy = yyctx;
     int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
     enum parser_mode mode = parser_get_mode();
-    enum parser_dialect d = parser_get_dialect();
 
     // Skip if dialect is not turbo and statement is
-    if( turbo_stmt && d != parser_dialect_turbo )
+    if( turbo_stmt && !parsingTurbo() )
         return 0;
 
     // Special case PRINT:
@@ -129,10 +128,9 @@ static int testToken(int turbo_tok, enum enum_tokens e)
     yycontext *yy = yyctx;
     int yypos0= yy->__pos, yythunkpos0= yy->__thunkpos;
     enum parser_mode mode = parser_get_mode();
-    enum parser_dialect d = parser_get_dialect();
 
     // Skip if dialect is not turbo and token is
-    if( turbo_tok && d != parser_dialect_turbo )
+    if( turbo_tok && !parsingTurbo() )
         return 0;
 
     // Check each character
