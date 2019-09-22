@@ -20,6 +20,7 @@
 #include "expr.h"
 #include "dbg.h"
 #include "program.h"
+#include "parser.h"
 #include "defs.h"
 #include <stdlib.h>
 #include <string.h>
@@ -452,6 +453,10 @@ static int do_convert_tok(expr *ex)
 
 int opt_convert_tok(expr *ex)
 {
+    // Only valid if parsing TurboBasic XL
+    if(parser_get_dialect() != parser_dialect_turbo)
+        return 0;
+
     // Apply rules over the tree until stops changing
     int changed = 1;
     while(changed)
