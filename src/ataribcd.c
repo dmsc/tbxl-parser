@@ -193,7 +193,7 @@ void atari_bcd_print(atari_bcd n, string_buf *sb)
     else
     {
         sb_puts(sb, dig);
-        sb_put(sb, 'e');
+        sb_put(sb, 'E');
         if( exp < 0 )
         {
             sb_put(sb, '-');
