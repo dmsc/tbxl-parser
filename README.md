@@ -147,8 +147,8 @@ Options:
   this is the default behaviour.
 
 - '-A'  Accept (and produce) standard Atari Basic language, instead of the
-        extended TurboBasicXL syntax. Note that the optimizer currently is not
-        usable in this mode, as it assumes TurboBasicXL interpreter.
+        extended TurboBasicXL syntax. Note that some of the optimizations
+        are specific to TurboBasic XL and won't run in this mode.
 
 - `-x`  In binary output mode, writes null variable names, making the program
   unlistable.
@@ -203,7 +203,8 @@ comma separated options, valid for the current file. Valid options:
 The optimization sub-options are:
 
 - `const_folding`: Replace operations on constants with the result.
-- `convert_percent`: Replace small integers with the `%*` equivalent.
+- `convert_percent`: Replace small integers with the `%*` equivalent, this is
+  only available in TurboBasic XL mode.
 - `commute`: Swap arguments to binary operations to minimize runtime.
 - `line_numbers`: Remove all Basic line numbers that are unused.
 - `const_replace`: Replace repeated constant values (numeric or string) with
