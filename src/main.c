@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#ifndef WIN32
+#ifndef __WIN32
 # include <sys/stat.h>
 #else
 # include <windows.h>
@@ -79,7 +79,7 @@ static char *get_out_filename(const char *inFname, const char *output, const cha
 // Returns 1 if both files are the same
 static int is_same_file(const char *p1, const char *p2)
 {
-#ifndef WIN32
+#ifndef __WIN32
     // Unix, use "stat"
     struct stat s1, s2;
     if( stat(p1, &s1) == -1 )
