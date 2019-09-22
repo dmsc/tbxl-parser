@@ -283,15 +283,6 @@ static int cvalue_saved_bytes(const cvalue *c)
     }
 }
 
-// Function to sort constant values based on bytes saved
-static int cvalue_sort_comp(const void *pa, const void *pb)
-{
-    // Calculate the number of bytes for "a" and "b"
-    int sa = cvalue_saved_bytes(pa);
-    int sb = cvalue_saved_bytes(pb);
-    return sa-sb;
-}
-
 // Function to sort constant values based numeric absolute value
 // Also, positive numbers come before negative ones and numbers are
 // before strings, but the number "0" is at the end.
@@ -331,6 +322,19 @@ static int cvalue_sort_abs_comp(const void *pa, const void *pb)
     else
         return +1;
 }
+
+// Function to sort constant values based on bytes saved
+static int cvalue_sort_comp(const void *pa, const void *pb)
+{
+    // Calculate the number of bytes for "a" and "b"
+    int sa = cvalue_saved_bytes(pa);
+    int sb = cvalue_saved_bytes(pb);
+    if( sa != sb )
+        return sa-sb;
+    else
+        return cvalue_sort_abs_comp(pa, pb);
+}
+
 
 static cvalue *cvalue_list_find(cvalue_list *l, cvalue *nv)
 {
@@ -654,14 +658,15 @@ int opt_replace_const(expr *prog)
         return 0;
     }
 
+    // Now, sort constant values by "usage gain", to try to convert better constants first
+    cvalue_list_sort(lst);
+
+
     // Redo selection until no more gains are possible
     int retry = 1;
     while( retry )
     {
         retry = 0;
-
-        // Now, sort constant values by "usage gain"
-        cvalue_list_sort(lst);
 
         // Extract all constant values that produce a gain:
         unsigned cs = 0, cn = 0;
