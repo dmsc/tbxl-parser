@@ -24,7 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_SHORT_NAMES 1021
+// 27 characters for the first letter, 37 characters for the second letter
+// and 5 names already reserved: "DO", "IF", "ON", "OR" and "TO".
+#define MAX_SHORT_NAMES (27 * 37 + 27 - 5)
 
 struct var {
     char *name;    // Long name
@@ -89,7 +91,41 @@ static int case_name_cmp_str(const char *a, const char *b)
     return *b != '$';
 }
 
-static char *get_short_name(int n)
+// Builds a short variable name for Atari BASIC
+static char *get_short_name_abas(int n)
+{
+    // In Atari BASIC, we have less names available.
+    if( n >= (26 * 36 + 26 - 4) )
+    {
+        // Error, too many variables!
+        return 0;
+    }
+    if( n < 26 )
+    {
+        char *out = malloc(2);
+        out[0] = 'A'+n;
+        out[1] = 0;
+        return out;
+    }
+    if( n > 730 )
+        n++;     // Skip 731 - "TO"
+    if( n > 554 )
+        n++;     // Skip 555 - "OR"
+    if( n > 551 )
+        n++;     // Skip 552 - "ON"
+    if( n > 328 )
+        n++;     // Skip 329 - "IF"
+    int c1 = (n-26) / 36;
+    int c2 = (n-26) % 36;
+    char *out = malloc(3);
+    out[0] = 'A'+c1;
+    out[1] = c2<10 ? '0'+c2 : 'A'+c2-10;
+    out[2] = 0;
+    return out;
+}
+
+
+static char *get_short_name_tbxl(int n)
 {
     if( n >= MAX_SHORT_NAMES )
     {
@@ -139,7 +175,45 @@ static int get_char_index(char c, int digit)
 }
 
 // This is exact inverse of above function
-static int get_short_index(const char *name)
+static int get_short_index_abas(const char *name)
+{
+    if( !name || !name[0] || (name[0] && name[1] && name[2]) )
+        return -1; // Name too long or null
+
+    if( name[0] == '_' || name[1] == '_' )
+        return -1; // Invalid in Atari BASIC
+
+    if( !name[1] )
+        return get_char_index(name[0], 0);
+    else
+    {
+        int i1 = get_char_index(name[0], 0);
+        int i2 = get_char_index(name[1], 1);
+        if( i1 < 0 || i2 < 0 )
+            return -1;
+        int n = 26 + 36 * i1 + i2;
+        if( n < 329 )
+            return n;
+        else if( n == 329 )
+            return -1; // "IF"
+        else if( n < 553 )
+            return n - 1;
+        else if( n == 553 )
+            return -1; // "ON"
+        else if( n < 557 )
+            return n - 2;
+        else if( n == 557 )
+            return -1; // "OR"
+        else if( n < 734 )
+            return n - 3;
+        else if( n == 734 )
+            return -1; // "TO"
+        else
+            return n - 4;
+    }
+}
+
+static int get_short_index_tbxl(const char *name)
 {
     if( !name || !name[0] || (name[0] && name[1] && name[2]) )
         return -1; // Name too long or null
@@ -176,6 +250,22 @@ static int get_short_index(const char *name)
         else
             return n - 5;
     }
+}
+
+static char *get_short_name(int n)
+{
+    if(parser_get_dialect() == parser_dialect_turbo)
+        return get_short_name_tbxl(n);
+    else
+        return get_short_name_abas(n);
+}
+
+static int get_short_index(const char *name)
+{
+    if(parser_get_dialect() == parser_dialect_turbo)
+        return get_short_index_tbxl(name);
+    else
+        return get_short_index_abas(name);
 }
 
 int vars_search(vars *v, const char *name, enum var_type type)
