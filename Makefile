@@ -36,6 +36,7 @@ SOURCES=\
  darray.c\
  defs.c\
  expr.c\
+ hash.c\
  lister.c\
  listexpr.c\
  main.c\
