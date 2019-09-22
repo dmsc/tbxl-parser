@@ -135,7 +135,7 @@ static void ls_write_line(struct ls *ls, int len, int tok_len)
     fprintf(ls->f, "%d",ls->cur_line);
     fwrite(sb_data(ls->out), len, 1, ls->f);
     if( !len )
-        fputc('.', ls->f); // Write a REM in an otherwise empty line
+        fputs(" .", ls->f); // Write a REM in an otherwise empty line
     fputc(0x9b, ls->f);
 
     // Delete from buffer and unset line number
