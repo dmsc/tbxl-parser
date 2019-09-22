@@ -365,6 +365,11 @@ static int expr_is_cstr(const expr *ex)
     return ex && ex->type == et_c_string;
 }
 
+static int expr_is_then_number(const expr *ex)
+{
+    return ex && ex->type == et_tok && ex->tok == TOK_THEN && expr_is_cnum(ex->rgt);
+}
+
 // Update constant value. Returns current count of constant values found and updates tree
 static int update_cvalue(const expr *ex, cvalue_list *l)
 {
@@ -428,11 +433,14 @@ static int replace_cvalue(expr *ex, cvalue *cv)
         else
             return 0;
     }
+    else if( expr_is_then_number(ex) && get_output_type() != out_binary )
+        // Don't replace the line number, as it is not supported in the
+        // Turbo-Basic XL or Atari BASIC parsers.
+        return replace_cvalue(ex->lft, cv);
     else if( ex )
         return replace_cvalue(ex->lft, cv) + replace_cvalue(ex->rgt, cv);
     else
         return 0;
-
 }
 
 static expr *expr_from_vid(expr_mngr *m, int vid)

@@ -38,6 +38,13 @@
 
 int do_debug = 1;
 
+// Called from parser
+static enum output_type out_type = out_binary;
+enum output_type get_output_type(void)
+{
+    return out_type;
+}
+
 static void show_vars_stats(int renamed, int bin)
 {
     unsigned i;
@@ -115,10 +122,6 @@ int main(int argc, char **argv)
     FILE *outFile;
     int do_optimize = 0;
     int opt;
-    enum {
-        out_short,
-        out_long,
-        out_binary } out_type = out_binary;
     int do_conv_ascii = 0;
     char *output = 0;
     const char *extension = 0;

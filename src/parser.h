@@ -36,7 +36,15 @@ enum parser_dialect {
     parser_dialect_atari
 };
 
+// Output type - used to decide on optimizations
+enum output_type {
+    out_short,
+    out_long,
+    out_binary
+};
+
 // Set parser options
+enum output_type get_output_type(void);
 enum parser_mode parser_get_mode(void);
 void parser_set_mode(enum parser_mode mode);
 enum parser_dialect parser_get_dialect(void);
