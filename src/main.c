@@ -117,6 +117,14 @@ static int is_same_file(const char *p1, const char *p2)
 #endif
 }
 
+static void cmd_help(const char *prog, const char *msg)
+{
+    if( msg )
+        fprintf(stderr, "%s: Error, %s.\n", prog, msg);
+    fprintf(stderr, "Try %s -h for help.\n", prog);
+    exit(EXIT_FAILURE);
+}
+
 int main(int argc, char **argv)
 {
     FILE *outFile;
@@ -212,14 +220,9 @@ int main(int argc, char **argv)
             case 'n':
                 max_line_len = atoi(optarg);
                 if( max_line_len < 16 || max_line_len > 355 )
-                {
-                    fprintf(stderr, "Error, maximum line length (%s) invalid.\n"
-                                    "try %s -h for help.\n", optarg, argv[0]);
-                    exit(EXIT_FAILURE);
-                }
+                    cmd_help(argv[0], "maximum line length (%s) invalid");
                 break;
             case 'h':
-            default:
                 fprintf(stderr, "TurboBasic XL parser tool - version " GIT_VERSION "\n"
                                 "https://github.com/dmsc/tbxl-parser\n"
                                 "\n"
@@ -242,26 +245,19 @@ int main(int argc, char **argv)
                                 "\t-h  Shows help and exit.\n",
                         argv[0], max_line_len);
                 exit(EXIT_FAILURE);
+            default:
+                cmd_help(argv[0], 0);
         }
     }
 
     if (optind >= argc)
-    {
-        fprintf(stderr, "Expected argument after options\n");
-        exit(EXIT_FAILURE);
-    }
+        cmd_help(argv[0], "expected at least one input file");
 
     if( output && strcmp(output,"-") && optind+1  != argc )
-    {
-        fprintf(stderr, "When setting output file, only one input file should be supplied\n");
-        exit(EXIT_FAILURE);
-    }
+        cmd_help(argv[0], "when setting output file, only one input file should be supplied");
 
     if( output && extension )
-    {
-        fprintf(stderr, "Only one of output file name or extension should be supplied.\n");
-        exit(EXIT_FAILURE);
-    }
+        cmd_help(argv[0], "only one of output file name or extension should be supplied");
 
     if( !extension )
         extension = (out_type == out_binary) ? ".bas" : ".lst";
