@@ -196,6 +196,13 @@ Options:
 
 - `-c`  Output to standard output instead of a file.
 
+- `-O`  Enables parser optimizations to produce smaller or faster code. Without
+        and argument enables all optimizations, an argument can be given
+        similar to the `optimize` directive in the code, see bellow for the
+        possible options. The option can be specified multiple times, an
+        example for producing short listings is `-O -O -convert_percent -O
+        -const_replace`
+
 - `-h`  Shows help and exit.
 
 ## Parser directives

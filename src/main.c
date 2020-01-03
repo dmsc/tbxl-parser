@@ -174,7 +174,40 @@ int main(int argc, char **argv)
                     output = strdup(optarg);
                 break;
             case 'O':
-                do_optimize = 1;
+                if( optind < argc )
+                {
+                    const char *opt = argv[optind];
+                    int set = 0;
+                    optind ++;
+                    // Option could start with "-" or "+":
+                    if( opt[0] == '-' )
+                    {
+                        opt ++;
+                        set = -1;
+                    }
+                    else if( opt[0] == '+' )
+                        opt ++;
+
+                    if( 0 == strcmp(opt, "const_folding") )
+                        do_optimize = set ^ ((set ^ do_optimize) | OPT_CONST_FOLD);
+                    else if( 0 == strcmp(opt, "convert_percent") )
+                        do_optimize = set ^ ((set ^ do_optimize) | OPT_NUMBER_TOK);
+                    else if( 0 == strcmp(opt, "commute") )
+                        do_optimize = set ^ ((set ^ do_optimize) | OPT_COMMUTE);
+                    else if( 0 == strcmp(opt, "line_numbers") )
+                        do_optimize = set ^ ((set ^ do_optimize) | OPT_LINE_NUM);
+                    else if( 0 == strcmp(opt, "const_replace") )
+                        do_optimize = set ^ ((set ^ do_optimize) | OPT_CONST_VARS);
+                    else
+                    {
+                        // Not an optimize option, go back and
+                        // assume "set all optimizations".
+                        do_optimize = -1;
+                        optind --;
+                    }
+                }
+                else
+                    do_optimize = -1;
                 break;
             case 'n':
                 max_line_len = atoi(optarg);
@@ -204,7 +237,8 @@ int main(int argc, char **argv)
                                 "\t-q  Don't show parsing information (quiet mode).\n"
                                 "\t-o  Sets the output file name or extension (if starts with a dot).\n"
                                 "\t-c  Output to standard output instead of a file.\n"
-                                "\t-O  Defaults to run the optimizer in the parsed program.\n"
+                                "\t-O  Optimize the parsed program. An optional argument with '+' or '-'\n"
+                                "\t    enables/disables specific optimization.\n"
                                 "\t-h  Shows help and exit.\n",
                         argv[0], max_line_len);
                 exit(EXIT_FAILURE);
@@ -253,7 +287,8 @@ int main(int argc, char **argv)
         info_print(inFname, 0, "parsing to '%s'\n", outFname);
 
         // Parse input file
-        parser_set_optimize(do_optimize);
+        parser_set_optimize(0);
+        parser_add_optimize(do_optimize, 1);
         parser_set_dialect(parser_dialect);
         int ok = parse_file(inFname);
 
