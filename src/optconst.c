@@ -363,6 +363,18 @@ static int do_constprop(expr *ex)
         case TOK_UINSTR:
             return x; // TODO: is it worth to optimize?
 
+        case TOK_SEMICOLON:
+            // Constant strings - must be a "PRINT" semicolon, join:
+            if( l_istr && r_istr )
+            {
+                int len1 = ex->lft->slen;
+                int len2 = ex->rgt->slen;
+                char *buf = malloc(len1 + len2);
+                memcpy(buf, ex->lft->str, len1);
+                memcpy(buf + len1, ex->rgt->str, len2);
+                return set_string(ex, buf, len1 + len2);
+            }
+            return x;
 
             // Those vary at runtime:
         case TOK_PEEK:
@@ -397,7 +409,6 @@ static int do_constprop(expr *ex)
 
         case TOK_COMMA:
         case TOK_A_COMMA:
-        case TOK_SEMICOLON:
         case TOK_S_L_PRN:
         case TOK_A_L_PRN:
         case TOK_D_L_PRN:
