@@ -379,7 +379,7 @@ void parse_init(const char *fname)
     last_def = -1;
     parse_error = 0;
     parsing_disabled = 0;
-    file_line = 1;
+    file_line = 0;
     file_name = fname;
     program *pgm = program_new(fname);
     set_current_pgm(pgm);

@@ -162,13 +162,13 @@ static int testToken(int turbo_tok, enum enum_tokens e)
 // Our exported functions
 int parse_file(const char *fname)
 {
-    parse_init(fname);
     inFile = fopen(fname, "rb");
     if( !inFile )
     {
         err_print(fname, 0, "%s\n", strerror(errno));
         return 0;
     }
+    inc_file_line();
     int e = yyparse();
     yyrelease(yyctx);
     fclose(inFile);

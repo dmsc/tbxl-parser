@@ -63,5 +63,4 @@ void set_strdef_value(void);
 // Used to keep current input file line number
 void inc_file_line(void);
 
-void parse_init(const char *fname);
 int get_parse_errors(void);

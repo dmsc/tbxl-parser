@@ -287,6 +287,7 @@ int main(int argc, char **argv)
         info_print(inFname, 0, "parsing to '%s'\n", outFname);
 
         // Parse input file
+        parse_init(inFname);
         parser_set_optimize(0);
         parser_add_optimize(do_optimize, 1);
         parser_set_dialect(parser_dialect);
