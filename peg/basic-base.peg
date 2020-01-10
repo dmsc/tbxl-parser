@@ -478,10 +478,18 @@ UnitExpr         = ConstNum
 # values with optimization ON
 ConstNum         = Number
                  | NumericDef
-                 | PER_0                                { $$ = ex_bin(0,0,TOK_PER_0); }
-                 | PER_1                                { $$ = ex_bin(0,0,TOK_PER_1); }
-                 | PER_2                                { $$ = ex_bin(0,0,TOK_PER_2); }
-                 | PER_3                                { $$ = ex_bin(0,0,TOK_PER_3); }
+                 | &{ parsingTurbo() } (
+                     PER_0                                { $$ = ex_bin(0,0,TOK_PER_0); }
+                   | PER_1                                { $$ = ex_bin(0,0,TOK_PER_1); }
+                   | PER_2                                { $$ = ex_bin(0,0,TOK_PER_2); }
+                   | PER_3                                { $$ = ex_bin(0,0,TOK_PER_3); }
+                   )
+                 | &{ !parsingTurbo() } (
+                     PER_0                                { $$ = add_number(0); }
+                   | PER_1                                { $$ = add_number(1); }
+                   | PER_2                                { $$ = add_number(2); }
+                   | PER_3                                { $$ = add_number(3); }
+                   )
 
 # String comparisons is a type of numeric expresion
 StrCompExpr      = l:StrExpr (
@@ -577,8 +585,8 @@ L_PRN           = '(' SPC
 R_PRN           = ')' SPC
 ANDPER          = &{ parsingTurbo() } '&' SPC
 EXCLAM          = &{ parsingTurbo() } '!' SPC
-PER_0           = &{ parsingTurbo() } '%0' SPC
-PER_1           = &{ parsingTurbo() } '%1' SPC
-PER_2           = &{ parsingTurbo() } '%2' SPC
-PER_3           = &{ parsingTurbo() } '%3' SPC
+PER_0           = '%0' SPC
+PER_1           = '%1' SPC
+PER_2           = '%2' SPC
+PER_3           = '%3' SPC
 
