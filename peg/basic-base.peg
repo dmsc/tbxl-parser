@@ -237,7 +237,8 @@ GetExpr          = l:IOChan COMMA r:VarNumComma         { $$ = ex_comma(l, r); }
 
 # PUT / %PUT expressions:
 PutExpr          = l:IOChan COMMA r:NumComma            { $$ = ex_comma(l, r); }
-                 | NumComma
+                 | &{ parsingTurbo() } NumComma
+                 | r:NumComma                           { $$ = ex_comma(ex_bin(0,add_number(16),TOK_SHARP), r); }
 
 # XIO expression:
 XioExpr          = n1:NumExprErr COMMA n2:IOChanErr COMMA n3:NumExpr2 COMMA n4:StrExprErr
