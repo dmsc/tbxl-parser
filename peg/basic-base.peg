@@ -85,7 +85,12 @@ Statement        =
                  | DSOUND {t=0;} t:NumExpr4?    { add_stmt(STMT_DSOUND,t); }
                  | ENTER  t:StrExprErr          { add_stmt(STMT_ENTER,t); }
                  | ELSE                         { add_stmt(STMT_ELSE,0); }
-                 | ENDIF                        { add_stmt(STMT_ENDIF,0); }
+                 | ENDIF (
+                     # In turbo mode, it is already an statement:
+                     &{ parsingTurbo() }        { add_stmt(STMT_ENDIF,0); }
+                   | # In Atari BASIC mode, is the end of line after the IF/THEN:
+                     &{ !parsingTurbo() }       { add_stmt(STMT_ENDIF_INVISIBLE,0); add_force_line(); }
+                   )
                  | EXIT   {t=0;} t:NumExprErr?  { add_stmt(STMT_EXIT,t); }
                  | EXEC   t:LabelExecParList    { add_stmt(STMT_EXEC_PAR,t); }
                  | EXEC   t:Label               { add_stmt(STMT_EXEC,t); }
@@ -113,9 +118,12 @@ Statement        =
                  # the end of the statements and forcing a line-break.
                  | IF     t:IfThenExpr          { add_stmt(STMT_IF_THEN,t); }
                     StatementLine               { add_stmt(STMT_ENDIF_INVISIBLE,0); add_force_line(); }
-                 # 3- A multi-line IF
+                 # 3- A multi-line IF - parsed as Turbo Basic:
                  | &{ parsingTurbo() }
                    IF     t:NumExprErr          { add_stmt(STMT_IF_MULTILINE,t); }
+                 # 4- A multi-line IF - parsed as Atari BASIC:
+                 | &{ !parsingTurbo() }
+                   IF     t:NumExprErr          { add_stmt(STMT_IF_THEN,ex_bin(t,0,TOK_THEN)); }
                  | LIST  { t=0; } t:ListExpr?   { add_stmt(STMT_LIST,t); }
                  | LET    t:LetExpr             { add_stmt(STMT_LET,t); }
                  | LOAD   t:StrExprErr          { add_stmt(STMT_LOAD,t); }
