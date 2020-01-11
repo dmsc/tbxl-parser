@@ -544,7 +544,7 @@ IdentifierChar    = [a-zA-Z0-9_]
 Identifier        = IdentifierInit IdentifierChar*
 
 # Numbers
-Number           = HexNumber                                   { $$ = add_hex_number( strtol(yytext,0,16) ); }
+Number           = HexNumber                                   { $$ = parsingTurbo() ? add_hex_number( strtol(yytext,0,16) ) : add_number( strtol(yytext,0,16) ); }
                  | DecNumber                                   { $$ = add_number( strtod(yytext,0) ); }
 
 HexNumber        = '$' < [a-fA-F0-9]+ > SPC
