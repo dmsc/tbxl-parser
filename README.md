@@ -94,6 +94,18 @@ The input listing format is very flexible:
 - The input is case insensitive (uppercase, lowercase and mixed case is
   supported).
 
+- Some of the extra statements from _Turbo Basic XL_ are supported even in
+  _Atari BASIC_ output mode, those are converted to equivalent forms:
+
+  - Multi-line `IF`/`ENDIF` statements are converted to `IF`/`THEN`.
+
+  - The `%0` to `%3` tokens are converted to the numbers 0 to 3.
+
+  - `PUT` without I/O channel is converted to `PUT #16`. This relies on a bug
+    in _Atari BASIC_ that makes I/O channel 16 equal to 0.
+
+  - String constants are converted to decimal constants.
+
 - There are parsing *directives* added, that consist on lines starting with a
   dollar sign `$`. A list of available directives documented bellow.
 
