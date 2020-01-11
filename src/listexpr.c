@@ -28,6 +28,7 @@
 #include "ataribcd.h"
 #include "program.h"
 #include "dbg.h"
+#include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -67,14 +68,23 @@ static void print_string_long(const char *str, int len, string_buf *s)
     sb_put(s, '"');
 }
 
-static void print_string_short(const char *str, int len, string_buf *s)
+static void print_string_short(const expr *e, string_buf *s)
 {
     const char *p;
+    const char *str = (const char *)e->str;
+    int len = e->slen;
+
     sb_put(s, '"');
     for(p=str; len>0; p++, len--)
     {
-        if( *p == '"' )
+        if( *p == '"' && (parser_get_dialect() == parser_dialect_turbo) )
             sb_put(s, '"');
+        else if( *p == '"' || *p == '\x9b' )
+        {
+            err_print(expr_get_file_name(e), expr_get_file_line(e),
+                      "string containts non-listable %s.\n",
+                      *p == '"' ? "'\"'" : "end of line");
+        }
         sb_put(s, *p);
     }
     sb_put(s, '"');
@@ -511,7 +521,7 @@ static int print_expr_short_rec(string_buf *out, const expr *e)
             }
             break;
         case et_c_string:
-            print_string_short((const char *)e->str, e->slen, out );
+            print_string_short(e, out);
             break;
         case et_def_number:
         case et_def_string:
