@@ -43,87 +43,9 @@ a flexible format and produces any of three outputs:
   This mode is selected with the `-l` command line switch.
 
 
-The input listing format is very flexible:
-
-- Standard Atari listing format, with Atari or ASCII end of lines.  The parser
-  understand the same abbreviations available in the original interpreter.
-
-- A free format listing, with line numbers separated from the statements.
-
-  In this format, not each line needs line number, only lines that are target
-  to `GOTO` / `GOSUB` / `THEN` needs them.  If you use only labels, no line
-  numbers are needed.
-
-  Also, line numbers can appear alone in a line, for better readability.
-
-- Adds parameters and local variables to `PROC` and `EXEC`.
-
-  Arguments follow the `PROC` label after a comma, and local variables follow
-  after a semicolon:
-  ```purebasic
-    D = 3
-    EXEC Testing, D+5, "Hello"
-    PRINT D
-    PROC Testing, A, B$(10); D
-        D = A + 1
-        PRINT D; " and "; B$
-    ENDPROC
-  ```
-
-  As the example shows, string variables must include the dimensioned length,
-  as the parser adds a `DIM` at the start of the program to initialize. The
-  dimensioned length must be an integer, a `$define` or a `%` number.
-
-  Also, setting the value of variable "D" inside the procedure does not alter
-  the value of the variable "D" outside the procedure.
-
-  The parser transform this construct by creating new variables that hold the
-  parameters and local variables, so the resulting procedures don't support
-  recursion.
-
-- Inside strings, special characters can be specified by using a backslash
-  followed by an hexadecimal number in upper-case, (i.e., `"\00\A0"` produces
-  a string with a "hearth" and an inverse space), this allows editing special
-  characters on any standard editor. Note that to force a backslash before a
-  valid hex number, you can use two backslashes (i.e., ``"123\\456"`` produces
-  ``123\456``).
-
-- Comments can be started by `'` in addition to the _Turbo-Basic XL_ `.`, `--`
-  or `rem`.
-
-- The input is case insensitive (uppercase, lowercase and mixed case is
-  supported).
-
-- Some of the extra statements from _Turbo Basic XL_ are supported even in
-  _Atari BASIC_ output mode, those are converted to equivalent forms:
-
-  - Multi-line `IF`/`ENDIF` statements are converted to `IF`/`THEN`.
-
-  - The `%0` to `%3` tokens are converted to the numbers 0 to 3.
-
-  - `PUT` without I/O channel is converted to `PUT #16`. This relies on a bug
-    in _Atari BASIC_ that makes I/O channel 16 equal to 0.
-
-  - String constants are converted to decimal constants.
-
-- There are parsing *directives* added, that consist on lines starting with a
-  dollar sign `$`. A list of available directives documented bellow.
-
-- There is support for extended strings, with embedded character names.
-  Start the string with `["` and end the string with `"]`, and include
-  special characters with `{name}` or `{count*name}`, with count a decimal
-  number and name from the list:
-  `heart`, `rbranch`, `rline`, `tlcorner`, `lbranch`, `blcorner`, `udiag`,
-  `ddiag`, `rtriangle`, `brblock`, `ltriangle`, `trblock`, `tlblock`,
-  `tline`, `bline`, `blblock`, `clubs`, `brcorner`, `hline`, `cross`, `ball`,
-  `bbar`, `lline`, `bbranch`, `tbranch`, `lbar`, `trcorner`, `esc`, `up`,
-  `down`, `left`, `right`, `diamond`, `spade`, `vline`, `clr`,
-  `del`, `ins`, `tbar`, `rbar`, `eol`, `bell`.
-
 ## Example Programs
 
-There are two sample programs, located in the `samples` folder that illustrate
-the free-form input format.
+The following is an example of a simple program in free form:
 
 ```purebasic
   ' Example program
@@ -156,6 +78,118 @@ for `ENTER` into _Atari BASIC_, type:
 
 This will generate a `sample-1.lst` file in the same folder.
 
+There are more sample programs, located in the `samples` folder that illustrate
+the free-form input format.
+
+
+## Input listing format
+
+The parser accepts standard listings for _Atari BASIC_ or _Trubo-Basic XL_
+programs, with Atari or ASCII end of lines.
+
+All the standard abbreviations available in the original interpreters are also
+accepted.
+
+As with _Turbo BASIC XL_, the input is case insensitive (uppercase, lowercase
+and mixed case is supported).
+
+
+### Line numbers
+
+You can omit line numbers, only lines that are target to `GOTO` / `GOSUB` /
+`THEN` needs them.  If you use only labels, no line numbers are needed.
+
+Also, line numbers can appear alone in a line, for better readability.
+
+
+### Comments
+
+Comments can be started by `'` in addition to the _Turbo-Basic XL_ `.`, `--`
+or `rem`. In short listing an tokenized output formats all comments are
+removed unless the `-k` option is given.
+
+All comment types are supported in _Atari BASIC_ mode.
+
+
+### Special characters inside string constants
+
+Inside strings, special characters can be specified by using a backslash
+followed by an hexadecimal number in upper-case, (i.e., `"\00\A0"` produces a
+string with a "hearth" and an inverse space), this allows editing special
+characters on any standard editor.
+
+Note that to force a backslash before a valid hex number, you can use two
+backslashes (i.e., ``"123\\456"`` produces ``123\456``).
+
+
+### Extended string constants
+
+There is support for extended strings, with embedded character names.
+
+Extended strings start with with `["` and ends with `"]`, and can contain:
+
+- Special characters with `{name}` or `{count*name}`, with count a decimal
+  number and name from the list:
+  `heart`, `rbranch`, `rline`, `tlcorner`, `lbranch`, `blcorner`, `udiag`,
+  `ddiag`, `rtriangle`, `brblock`, `ltriangle`, `trblock`, `tlblock`,
+  `tline`, `bline`, `blblock`, `clubs`, `brcorner`, `hline`, `cross`, `ball`,
+  `bbar`, `lline`, `bbranch`, `tbranch`, `lbar`, `trcorner`, `esc`, `up`,
+  `down`, `left`, `right`, `diamond`, `spade`, `vline`, `clr`,
+  `del`, `ins`, `tbar`, `rbar`, `eol`, `bell`.
+
+- Inverse video characters surrounded by `~`.
+
+- Multiple lines, you can terminate the string in a different line than the
+  start. Note that this will embed end-of-line characters in the string, so it
+  will only work in tokenized output, not short-listing output.
+
+
+### Parameters and local variables for `PROC`
+
+Arguments follow the `PROC` label after a comma, and local variables follow
+after a semicolon:
+```purebasic
+  D = 3
+  EXEC Testing, D+5, "Hello"
+  PRINT D
+  PROC Testing, A, B$(10); D
+      D = A + 1
+      PRINT D; " and "; B$
+  ENDPROC
+```
+
+As the example shows, string variables must include the dimensioned length,
+as the parser adds a `DIM` at the start of the program to initialize. The
+dimensioned length must be an integer, a `$define` or a `%` number.
+
+Also, setting the value of variable "D" inside the procedure does not alter
+the value of the variable "D" outside the procedure.
+
+The parser transform this construct by creating new variables that hold the
+parameters and local variables, so the resulting procedures don't support
+recursion.
+
+
+### Syntax from _Turbo Basic XL_ in _Atari BASIC_
+
+Some of the extra statements from _Turbo Basic XL_ are supported even in _Atari
+BASIC_ output mode, those are converted to equivalent forms:
+
+- Multi-line `IF`/`ENDIF` statements are converted to `IF`/`THEN`.
+
+- The `%0` to `%3` tokens are converted to the numbers 0 to 3.
+
+- `PUT` without I/O channel is converted to `PUT #16`. This relies on a bug
+  in _Atari BASIC_ that makes I/O channel 16 equal to 0.
+
+- String constants are converted to decimal constants.
+
+
+### Parsing directives
+
+There are parsing *directives* added, that consist on lines starting with a
+dollar sign `$`. A list of available directives documented bellow.
+
 
 ## Program Usage
 
@@ -179,7 +213,7 @@ Options:
         output file name is the same as input with `.bas` extension added. Note
         that this is the default behaviour.
 
-- '-A'  Accept (and produce) standard _Atari BASIC_ language, without the
+- `-A`  Accept (and produce) standard _Atari BASIC_ language, without the
         extended statements and syntax. Note that some of the optimizations are
         specific to _Turbo-Basic XL_ and won't run in this mode.
 
@@ -216,6 +250,7 @@ Options:
         -const_replace`
 
 - `-h`  Shows help and exit.
+
 
 ## Parser directives
 
