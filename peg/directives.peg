@@ -74,11 +74,9 @@ ParserOptionMode  = 'default'           &{ parser_set_mode(parser_mode_default),
                   | 'extended'          &{ parser_set_mode(parser_mode_extended), 1 }
                   | < ERROREXP >         { print_error("parsing mode", yytext); }
 
-OptimizeSuboptions   = ( < ( '+' | '-' ) >
-          (
-            'const_folding'   &{ parser_add_optimize( OPT_CONST_FOLD, yytext[0] == '+' ) , 1 }
-          | 'convert_percent' &{ parser_add_optimize( OPT_NUMBER_TOK, yytext[0] == '+' ) , 1 }
-          | 'commute'         &{ parser_add_optimize( OPT_COMMUTE,    yytext[0] == '+' ) , 1 }
-          | 'line_numbers'    &{ parser_add_optimize( OPT_LINE_NUM,   yytext[0] == '+' ) , 1 }
-          | 'const_replace'   &{ parser_add_optimize( OPT_CONST_VARS, yytext[0] == '+' ) , 1 }
-          ) )+
+OptimizeSuboptions   = (
+                        < ( '+' | '-' ) [a-zA-Z_][a-zA-Z0-9_]* > (
+                        &{ parser_add_optimize_str( yytext + 1, yytext[0] == '+' ) }
+                        |                { print_error("optimize option", yytext); }
+                        )
+                       )+

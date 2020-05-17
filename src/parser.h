@@ -52,4 +52,5 @@ void parser_set_dialect(enum parser_dialect d);
 int parser_get_optimize(void);
 void parser_set_optimize(int);
 void parser_add_optimize(int level, int set);
+int parser_add_optimize_str(const char *opt, int set);
 void parse_init(const char *fname);

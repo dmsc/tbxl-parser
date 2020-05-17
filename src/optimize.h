@@ -27,6 +27,9 @@ enum optimize_levels {
     OPT_CONST_VARS = 16
 };
 
+// Returns the optimization option from the text
+enum optimize_levels optimize_option(const char *txt);
+
 // Optimizes the program.
 // returns 0 if ok.
 int optimize_program(program *pgm, int level);

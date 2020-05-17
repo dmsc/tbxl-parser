@@ -185,7 +185,7 @@ int main(int argc, char **argv)
                 if( optind < argc )
                 {
                     const char *opt = argv[optind];
-                    int set = 0;
+                    int set = 0, force = 1, level;
                     optind ++;
                     // Option could start with "-" or "+":
                     if( opt[0] == '-' )
@@ -195,17 +195,16 @@ int main(int argc, char **argv)
                     }
                     else if( opt[0] == '+' )
                         opt ++;
+                    else
+                        force = 0;
 
-                    if( 0 == strcmp(opt, "const_folding") )
-                        do_optimize = set ^ ((set ^ do_optimize) | OPT_CONST_FOLD);
-                    else if( 0 == strcmp(opt, "convert_percent") )
-                        do_optimize = set ^ ((set ^ do_optimize) | OPT_NUMBER_TOK);
-                    else if( 0 == strcmp(opt, "commute") )
-                        do_optimize = set ^ ((set ^ do_optimize) | OPT_COMMUTE);
-                    else if( 0 == strcmp(opt, "line_numbers") )
-                        do_optimize = set ^ ((set ^ do_optimize) | OPT_LINE_NUM);
-                    else if( 0 == strcmp(opt, "const_replace") )
-                        do_optimize = set ^ ((set ^ do_optimize) | OPT_CONST_VARS);
+                    level = optimize_option(opt);
+                    if( level )
+                        do_optimize = set ^ ((set ^ do_optimize) | level);
+                    else if( force )
+                    {
+                        cmd_help(argv[0], "optimization option invalid");
+                    }
                     else
                     {
                         // Not an optimize option, go back and

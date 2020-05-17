@@ -433,6 +433,20 @@ void parser_add_optimize(int level, int set)
         parser_optimize &= ~level;
 }
 
+int parser_add_optimize_str(const char *name, int set)
+{
+    int level = optimize_option(name);
+    if( !level )
+        return 0;
+
+    info_print(file_name,file_line,"%s optimization %d\n", set ? "enable" : "disable", level);
+    if( set )
+        parser_optimize |= level;
+    else
+        parser_optimize &= ~level;
+    return 1;
+}
+
 int parser_get_optimize(void)
 {
     return parser_optimize;

@@ -26,6 +26,23 @@
 #include "program.h"
 #include "statements.h"
 #include <stdio.h>
+#include <string.h>
+
+enum optimize_levels optimize_option(const char *opt)
+{
+    if( 0 == strcmp(opt, "const_folding") )
+        return OPT_CONST_FOLD;
+    else if( 0 == strcmp(opt, "convert_percent") )
+        return OPT_NUMBER_TOK;
+    else if( 0 == strcmp(opt, "commute") )
+        return OPT_COMMUTE;
+    else if( 0 == strcmp(opt, "line_numbers") )
+        return OPT_LINE_NUM;
+    else if( 0 == strcmp(opt, "const_replace") )
+        return OPT_CONST_VARS;
+    else
+        return 0;
+}
 
 int optimize_program(program *pgm, int level)
 {
