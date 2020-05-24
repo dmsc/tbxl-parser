@@ -30,7 +30,7 @@ void sb_delete(string_buf *s);
 // Returns the length
 unsigned sb_len(const string_buf *s);
 
-// Returns the length
+// Returns the data
 const char *sb_data(const string_buf *s);
 
 // Sets a character inside the string buffer.
@@ -56,6 +56,9 @@ void sb_put_hex(string_buf *s, int n, int dig);
 // at "end" is moved to "start", "end+1" is moved to "start+1" and
 // so on.
 void sb_erase(string_buf *s, unsigned start, unsigned end);
+
+// Trims the data removing characters 'c' at the end
+void sb_trim_end(string_buf *s, char c);
 
 // Inserts another string_buf at the given position of this, pushing
 // all existing characters forward.

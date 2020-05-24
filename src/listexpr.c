@@ -470,6 +470,8 @@ string_buf *expr_print_long(const expr *e, int *indent, int conv_ascii)
         if( e->rgt )
             print_expr_long_rec(b, e->rgt, e->stmt == STMT_IF_THEN);
     }
+    // Strip spaces from end of line
+    sb_trim_end(b, ' ');
     return b;
 }
 

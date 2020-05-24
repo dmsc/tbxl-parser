@@ -134,6 +134,12 @@ void sb_erase(string_buf *s, unsigned start, unsigned end)
     s->len -= end - start;
 }
 
+void sb_trim_end(string_buf *s, char c)
+{
+    while(s->len && s->data[s->len - 1] == c)
+        s->len --;
+}
+
 void sb_insert(string_buf *s, int pos, const string_buf *src)
 {
     if( pos < 0 )
