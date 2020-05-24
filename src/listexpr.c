@@ -57,10 +57,12 @@ static void print_string_long(const char *str, int len, string_buf *s)
             sb_put(s, '"');
             sb_put(s, '"');
         }
-        else if( *p == '\\' && len > 2 && is_hex_digit(p[1]) && is_hex_digit(p[2]) )
+        else if( *p == '\\' )
         {
             sb_put(s, '\\');
-            sb_put(s, '\\');
+            if( (len > 2 && is_hex_digit(p[1]) && is_hex_digit(p[2])) ||
+                (len > 1 && (p[1] < 32 || p[1] > 126)) )
+                sb_put(s, '\\');
         }
         else
             sb_put(s, *p);
