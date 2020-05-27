@@ -40,8 +40,15 @@ enum optimize_levels optimize_option(const char *opt)
         return OPT_LINE_NUM;
     else if( 0 == strcmp(opt, "const_replace") )
         return OPT_CONST_VARS;
+    else if( 0 == strcmp(opt, "fixed_vars") )
+        return OPT_FIXED_VARS;
     else
         return 0;
+}
+
+enum optimize_levels optimize_all(void)
+{
+    return OPT_CONST_FOLD | OPT_NUMBER_TOK | OPT_COMMUTE | OPT_LINE_NUM | OPT_CONST_VARS;
 }
 
 int optimize_program(program *pgm, int level)
@@ -59,6 +66,17 @@ int optimize_program(program *pgm, int level)
 
     if( level & OPT_COMMUTE )
         err |= opt_commute(ex);
+
+    if( level & OPT_FIXED_VARS )
+    {
+        err |= opt_replace_fixed_vars(ex);
+        // After fixed variable removal, redo constant propagation and try again
+        if( level & OPT_CONST_FOLD )
+        {
+            err |= opt_constprop(ex);
+            err |= opt_replace_fixed_vars(ex);
+        }
+    }
 
     if( level & OPT_LINE_NUM )
         err |= opt_remove_line_num(ex);

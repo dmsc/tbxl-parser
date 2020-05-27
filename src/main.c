@@ -209,12 +209,12 @@ int main(int argc, char **argv)
                     {
                         // Not an optimize option, go back and
                         // assume "set all optimizations".
-                        do_optimize = -1;
+                        do_optimize = optimize_all();
                         optind --;
                     }
                 }
                 else
-                    do_optimize = -1;
+                    do_optimize = optimize_all();
                 break;
             case 'n':
                 max_line_len = atoi(optarg);

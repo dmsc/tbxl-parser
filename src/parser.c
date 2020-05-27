@@ -421,7 +421,7 @@ void parser_set_dialect(enum parser_dialect dialect)
 void parser_set_optimize(int opt)
 {
     info_print(file_name,file_line,"%s optimizations\n", opt ? "enabling" : "disabling");
-    parser_optimize = opt ? -1 : 0;
+    parser_optimize = opt ? optimize_all() : 0;
 }
 
 void parser_add_optimize(int level, int set)

@@ -22,3 +22,5 @@ typedef struct expr_struct expr;
 // Remove unused variables in the program
 int opt_remove_unused_vars(expr *ex);
 
+// Replace variables that have fixed values
+int opt_replace_fixed_vars(expr *ex);

@@ -24,8 +24,12 @@ enum optimize_levels {
     OPT_NUMBER_TOK = 2,
     OPT_COMMUTE    = 4,
     OPT_LINE_NUM   = 8,
-    OPT_CONST_VARS = 16
+    OPT_CONST_VARS = 16,
+    OPT_FIXED_VARS = 32
 };
+
+// Returns the "standard" optimizations
+enum optimize_levels optimize_all(void);
 
 // Returns the optimization option from the text
 enum optimize_levels optimize_option(const char *txt);

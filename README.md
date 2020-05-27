@@ -286,6 +286,15 @@ The optimization sub-options are:
   a variable initialized to the value. The initialization code is added
   before any statement in the program, and tries to use the minimum number
   of bytes posible.
+- `fixed_vars`: This is the complement of the `const_replace` option, tries to
+  identify variables with a fixed value in the whole program and removes the
+  variable. Use this optimization when converting original basic listings, as
+  reversing the constant replacing gives a simpler listing and allows to apply
+  further optimizations.  Note that currently this option can produce bad
+  results, as it does not follows the program flow and can't detect if a
+  variable is used before the first assignment, so it is not enabled by
+  default. You need to check each removed variable, as printed in the output
+  and in the comments in the resulting program.
 
 Note that options can be changed at any place in the file, this is an example
 of changing the parser mode in the middle of the file:
