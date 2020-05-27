@@ -410,6 +410,9 @@ string_buf *expr_print_long(const expr *e, int *indent, int conv_ascii)
             print_comment_ascii(b, e->rgt->str, e->rgt->slen, e->rgt->lft);
         else
             print_comment(b, e->rgt->str, e->rgt->slen, e->rgt->lft);
+        // Return here, don't trim the extra spaces in REM
+        if( e->rgt->slen )
+            return b;
     }
     else if( e->stmt == STMT_DATA )
     {
