@@ -472,7 +472,7 @@ UnitExpr         = ConstNum
                  | RAND   r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_RAND); }
                  | TRUNC  r:ParNumExpr                  { $$ = ex_bin(0,r,TOK_TRUNC); }
                  | UINSTR r:ParInstrExpr                { $$ = ex_bin(0,r,TOK_UINSTR); }
-                 | TIME                                 { $$ = ex_bin(0,0,TOK_TIME); }
+                 | TIME   !'$'                          { $$ = ex_bin(0,0,TOK_TIME); }
                  | ERR                                  { $$ = ex_bin(0,0,TOK_ERR); }
                  | ERL                                  { $$ = ex_bin(0,0,TOK_ERL); }
                  | AssignVarNum
