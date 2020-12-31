@@ -59,10 +59,20 @@ static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line,
     // Check for empty lines
     if( !sb_len(tok_line) )
     {
-        // Output at least a single "--" comment to preserve the line number
+        // Output at least an empty comment to preserve the line number
         // as we don't know if it is used in some GOTO
-        sb_put(tok_line, 5);
-        sb_put(tok_line, STMT_REM_);
+        if( parser_get_dialect() == parser_dialect_turbo )
+        {
+            // In TurboBasic XL, it is smaller to use the '--' comment.
+            sb_put(tok_line, 5);
+            sb_put(tok_line, STMT_REM_);
+        }
+        else
+        {
+            sb_put(tok_line, 6);
+            sb_put(tok_line, STMT_REM);
+            sb_put(tok_line, 155);
+        }
     }
     // Transform last COLON to EOL if needed
     // TODO: this should be done at statement build time, here it is a hack
