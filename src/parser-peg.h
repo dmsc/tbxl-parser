@@ -56,7 +56,7 @@ void add_definition(const char *var_name);
 void set_incbin_filename(const char *bin_file_name);
 void set_incbin_offset(long bin_file_off);
 void set_incbin_length(long bin_file_len);
-void add_incbin_file(void);
+void add_incbin_file(int mode);
 void set_numdef_value(double);
 void set_strdef_value(void);
 

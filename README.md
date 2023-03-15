@@ -370,6 +370,22 @@ This is an example usage of the `$incbin` directive:
   ? usr(asmRut, 1, 2)      : ' Call routine. Should be relocatable and less than 242 bytes.
 ```
 
+### `$incdata` directive.
+
+This directive allows including data from a binary file to a `DATA` BASIC
+statement. The content of the file is read at parsing time and the full content
+is stored as is. The syntax of the directive is:
+
+  `$incdata` `"`*fileName*`"`  [ , *offset* [, *length* ] ]
+
+The optional *offset* parameter specifies a starting offset in bytes for the
+included data, and the optional *length* parameter specifies the number of
+bytes to read. If *length* is not given, the file read completely.
+
+Note that you can use this directive to store arbitrary bytes inside the
+statement, but BASIC parses the actual data at `READ` time.
+
+
 ## Limitations and Incompatibilities
 
 There are some incompatibilities in the way the source is interpreted with the

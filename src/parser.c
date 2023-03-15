@@ -271,9 +271,10 @@ void set_incbin_length(long bin_file_len)
     incbin_length = bin_file_len;
 }
 
-void add_incbin_file(void)
+// Invlude binary file, as string if mode = 0, as DATA otherwise.
+void add_incbin_file(int mode)
 {
-    if( last_def == -1 )
+    if( !mode && last_def == -1 )
         return; // Ignore error, already flagged.
 
     // Check errors
@@ -337,9 +338,19 @@ void add_incbin_file(void)
         parse_error++;
         len = 247;
     }
-    // Add to last def:
-    defs *d = pgm_get_defs( parse_get_current_pgm() );
-    defs_set_string(d, last_def, buf, len);
+
+    if( mode )
+    {
+        // Adds a DATA statement
+        add_stmt(STMT_DATA, add_data_stmt(buf, len));
+        add_force_line();
+    }
+    else
+    {
+        // Add to last def:
+        defs *d = pgm_get_defs( parse_get_current_pgm() );
+        defs_set_string(d, last_def, buf, len);
+    }
 }
 
 void set_numdef_value(double x)

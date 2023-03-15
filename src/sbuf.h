@@ -60,11 +60,17 @@ void sb_erase(string_buf *s, unsigned start, unsigned end);
 // Trims the data removing characters 'c' at the end
 void sb_trim_end(string_buf *s, char c);
 
-// Inserts another string_buf at the given position of this, pushing
-// all existing characters forward.
+// Inserts another string_buf at the given position, pushing all existing
+// characters forward.
 // If pos = 0, insert at the beginning.
 // If pos < 0, count the position from the end.
 void sb_insert(string_buf *s, int pos, const string_buf *src);
+
+// Inserts one character at the given position, pushing all existing characters
+// forward.
+// If pos = 0, insert at the beginning.
+// If pos < 0, count the position from the end.
+void sb_insert_char(string_buf *s, int pos, char c);
 
 // Removes all characters.
 void sb_clear(string_buf *s);

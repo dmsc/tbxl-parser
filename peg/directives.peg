@@ -7,6 +7,7 @@
 
 DirectiveLine  = ( OptionsDirective
                  | IncBinaryDirect
+                 | IncDataDirect
                  | DefineVariable
                  | < ERROR >             { print_error("parser directive", yytext); }
                  )
@@ -21,8 +22,14 @@ IncBinaryDirect   = 'incbin' SPC (
                        StrDefName        { add_definition(yytext); }
                        SPC ','
                        SPC IncFileName SPC  ( ',' SPC IncFileOffset ( ',' SPC IncFileLength )? )?
-                                         { add_incbin_file(); }
+                                         { add_incbin_file(0); }
                      | < ERROR >         { print_error("$incbin def and file name", yytext); }
+                     )
+
+IncDataDirect     = 'incdata' SPC (
+                       IncFileName SPC  ( ',' SPC IncFileOffset ( ',' SPC IncFileLength )? )?
+                                         { add_incbin_file(1); }
+                     | < ERROR >         { print_error("$incdata file name", yytext); }
                      )
 
 IncFileName       = '"' < ( !'"' . )+ > '"' { set_incbin_filename(yytext); }

@@ -153,6 +153,19 @@ void sb_insert(string_buf *s, int pos, const string_buf *src)
     s->len += src->len;
 }
 
+void sb_insert_char(string_buf *s, int pos, char c)
+{
+    if( pos < 0 )
+        pos = s->len - pos;
+    // Grow
+    darray_grow(s, sizeof(s->data[0]), s->len + 1);
+    // Move
+    memmove(s->data + pos + 1, s->data + pos, s->len - pos);
+    // Copy
+    s->data[pos] = c;
+    s->len ++;
+}
+
 unsigned sb_fwrite(string_buf *s, FILE *f)
 {
     return fwrite( sb_data(s), sb_len(s), 1, f);
