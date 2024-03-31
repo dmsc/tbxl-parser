@@ -19,6 +19,7 @@
 #include "tokens.h"
 #include "statements.h"
 #include "dbg.h"
+#include "dmem.h"
 #include "darray.h"
 #include <stdlib.h>
 #include <string.h>
@@ -118,7 +119,7 @@ int defs_new_def(defs *d, const char *name, const char *file_name, int file_line
 void defs_set_string(defs *d, unsigned id, const char *data, int len)
 {
     assert( id >= 0 && id < darray_len(d) );
-    darray_i(d,id).data = malloc(len);
+    darray_i(d,id).data = dmalloc(len);
     memcpy(darray_i(d,id).data, data, len);
     darray_i(d,id).len = len;
 }

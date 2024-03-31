@@ -19,6 +19,7 @@
 #include "expr.h"
 #include "vars.h"
 #include "defs.h"
+#include "dmem.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -36,7 +37,7 @@ struct program_struct {
 program *program_new(const char *file_name)
 {
     program *p;
-    p = malloc(sizeof(program));
+    p = dmalloc(sizeof(program));
     p->variables = vars_new();
     p->defines   = defs_new();
     p->file_name = strdup(file_name);

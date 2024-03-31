@@ -21,6 +21,7 @@
 #include "lister.h"
 #include "vars.h"
 #include "dbg.h"
+#include "dmem.h"
 #include "baswriter.h"
 #include "version.h"
 #include "optimize.h"
@@ -65,9 +66,9 @@ static void show_vars_stats(int renamed, int bin)
 static char *get_out_filename(const char *inFname, const char *output, const char *ext)
 {
     if( output )
-        return strdup(output);
+        return dstrdup(output);
 
-    char * out = malloc(strlen(inFname) + 1 + strlen(ext));
+    char * out = dmalloc(strlen(inFname) + 1 + strlen(ext));
     strcpy(out,inFname);
     char *p = strrchr(out, '.');
     if( p )
@@ -173,13 +174,13 @@ int main(int argc, char **argv)
                 keep_comments = 1;
                 break;
             case 'c':
-                output = strdup("-");
+                output = dstrdup("-");
                 break;
             case 'o':
                 if( optarg[0] == '.' )
                     extension = optarg;
                 else
-                    output = strdup(optarg);
+                    output = dstrdup(optarg);
                 break;
             case 'O':
                 if( optind < argc )

@@ -19,6 +19,7 @@
 #include "tokens.h"
 #include "statements.h"
 #include "dbg.h"
+#include "dmem.h"
 #include "darray.h"
 #include "parser.h"
 #include <stdlib.h>
@@ -43,7 +44,7 @@ struct vars_struct {
 
 vars * vars_new()
 {
-    vars *v = calloc(1, sizeof(struct vars_struct));
+    vars *v = dcalloc(1, sizeof(struct vars_struct));
     darray_init(v->vlist, 64);
     return v;
 }
@@ -102,7 +103,7 @@ static char *get_short_name_abas(int n)
     }
     if( n < 26 )
     {
-        char *out = malloc(2);
+        char *out = dmalloc(2);
         out[0] = 'A'+n;
         out[1] = 0;
         return out;
@@ -117,7 +118,7 @@ static char *get_short_name_abas(int n)
         n++;     // Skip 329 - "IF"
     int c1 = (n-26) / 36;
     int c2 = (n-26) % 36;
-    char *out = malloc(3);
+    char *out = dmalloc(3);
     out[0] = 'A'+c1;
     out[1] = c2<10 ? '0'+c2 : 'A'+c2-10;
     out[2] = 0;
@@ -134,7 +135,7 @@ static char *get_short_name_tbxl(int n)
     }
     if( n < 27 )
     {
-        char *out = malloc(2);
+        char *out = dmalloc(2);
         out[0] = n==26 ? '_' : 'A'+n;
         out[1] = 0;
         return out;
@@ -151,7 +152,7 @@ static char *get_short_name_tbxl(int n)
         n++;     // Skip 753 - "TO"
     int c1 = (n-27) / 37;
     int c2 = (n-27) % 37;
-    char *out = malloc(3);
+    char *out = dmalloc(3);
     out[0] = c1==26 ? '_' : 'A'+c1;
     out[1] = c2<10 ? '0'+c2 : (c2==36 ? '_' : 'A'+c2-10);
     out[2] = 0;

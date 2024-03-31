@@ -19,6 +19,7 @@
 #include "optlinenum.h"
 #include "expr.h"
 #include "dbg.h"
+#include "dmem.h"
 #include <assert.h>
 #include <stdlib.h>
 
@@ -236,8 +237,8 @@ static int do_search_stmt(expr *ex, uint8_t *keep, uint8_t *avail)
 int opt_remove_line_num(expr *prog)
 {
     // Search all line numbers and mark available ones
-    uint8_t *avail = calloc(32768/8,1);
-    uint8_t *keep = calloc(32768/8,1);
+    uint8_t *avail = dcalloc(32768/8,1);
+    uint8_t *keep = dcalloc(32768/8,1);
     int err = 0;
     for(expr *ex = prog; ex != 0; ex = ex->lft )
         if( ex->type == et_lnum && ex->num != -1 )

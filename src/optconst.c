@@ -19,6 +19,7 @@
 #include "optconst.h"
 #include "expr.h"
 #include "dbg.h"
+#include "dmem.h"
 #include "program.h"
 #include "parser.h"
 #include "defs.h"
@@ -327,7 +328,7 @@ static int do_constprop(expr *ex)
         case TOK_CHRP:
             if( r_inum )
             {
-                char *buf = malloc(1);
+                char *buf = dmalloc(1);
                 buf[0] = (int)ex->rgt->num;
                 return set_string(ex, buf, 1);
             }
@@ -369,7 +370,7 @@ static int do_constprop(expr *ex)
             {
                 int len1 = ex->lft->slen;
                 int len2 = ex->rgt->slen;
-                char *buf = malloc(len1 + len2);
+                char *buf = dmalloc(len1 + len2);
                 memcpy(buf, ex->lft->str, len1);
                 memcpy(buf + len1, ex->rgt->str, len2);
                 return set_string(ex, buf, len1 + len2);
@@ -609,7 +610,7 @@ static int do_replace_defs(expr *ex, const defs *d)
     {
         int len;
         const char *str = defs_get_string(d, ex->var, &len);
-        char *buf = malloc(len);
+        char *buf = dmalloc(len);
         memcpy(buf, str, len);
         return set_string(ex, buf, len);
     }

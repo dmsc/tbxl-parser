@@ -20,6 +20,7 @@
 #include "expr.h"
 #include "vars.h"
 #include "dbg.h"
+#include "dmem.h"
 #include "program.h"
 #include "darray.h"
 #include <assert.h>
@@ -64,7 +65,7 @@ static int tok_is_assignment(expr *ex)
 static void var_list_assign_new_id(var_list *vl, vars *nvar, const char *fname)
 {
     int num = darray_len(vl);
-    int *idx = malloc(sizeof(int) * num);
+    int *idx = dmalloc(sizeof(int) * num);
     int nused = 0;
 
     // Assign indexes to used variables

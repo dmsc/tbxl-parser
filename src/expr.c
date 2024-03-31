@@ -16,6 +16,7 @@
  *  with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
+#include "dmem.h"
 #include "expr.h"
 #include "program.h"
 #include "tokens.h"
@@ -166,7 +167,7 @@ expr *expr_new_string(expr_mngr *mngr, const uint8_t *str, unsigned len)
 {
     expr *n = expr_new(mngr);
     n->type = et_c_string;
-    n->str = malloc(len);
+    n->str = dmalloc(len);
     n->slen = len;
     memcpy(n->str, str, len);
     return n;
@@ -176,7 +177,7 @@ expr *expr_new_data(expr_mngr *mngr, const uint8_t *data, unsigned len, expr *l)
 {
     expr *n = expr_new(mngr);
     n->type = et_data;
-    n->str = malloc(len);
+    n->str = dmalloc(len);
     n->slen = len;
     n->lft = l;
     memcpy(n->str, data, len);
@@ -412,7 +413,7 @@ static expr *expr_new(expr_mngr *m)
         m->size += EXPR_MNGR_BLOCK_SIZE;
         if( m->size > EXPR_MNGR_MAX_SIZE )
             memory_error();
-        m->blocks[idx] = calloc(sizeof(expr), EXPR_MNGR_BLOCK_SIZE);
+        m->blocks[idx] = dcalloc(sizeof(expr), EXPR_MNGR_BLOCK_SIZE);
         if( !m->blocks[idx] )
             memory_error();
         m->current = m->blocks[idx];
@@ -428,14 +429,14 @@ static expr *expr_new(expr_mngr *m)
 
 expr_mngr *expr_mngr_new(program *pgm)
 {
-    expr_mngr *m = calloc(sizeof(expr_mngr),1);
+    expr_mngr *m = dcalloc(sizeof(expr_mngr),1);
     if( !m )
         memory_error();
     m->pgm  = pgm;
     m->file_name = pgm_get_file_name(pgm);
     m->len  = 0;
     m->size = EXPR_MNGR_BLOCK_SIZE;
-    m->blocks[0] = calloc(sizeof(expr), EXPR_MNGR_BLOCK_SIZE);
+    m->blocks[0] = dcalloc(sizeof(expr), EXPR_MNGR_BLOCK_SIZE);
     if( !m->blocks[0] )
         memory_error();
     m->current = m->blocks[0];

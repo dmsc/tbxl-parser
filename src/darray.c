@@ -17,12 +17,39 @@
  */
 
 #include "darray.h"
+#include "dmem.h"
 #include <stdio.h>
+#include <string.h>
 
 static void memory_error(void)
 {
     fprintf(stderr,"INTERNAL ERROR: memory allocation failure.\n");
     abort();
+}
+
+// Aborts on memory errors
+void *dmalloc(size_t len)
+{
+    void *p = malloc(len);
+    if(!p)
+        memory_error();
+    return p;
+}
+
+void *dcalloc(size_t nmem, size_t size)
+{
+    void *p = calloc(nmem, size);
+    if(!p)
+        memory_error();
+    return p;
+}
+
+char *dstrdup(const char *c)
+{
+    void *p = strdup(c);
+    if(!p)
+        memory_error();
+    return p;
 }
 
 void darray_fill_ptr(void *arr, size_t sz, size_t init)
