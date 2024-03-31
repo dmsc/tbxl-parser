@@ -42,7 +42,7 @@ struct vars_struct {
     unsigned num[vtMaxType]; // Number of variables of each type
 };
 
-vars * vars_new()
+vars * vars_new(void)
 {
     vars *v = dcalloc(1, sizeof(struct vars_struct));
     darray_init(v->vlist, 64);

@@ -72,7 +72,7 @@ static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line,
         {
             sb_put(tok_line, 6);
             sb_put(tok_line, STMT_REM);
-            sb_put(tok_line, 155);
+            sb_put(tok_line, '\x9B');
         }
     }
     // Transform last COLON to EOL if needed
@@ -204,15 +204,15 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             if( t == vtArray )
             {
                 sb_put(vnt, *name);
-                sb_put(vnt, '(' | 0x80);
+                sb_put(vnt, '(' | '\x80');
             }
             else if( t == vtString )
             {
                 sb_put(vnt, *name);
-                sb_put(vnt, '$' | 0x80);
+                sb_put(vnt, '$' | '\x80');
             }
             else
-                sb_put(vnt, *name | 0x80);
+                sb_put(vnt, *name | '\x80');
         }
     }
     // VNT must terminate with a 0

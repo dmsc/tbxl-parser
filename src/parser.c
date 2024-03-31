@@ -79,7 +79,7 @@ expr *add_data_stmt(const char *str, int len)
     return expr_new_data(mngr, (const uint8_t *)str, len, 0);
 }
 
-void add_force_line()
+void add_force_line(void)
 {
     if( last_stmt && last_stmt->type != et_lnum )
         set_last_stmt(expr_new_lnum(mngr, last_stmt, -1));

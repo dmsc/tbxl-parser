@@ -146,7 +146,7 @@ string_buf *expr_get_bas(const expr *e, int *end_colon, int *no_split)
         sb_put(b, e->stmt);
         assert(e->rgt && e->rgt->type == et_data);
         sb_write(b, e->rgt->str, e->rgt->slen);
-        sb_put(b, 155);
+        sb_put(b, '\x9B');
         *end_colon = 0;
         return b;
     }

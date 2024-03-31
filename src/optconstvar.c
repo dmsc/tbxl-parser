@@ -618,8 +618,6 @@ int opt_replace_const(expr *prog)
     // Get current number of variables, used to estimate the
     // memory usage of each new constant added to the program
     vars *v = pgm_get_vars( expr_get_program(prog) );
-    unsigned nfloat  = vars_get_count(v, vtFloat);
-    unsigned nstring = vars_get_count(v, vtString);
     unsigned nvar    = vars_get_total(v);
 
     // If not enough variables, exit
@@ -700,7 +698,6 @@ int opt_replace_const(expr *prog)
                 char name[256];
                 sprintf(name, "__s%d", cs);
                 cs++;
-                nstring++;
                 nvar++;
                 info_print(expr_get_file_name(prog), 0, "replacing constant var %s$=\"%.*s\" (%d times, %d bytes)\n",
                         name, cv->slen, cv->str, cv->count, bytes);
@@ -732,7 +729,6 @@ int opt_replace_const(expr *prog)
                     sprintf(name, "__nd%d", cn);
                     cn++;
                 }
-                nfloat++;
                 nvar++;
                 info_print(expr_get_file_name(prog), 0, "replacing constant var %s=%g (%d times, %d bytes)\n",
                         name, cv->num, cv->count, bytes);
