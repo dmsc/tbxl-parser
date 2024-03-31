@@ -34,19 +34,18 @@ struct def {
 // List of all definitions
 darray_struct(struct def, defs_struct);
 
-defs * defs_new()
+defs * defs_new(void)
 {
     return darray_new(struct def, 16);
 }
 
 void defs_delete(defs *d)
 {
-    int i;
-    for(i=0; i<darray_len(d); i++)
+    struct def *df;
+    darray_foreach(df, d)
     {
-        free(darray_i(d,i).name);
-        if( darray_i(d,i).data )
-            free(darray_i(d,i).data);
+        free(df->name);
+        free(df->data);
     }
     darray_free(d);
 }
@@ -88,10 +87,6 @@ int defs_search(const defs *d, const char *name)
 
 int defs_new_def(defs *d, const char *name, const char *file_name, int file_line)
 {
-    int i;
-    for(i=0; i<darray_len(d); i++)
-        if( !case_name_cmp(name, darray_i(d,i).name) )
-            return i;
     struct def df;
     df.name = strdup(name);
     darray_add(d,df);
@@ -117,7 +112,7 @@ int defs_new_def(defs *d, const char *name, const char *file_name, int file_line
             break;
         }
 
-    return i;
+    return darray_len(d) - 1;
 }
 
 void defs_set_string(defs *d, unsigned id, const char *data, int len)
