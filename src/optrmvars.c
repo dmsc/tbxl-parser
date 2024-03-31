@@ -88,7 +88,8 @@ static void var_list_assign_new_id(var_list *vl, vars *nvar, const char *fname)
     {
         for(int i=1; i<nused; i++)
         {
-            int j = i, tmp = idx[j], total = darray_i(vl, tmp).total;
+            int j = i, tmp = idx[j];
+            unsigned total = darray_i(vl, tmp).total;
             for( ; j>0 && darray_i(vl, idx[j-1]).total < total; j--)
                 idx[j] = idx[j-1];
             idx[j] = tmp;
@@ -456,7 +457,7 @@ static int do_get_var_usage(expr *ex, var_list *vl)
 }
 
 // Replace variable assignment with a REM
-static int do_replace_var_assign(expr *ex, int id, double val)
+static int do_replace_var_assign(expr *ex, unsigned id, double val)
 {
     int rep = 0;
     for( ; ex ; ex = ex->lft )
@@ -480,7 +481,7 @@ static int do_replace_var_assign(expr *ex, int id, double val)
 }
 
 // Replace variable with a constant value
-static int do_replace_var(expr *ex, int id, double val)
+static int do_replace_var(expr *ex, unsigned id, double val)
 {
     int num = 0;
 
@@ -625,7 +626,7 @@ int opt_replace_fixed_vars(expr *prog)
         if( do_again )
         {
             do_again = 0;
-            for( int id=0; id<darray_len(vl); id++ )
+            for( unsigned id=0; id<darray_len(vl); id++ )
             {
                 vu = &darray_i(vl, id);
                 if( vu->replace )

@@ -623,7 +623,7 @@ int opt_replace_const(expr *prog)
     unsigned nvar    = vars_get_total(v);
 
     // If not enough variables, exit
-    int max_vars = (parser_get_dialect() == parser_dialect_turbo) ? 256 : 128;
+    unsigned max_vars = (parser_get_dialect() == parser_dialect_turbo) ? 256 : 128;
 
     if( nvar >= max_vars )
         return 0;

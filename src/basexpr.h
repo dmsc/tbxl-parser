@@ -21,7 +21,7 @@ typedef struct expr_struct expr;
 typedef struct string_buf string_buf;
 
 string_buf *expr_get_bas(const expr *e, int *end_colon, int *no_split);
-int expr_get_bas_len(const expr *e);
+unsigned expr_get_bas_len(const expr *e);
 // Returns the maximum length of a tokenized line with this statement as
 // the last one, this is to fix TurboBasic XL interpreter bugs
 unsigned expr_get_bas_maxlen(const expr *e);

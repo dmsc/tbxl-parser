@@ -162,7 +162,7 @@ static void ls_write_line(struct ls *ls, int len, int tok_len)
         ls->tok_len = 0;
 }
 
-int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
+int lister_list_program_short(FILE *f, program *pgm, unsigned max_line_len)
 {
     struct ls ls;
     ls.max_len = ls.max_num = ls.num_lines = 0;
@@ -202,7 +202,7 @@ int lister_list_program_short(FILE *f, program *pgm, int max_line_len)
 
                 ls.file_line = ex->file_line;
                 // Get tokenized length
-                int bas_len = expr_get_bas_len(ex);
+                unsigned bas_len = expr_get_bas_len(ex);
                 unsigned maxlen = expr_get_bas_maxlen(ex);
                 if( bas_len + 4 >= maxlen )
                 {

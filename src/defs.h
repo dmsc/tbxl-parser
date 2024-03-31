@@ -28,20 +28,20 @@ int defs_search(const defs *, const char *name);
 int defs_new_def(defs *, const char *name, const char *file_name, int file_line);
 
 // Sets string data to a definition
-void defs_set_string(defs *, int id, const char *data, int len);
+void defs_set_string(defs *, unsigned id, const char *data, int len);
 
 // Sets numeric value to a definition
-void defs_set_numeric(defs *, int id, const double val);
+void defs_set_numeric(defs *, unsigned id, const double val);
 
 // Gets string data from a definition
-const char *defs_get_string(const defs *, int id, int *len);
+const char *defs_get_string(const defs *, unsigned id, int *len);
 
 // Gets value from a definition
-double defs_get_numeric(const defs *, int id);
+double defs_get_numeric(const defs *, unsigned id);
 
 // Gets the type of the definition
 // 0 : numeric,  1 : string
-int defs_get_type(const defs *, int id);
+int defs_get_type(const defs *, unsigned id);
 
 // Gets def name
-const char * defs_get_name(const defs *, int id);
+const char * defs_get_name(const defs *, unsigned id);

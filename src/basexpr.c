@@ -178,7 +178,7 @@ string_buf *expr_get_bas(const expr *e, int *end_colon, int *no_split)
     return b;
 }
 
-int expr_get_bas_len(const expr *e)
+unsigned expr_get_bas_len(const expr *e)
 {
     int ec = 0, ns = 0;
     string_buf *b = expr_get_bas(e, &ec, &ns);

@@ -38,7 +38,8 @@ static void put16(FILE *f, unsigned n)
 // Holds bas-writer status
 struct bw {
     // Summary variables
-    int max_len, max_num, num_lines;
+    unsigned max_len, num_lines;
+    int max_num;
     // TOK buffer
     string_buf *toks;
 };
@@ -352,8 +353,8 @@ int bas_write_program(FILE *f, program *pgm, int variables)
     if( do_debug )
     {
         fprintf(stderr,"Binary Tokenized output information:\n"
-                       " Number of lines written: %d\n"
-                       " Maximum line length: %d bytes at line %d\n"
+                       " Number of lines written: %u\n"
+                       " Maximum line length: %u bytes at line %d\n"
                        " VNT (variable name table) : %u bytes\n"
                        " VVT (variable value table): %u bytes\n"
                        " TOK (tokenized program)   : %u bytes\n"
