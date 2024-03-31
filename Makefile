@@ -18,7 +18,7 @@
 CROSS=
 EXT=
 CC=gcc
-CFLAGS=-Wall -O2 -g -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS=-Wall -O2 -g -Wstrict-prototypes -Wmissing-prototypes -Wimplicit-fallthrough
 DEPFLAGS=-MMD -MP
 LDFLAGS=
 LDLIBS=-lm

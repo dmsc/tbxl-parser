@@ -586,7 +586,7 @@ void push_extended_string(const char *data, unsigned len)
                         break;
                 }
                 state = 0;
-                // Fall through to normal character
+                // Fall through
             case 0: // Normal characters
                 if( c == '{' )
                 {

@@ -194,6 +194,7 @@ static int do_search_stmt(expr *ex, uint8_t *keep, uint8_t *avail)
             // Skip if no argument
             if( !ex->rgt)
                 return 0;
+            // Fall through
         case STMT_TRAP:
             // Skip if argument is label
             if( ex->rgt && ex->rgt->type == et_tok && ex->rgt->tok == TOK_SHARP )
