@@ -118,7 +118,7 @@ int defs_new_def(defs *d, const char *name, const char *file_name, int file_line
 
 void defs_set_string(defs *d, unsigned id, const char *data, int len)
 {
-    assert( id >= 0 && id < darray_len(d) );
+    assert( id < darray_len(d) );
     darray_i(d,id).data = dmalloc(len);
     memcpy(darray_i(d,id).data, data, len);
     darray_i(d,id).len = len;
@@ -126,31 +126,31 @@ void defs_set_string(defs *d, unsigned id, const char *data, int len)
 
 void defs_set_numeric(defs *d, unsigned id, double val)
 {
-    assert( id >= 0 && id < darray_len(d) );
+    assert( id < darray_len(d) );
     darray_i(d,id).val = val;
 }
 
 const char *defs_get_string(const defs *d, unsigned id, int *len)
 {
-    assert( id >= 0 && id < darray_len(d) && darray_i(d,id).data );
+    assert( id < darray_len(d) && darray_i(d,id).data );
     *len  = darray_i(d,id).len;
     return darray_i(d,id).data;
 }
 
 double defs_get_numeric(const defs *d, unsigned id)
 {
-    assert( id >= 0 && id < darray_len(d) && !darray_i(d,id).data );
+    assert( id < darray_len(d) && !darray_i(d,id).data );
     return darray_i(d,id).val;
 }
 
 int defs_get_type(const defs *d, unsigned id)
 {
-    assert( id >= 0 && id < darray_len(d) );
+    assert( id < darray_len(d) );
     return darray_i(d,id).data != 0;
 }
 
 const char * defs_get_name(const defs *d, unsigned id)
 {
-    assert( id >= 0 && id < darray_len(d) );
+    assert( id < darray_len(d) );
     return darray_i(d,id).name;
 }

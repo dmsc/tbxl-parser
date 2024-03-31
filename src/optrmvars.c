@@ -43,6 +43,9 @@ typedef struct {
 
 typedef darray(var_usage) var_list;
 
+// Used to detect invalid conditions on debug builds
+#define var_in_range(var)  assert( (uintmax_t)(var) < darray_len(vl) )
+
 // Check if an expr is a variable
 static int expr_is_var(const expr *ex)
 {
@@ -122,7 +125,7 @@ static int do_replace_var_id(expr *ex, var_list *vl)
 
         if( expr_is_var(ex) )
         {
-            assert(ex->var>=0 && ex->var<darray_len(vl));
+            var_in_range(ex->var);
             ex->var = darray_i(vl, ex->var).new_id;
         }
     }
@@ -146,7 +149,7 @@ static int read_expr(expr *ex, var_list *vl, int in_for_stmt)
     // Check if this is a variable (being read)
     if( expr_is_var(ex) )
     {
-        assert(ex->var>=0 && ex->var<darray_len(vl));
+        var_in_range(ex->var);
         darray_i(vl, ex->var).read ++;
     }
 
@@ -160,7 +163,7 @@ static int read_expr(expr *ex, var_list *vl, int in_for_stmt)
         // ignore FOR as it assigns multiple times.
         if( !in_for_stmt && ex->lft->type == et_var_number )
         {
-            assert(ex->lft->var>=0 && ex->lft->var<darray_len(vl));
+            var_in_range(ex->lft->var);
             var_usage *vu = &darray_i(vl, ex->lft->var);
             // Check right expression:
             // Constant value?
@@ -222,7 +225,7 @@ static int write_var(expr *ex, var_list *vl)
     assert(ex);
     if( expr_is_var(ex) )
     {
-        assert(ex->var>=0 && ex->var<darray_len(vl));
+        var_in_range(ex->var);
         darray_i(vl, ex->var).written ++;
         return 0;
     }
@@ -450,7 +453,7 @@ static int do_get_var_usage(expr *ex, var_list *vl)
 
         if( expr_is_var(ex) )
         {
-            assert(ex->var>=0 && ex->var<darray_len(vl));
+            var_in_range(ex->var);
             darray_i(vl, ex->var).total ++;
         }
     }
