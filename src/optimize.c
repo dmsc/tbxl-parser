@@ -28,27 +28,44 @@
 #include <stdio.h>
 #include <string.h>
 
+static struct optimization_options {
+    enum optimize_levels lvl;
+    const char *tag;
+    const char *desc;
+} opts[] = {
+    { OPT_CONST_FOLD, "const_folding",   "Replace operations on constants with result" },
+    { OPT_NUMBER_TOK, "convert_percent", "Replace small constants with %0 to %3 (TBXL only)" },
+    { OPT_COMMUTE,    "commute",         "Swap operands for less size and more speed" },
+    { OPT_LINE_NUM,   "line_numbers",    "Remove all unused line numbers" },
+    { OPT_CONST_VARS, "const_replace",   "Replace repeated constants with variables" },
+    { OPT_FIXED_VARS, "fixed_vars",      "Remove variables with constant values" },
+    { 0, 0, 0 }
+};
+
 enum optimize_levels optimize_option(const char *opt)
 {
-    if( 0 == strcmp(opt, "const_folding") )
-        return OPT_CONST_FOLD;
-    else if( 0 == strcmp(opt, "convert_percent") )
-        return OPT_NUMBER_TOK;
-    else if( 0 == strcmp(opt, "commute") )
-        return OPT_COMMUTE;
-    else if( 0 == strcmp(opt, "line_numbers") )
-        return OPT_LINE_NUM;
-    else if( 0 == strcmp(opt, "const_replace") )
-        return OPT_CONST_VARS;
-    else if( 0 == strcmp(opt, "fixed_vars") )
-        return OPT_FIXED_VARS;
-    else
-        return 0;
+    struct optimization_options *o;
+    for(o = &opts[0]; o->lvl; o++)
+        if( 0 == strcasecmp(opt, o->tag) )
+            return o->lvl;
+    return 0;
 }
 
 enum optimize_levels optimize_all(void)
 {
     return OPT_CONST_FOLD | OPT_NUMBER_TOK | OPT_COMMUTE | OPT_LINE_NUM | OPT_CONST_VARS;
+}
+
+void optimize_list_options(void)
+{
+    struct optimization_options *o;
+    enum optimize_levels def = optimize_all();
+
+    fprintf(stderr, "List of optimization options:\n");
+    for(o = &opts[0]; o->lvl; o++)
+        fprintf(stderr, "\t%-16s %c  %s\n",
+                o->tag, 0 == (o->lvl & def) ? ' ' : '*', o->desc );
+    fprintf(stderr, "\nOptions with '*' are enabled with the '-O' option alone.\n");
 }
 
 int optimize_program(program *pgm, int level)

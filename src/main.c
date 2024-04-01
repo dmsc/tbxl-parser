@@ -126,6 +126,12 @@ static void cmd_help(const char *prog, const char *msg)
     exit(EXIT_FAILURE);
 }
 
+static void print_header(void)
+{
+    fprintf(stderr, "TurboBasic XL parser tool - version " GIT_VERSION "\n"
+            "https://github.com/dmsc/tbxl-parser\n\n");
+}
+
 int main(int argc, char **argv)
 {
     FILE *outFile;
@@ -188,6 +194,13 @@ int main(int argc, char **argv)
                     const char *opt = argv[optind];
                     int set = 0, force = 1, level;
                     optind ++;
+                    if( !strcmp(opt, "help") )
+                    {
+                        // List all optimization options and exit
+                        print_header();
+                        optimize_list_options();
+                        exit(EXIT_FAILURE);
+                    }
                     // Option could start with "-" or "+":
                     if( opt[0] == '-' )
                     {
@@ -223,10 +236,8 @@ int main(int argc, char **argv)
                     cmd_help(argv[0], "maximum line length (%s) invalid");
                 break;
             case 'h':
-                fprintf(stderr, "TurboBasic XL parser tool - version " GIT_VERSION "\n"
-                                "https://github.com/dmsc/tbxl-parser\n"
-                                "\n"
-                                "Usage: %s [options] filename\n"
+                print_header();
+                fprintf(stderr, "Usage: %s [options] filename\n"
                                 "\t-l  Output long (readable) program.\n"
                                 "\t-b  Output binary (.BAS) program. (default)\n"
                                 "\t-s  Output short listing program.\n"
@@ -241,7 +252,8 @@ int main(int argc, char **argv)
                                 "\t-o  Sets the output file name or extension (if starts with a dot).\n"
                                 "\t-c  Output to standard output instead of a file.\n"
                                 "\t-O  Optimize the parsed program. An optional argument with '+' or '-'\n"
-                                "\t    enables/disables specific optimization.\n"
+                                "\t    enables/disables specific optimization. Use -O help for a list of\n"
+                                "\t    all available options.\n"
                                 "\t-h  Shows help and exit.\n",
                         argv[0], max_line_len);
                 exit(EXIT_FAILURE);

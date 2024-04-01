@@ -34,6 +34,9 @@ enum optimize_levels optimize_all(void);
 // Returns the optimization option from the text
 enum optimize_levels optimize_option(const char *txt);
 
+// Lists all optimization options to stderr
+void optimize_list_options(void);
+
 // Optimizes the program.
 // returns 0 if ok.
 int optimize_program(program *pgm, int level);
