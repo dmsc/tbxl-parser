@@ -134,9 +134,9 @@ static int testToken(int turbo_tok, enum enum_tokens e)
         return 0;
 
     // Check each character
-    for(i=0; 0 != t->tok_in[i]; i++)
+    for(i=0; 0 != t->tok_short[i]; i++)
     {
-        if( !matchIgnoreCase(yy, t->tok_in[i]) )
+        if( !matchIgnoreCase(yy, t->tok_short[i]) )
         {
             yy->__pos = yypos0;
             yy->__thunkpos = yythunkpos0;
@@ -147,7 +147,7 @@ static int testToken(int turbo_tok, enum enum_tokens e)
     // If mode is "extended", we ensure that the identifier ended
     if( mode == parser_mode_extended && i )
     {
-        char c = t->tok_in[i-1];
+        char c = t->tok_short[i-1];
         if( c>='A' && c<='Z' && yy_IdentifierChar(yy) )
         {
             // Don't accept

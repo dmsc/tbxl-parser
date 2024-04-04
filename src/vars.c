@@ -365,7 +365,7 @@ int vars_new_var(vars *v, const char *name, enum var_type type, const char *file
     {
         int j;
         for(j=0; j<TOK_LAST_TOKEN; j++)
-            if( !case_name_cmp(name, tokens[j].tok_in, 0) )
+            if( !case_name_cmp(name, tokens[j].tok_short, 0) )
             {
                 warn_print(file_name, file_line, "variable name '%s' is a token\n", name);
                 warned = 1;
@@ -383,7 +383,7 @@ int vars_new_var(vars *v, const char *name, enum var_type type, const char *file
     {
         int j;
         for(j=0; j<TOK_LAST_TOKEN; j++)
-            if( !case_name_cmp_str(name, tokens[j].tok_in) )
+            if( !case_name_cmp_str(name, tokens[j].tok_short) )
             {
                 warn_print(file_name, file_line, "variable name '%s$' is a token\n", name);
                 warned = 1;

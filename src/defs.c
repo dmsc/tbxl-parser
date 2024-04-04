@@ -95,7 +95,7 @@ int defs_new_def(defs *d, const char *name, const char *file_name, int file_line
     // Search in token list, to avoid defining variables identical to tokens
     int j;
     for(j=0; j<TOK_LAST_TOKEN; j++)
-        if( !case_name_cmp(name, tokens[j].tok_in) )
+        if( !case_name_cmp(name, tokens[j].tok_short) )
         {
             warn_print(file_name, file_line, "definition name '%s' is a token\n", name);
             break;
@@ -107,7 +107,7 @@ int defs_new_def(defs *d, const char *name, const char *file_name, int file_line
             break;
         }
     for(j=0; j<TOK_LAST_TOKEN; j++)
-        if( !case_name_cmp_str(name, tokens[j].tok_in) )
+        if( !case_name_cmp_str(name, tokens[j].tok_short) )
         {
             warn_print(file_name, file_line, "definition name '%s$' is a token\n", name);
             break;

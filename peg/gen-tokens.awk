@@ -51,9 +51,19 @@ BEGIN {
     # Header - enum definition
     enums = enums sprintf("    %s,\n", "TOK_" n);
 
+    if (s != m) {
+        # Only tokens allowed to differ are "unused" tokens: A_L_PRN and D_L_PRN
+        if(n != "A_L_PRN" && n != "D_L_PRN") {
+            printf "---------- ERROR -----------\n" > "/dev/stderr"
+            printf "TOKEN %s: '%s' <> '%s'\n", n, s, m > "/dev/stderr"
+            printf "---------- ERROR -----------\n" > "/dev/stderr"
+            exit -1
+        }
+    }
+
     # Header - table
-    table = table sprintf("    { %-11s %-11s %-7s },\n",\
-                          "\"" s "\",", "\"" m "\",", "\"" l "\"");
+    table = table sprintf("    { %-11s %-7s },\n",\
+                          "\"" m "\",", "\"" l "\"");
 
     num = num + 1;
 }
@@ -68,7 +78,6 @@ END {
            "};\n" \
            "\n" \
            "struct tokens {\n" \
-           "    const char *tok_in;\n" \
            "    const char *tok_short;\n" \
            "    const char *tok_long;\n" \
            "};\n"\
@@ -80,7 +89,7 @@ END {
            "" \
            "const struct tokens tokens[%d] = {\n" \
            "%s" \
-           "    { \"\", 0, \"\" }\n" \
+           "    { 0, \"\" }\n" \
            "};\n" \
            "\n", \
            FILENAME, num+1, table > src
