@@ -90,7 +90,7 @@ programs, with Atari or ASCII end of lines.
 All the standard abbreviations available in the original interpreters are also
 accepted.
 
-As with _Turbo BASIC XL_, the input is case insensitive (uppercase, lowercase
+As with _Turbo-Basic XL_, the input is case insensitive (uppercase, lowercase
 and mixed case is supported).
 
 
@@ -115,7 +115,7 @@ All comment types are supported in _Atari BASIC_ mode.
 
 Inside strings, special characters can be specified by using a backslash
 followed by an hexadecimal number in upper-case, (i.e., `"\00\A0"` produces a
-string with a "hearth" and an inverse space), this allows editing special
+string with a "heart" and an inverse space "♥█"), this allows editing special
 characters on any standard editor.
 
 Note that to force a backslash before a valid hex number, you can use two
@@ -170,9 +170,9 @@ parameters and local variables, so the resulting procedures don't support
 recursion.
 
 
-### Syntax from _Turbo Basic XL_ in _Atari BASIC_
+### Syntax from _Turbo-Basic XL_ in _Atari BASIC_
 
-Some of the extra statements from _Turbo Basic XL_ are supported even in _Atari
+Some of the extra statements from _Turbo-Basic XL_ are supported even in _Atari
 BASIC_ output mode, those are converted to equivalent forms:
 
 - Multi-line `IF`/`ENDIF` statements are converted to `IF`/`THEN`.
@@ -188,7 +188,7 @@ BASIC_ output mode, those are converted to equivalent forms:
 ### Parsing directives
 
 There are parsing *directives* added, that consist on lines starting with a
-dollar sign `$`. A list of available directives documented bellow.
+dollar sign `$`. A list of available directives is documented bellow.
 
 
 ## Program Usage
@@ -281,7 +281,7 @@ The optimization sub-options are:
 - `convert_percent`: Replace small integers with the `%*` equivalent, this is
   only available in _Turbo-Basic XL_ mode.
 - `commute`: Swap arguments to binary operations to minimize runtime.
-- `line_numbers`: Remove all Basic line numbers that are unused.
+- `line_numbers`: Remove all BASIC line numbers that are unused.
 - `const_replace`: Replace repeated constant values (numeric or string) with
   a variable initialized to the value. The initialization code is added
   before any statement in the program, and tries to use the minimum number
@@ -337,7 +337,9 @@ of changing the parser mode in the middle of the file:
 
 A good optimization mode for producing short listings is:
 
+```
     $options +optimize, optimize=-convert_percent-const_replace
+```
 
 The above line instructs the parser to avoid converting numbers to `%` values
 and the replacement of constants, producing a smaller listing. Note that
