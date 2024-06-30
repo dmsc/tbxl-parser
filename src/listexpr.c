@@ -467,6 +467,8 @@ string_buf *expr_print_long(const expr *e, int *indent, int conv_ascii)
         const char *st = statements[e->stmt].stm_long;
         if( e->stmt == STMT_ENDIF_INVISIBLE )
             st = "ENDIF";
+        else if( e->stmt == STMT_PRINT_ )
+            st = "PRINT";
         sb_puts_lcase(b, st);
         if( *st )
             sb_put(b, ' ');

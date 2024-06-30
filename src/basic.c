@@ -89,8 +89,8 @@ static int testStatement(int turbo_stmt, enum enum_statements e)
         return 0;
 
     // Special case PRINT:
-    if( e == STMT_PRINT && yymatchChar(yy, '?') )
-        return 1;
+    if( e == STMT_PRINT_ )
+        return !!yymatchChar(yy, '?');
 
     // Check each character
     for(i=0; 0 != s->stm_long[i]; i++)
