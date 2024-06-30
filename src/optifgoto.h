@@ -1,6 +1,6 @@
 /*
  *  Basic Parser - TurboBasic XL compatible parsing and transformation tool.
- *  Copyright (C) 2015 Daniel Serpell
+ *  Copyright (C) 2024 Daniel Serpell
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,29 +17,8 @@
  */
 #pragma once
 
-typedef struct program_struct program;
+typedef struct expr_struct expr;
 
-enum optimize_levels {
-    OPT_CONST_FOLD = 1,
-    OPT_NUMBER_TOK = 2,
-    OPT_COMMUTE    = 4,
-    OPT_LINE_NUM   = 8,
-    OPT_CONST_VARS = 16,
-    OPT_FIXED_VARS = 32,
-    OPT_THEN_GOTO  = 64,
-    OPT_IF_GOTO    = 128
-};
-
-// Returns the "standard" optimizations
-enum optimize_levels optimize_all(void);
-
-// Returns the optimization option from the text
-enum optimize_levels optimize_option(const char *txt);
-
-// Lists all optimization options to stderr
-void optimize_list_options(void);
-
-// Optimizes the program.
-// returns 0 if ok.
-int optimize_program(program *pgm, int level);
+// Remove GOTO after IF/THEN
+int opt_convert_then_goto(expr *ex, int multiline);
 

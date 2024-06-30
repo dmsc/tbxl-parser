@@ -42,6 +42,7 @@ SOURCES=\
  main.c\
  optconst.c\
  optconstvar.c\
+ optifgoto.c\
  optimize.c\
  optlinenum.c\
  optrmvars.c\

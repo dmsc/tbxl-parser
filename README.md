@@ -295,6 +295,31 @@ The optimization sub-options are:
   variable is used before the first assignment, so it is not enabled by
   default. You need to check each removed variable, as printed in the output
   and in the comments in the resulting program.
+- `then_goto`: Searches `IF` statements with `THEN GOTO` and removes the `GOTO`
+  statement, replacing with the line number alone.
+  Note: If the line number is not a constant, the resulting program will be
+  executed and listed correctly by both _Atari BASIC_ and _Turbo-Basic XL_, but
+  can't be entered because of an original parser limitation. Therefore, this
+  conversion is only done for constant values when the output is a short listing.
+
+  Example: `IF X THEN GOTO 100` becomes `IF X THEN 100`
+- `if_goto`: Performs the same optimization as `then_goto`, but also replaces
+  instances of multi-line `IF` statements containing a `GOTO` with `THEN` and
+  the target line number.
+
+  This optimization is not enabled by default because it can produce larger
+  code by forcing a newline in the file.
+
+  Example:
+  ```
+  IF X
+    GOTO 100
+  ENDIF
+  ```
+  becomes
+  ```
+  IF X THEN 100
+  ```
 
 Note that options can be changed at any place in the file, this is an example
 of changing the parser mode in the middle of the file:

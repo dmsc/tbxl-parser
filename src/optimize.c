@@ -21,6 +21,7 @@
 #include "optconst.h"
 #include "optlinenum.h"
 #include "optconstvar.h"
+#include "optifgoto.h"
 #include "optrmvars.h"
 #include "vars.h"
 #include "program.h"
@@ -39,6 +40,8 @@ static struct optimization_options {
     { OPT_LINE_NUM,   "line_numbers",    "Remove all unused line numbers" },
     { OPT_CONST_VARS, "const_replace",   "Replace repeated constants with variables" },
     { OPT_FIXED_VARS, "fixed_vars",      "Remove variables with constant values" },
+    { OPT_THEN_GOTO,  "then_goto",       "Convert THEN GOTO to THEN alone" },
+    { OPT_IF_GOTO,    "if_goto",         "Also convert IF/GOTO/ENDIF to IF/THEN alone (TBXL)" },
     { 0, 0, 0 }
 };
 
@@ -53,7 +56,8 @@ enum optimize_levels optimize_option(const char *opt)
 
 enum optimize_levels optimize_all(void)
 {
-    return OPT_CONST_FOLD | OPT_NUMBER_TOK | OPT_COMMUTE | OPT_LINE_NUM | OPT_CONST_VARS;
+    return OPT_CONST_FOLD | OPT_NUMBER_TOK | OPT_COMMUTE |
+           OPT_LINE_NUM | OPT_CONST_VARS | OPT_THEN_GOTO;
 }
 
 void optimize_list_options(void)
@@ -105,6 +109,9 @@ int optimize_program(program *pgm, int level)
 
     if( level & OPT_CONST_VARS )
         err |= opt_replace_const(ex);
+
+    if( level & OPT_IF_GOTO || level & OPT_THEN_GOTO )
+        err |= opt_convert_then_goto(ex, level & OPT_IF_GOTO);
 
     pgm_set_expr(pgm, ex);
     return err;
