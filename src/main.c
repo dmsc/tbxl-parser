@@ -192,7 +192,7 @@ int main(int argc, char **argv)
                 if( optind < argc )
                 {
                     const char *opt = argv[optind];
-                    int set = 0, force = 1, level;
+                    int set = 0, force = 0, level;
                     optind ++;
                     if( !strcmp(opt, "help") )
                     {
@@ -208,16 +208,17 @@ int main(int argc, char **argv)
                         set = -1;
                     }
                     else if( opt[0] == '+' )
+                    {
                         opt ++;
-                    else
-                        force = 0;
+                        force = 1;
+                    }
 
                     level = optimize_option(opt);
                     if( level )
                         do_optimize = set ^ ((set ^ do_optimize) | level);
                     else if( force )
                     {
-                        cmd_help(argv[0], "optimization option invalid");
+                        cmd_help(argv[0], "optimization option invalid, use -O help");
                     }
                     else
                     {
