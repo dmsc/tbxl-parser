@@ -89,6 +89,7 @@ int defs_search(const defs *d, const char *name)
 int defs_new_def(defs *d, const char *name, const char *file_name, int file_line)
 {
     struct def df;
+    memset(&df, 0, sizeof(df));
     df.name = strdup(name);
     darray_add(d,df);
 

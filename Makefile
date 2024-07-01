@@ -163,6 +163,5 @@ dist: all
 	rm -f $(B)/$(ZIPFILE)
 	(cd $B; zip -9vr $(ZIPFILE) $(DISTNAME))
 
-
 # Include dependencies
 -include $(OBJS:.o=.d)
