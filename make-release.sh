@@ -49,4 +49,5 @@ mv build/${out}.zip ../${out}-linux32.zip
 
 # Makes PDF using "pandoc"
 pandoc README.md -o ../${out}-manual.pdf \
+       --pdf-engine=xelatex \
        --from markdown --template eisvogel.tex --top-level-division="chapter" --listings
