@@ -273,7 +273,7 @@ static int expr_comma2_var_list(expr *ex, var_list *vl)
     if( !ex || ex->type != et_tok || ex->tok != TOK_COMMA )
         return 1;
     int err = read_expr(ex->lft, vl, 0);
-    return err | expr_comma_var_list(ex->rgt, vl);
+    return err | write_var_list(ex->rgt, vl);
 }
 
 // Counts usage of variable inside statement
