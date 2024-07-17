@@ -41,7 +41,9 @@ typedef struct {
     enum var_type type;// Type of variable
 } var_usage;
 
-typedef darray(var_usage) var_list;
+#define var_list var_usage_list
+typedef darray(var_usage) var_usage_list;
+
 
 // Used to detect invalid conditions on debug builds
 #define var_in_range(var)  assert( (uintmax_t)(var) < darray_len(vl) )
