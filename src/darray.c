@@ -54,7 +54,7 @@ char *dstrdup(const char *c)
 
 void darray_fill_ptr(void *arr, size_t sz, size_t init)
 {
-    darray(char) *ret = arr;
+    darray(void) *ret = arr;
     if( !ret || !(ret->data = malloc(sz * init)) )
         memory_error();
     ret->len = 0;
@@ -63,14 +63,14 @@ void darray_fill_ptr(void *arr, size_t sz, size_t init)
 
 void *darray_alloc(size_t sz, size_t init)
 {
-    darray(char) *ret = malloc(sizeof(darray(char)));
+    darray(void) *ret = malloc(sizeof(darray(void)));
     darray_fill_ptr(ret, sz, init);
     return ret;
 }
 
 void darray_grow(void *arr, size_t sz, size_t newsize)
 {
-    darray(char) *p = arr;
+    darray(void) *p = arr;
     while( newsize > p->size )
     {
         p->size *= 2;
@@ -81,13 +81,13 @@ void darray_grow(void *arr, size_t sz, size_t newsize)
 
 void darray_free(void *arr)
 {
-    darray(char) *p = arr;
+    darray(void) *p = arr;
     free(p->data);
     free(p);
 }
 
 void darray_delete_ptr(void *arr)
 {
-    darray(char) *p = arr;
+    darray(void) *p = arr;
     free(p->data);
 }
