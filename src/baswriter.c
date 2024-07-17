@@ -101,7 +101,7 @@ static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line,
     return 0;
 }
 
-int bas_write_program(FILE *f, program *pgm, int variables)
+int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_len)
 {
     // Input file name, used for debugging
     const char *fname = pgm_get_file_name(pgm);
@@ -267,6 +267,8 @@ int bas_write_program(FILE *f, program *pgm, int variables)
             int old_last_colon = last_colon;
             string_buf *sb = expr_get_bas(ex, &last_colon, &no_split);
             unsigned maxlen = expr_get_bas_maxlen(ex);
+            if( maxlen > max_line_len )
+                maxlen = max_line_len;
             // Check: tokens + 4 (line number (2) + length + EOL) >= max line len.
             if( sb_len(sb) + 4 >= maxlen )
             {

@@ -140,7 +140,9 @@ int main(int argc, char **argv)
     int do_conv_ascii = 0;
     char *output = 0;
     const char *extension = 0;
+    int max_opt_len = 0;
     int max_line_len = 120;
+    int max_bin_len = 255;
     int bin_variables = 0;
     int keep_comments = 0;
     enum parser_dialect parser_dialect = parser_dialect_turbo;
@@ -232,9 +234,7 @@ int main(int argc, char **argv)
                     do_optimize = optimize_all();
                 break;
             case 'n':
-                max_line_len = atoi(optarg);
-                if( max_line_len < 16 || max_line_len > 355 )
-                    cmd_help(argv[0], "maximum line length (%s) invalid");
+                max_opt_len = atoi(optarg);
                 break;
             case 'h':
                 print_header();
@@ -242,7 +242,8 @@ int main(int argc, char **argv)
                                 "\t-l  Output long (readable) program.\n"
                                 "\t-b  Output binary (.BAS) program. (default)\n"
                                 "\t-s  Output short listing program.\n"
-                                "\t-n  In short listing, sets the max line length before splitting (%d).\n"
+                                "\t-n  In short listing, sets the max line length before splitting (%d),\n"
+                                "\t    and in binary output limit binary line bytes (%d).\n"
                                 "\t-f  Output full (long) variable names in binary output.\n"
                                 "\t-k  Keeps comments in binary output.\n"
                                 "\t-x  Makes binary output protected (un-listable).\n"
@@ -256,7 +257,7 @@ int main(int argc, char **argv)
                                 "\t    enables/disables specific optimization. Use -O help for a list of\n"
                                 "\t    all available options.\n"
                                 "\t-h  Shows help and exit.\n",
-                        argv[0], max_line_len);
+                        argv[0], max_line_len, max_bin_len);
                 exit(EXIT_FAILURE);
             default:
                 cmd_help(argv[0], 0);
@@ -274,6 +275,31 @@ int main(int argc, char **argv)
 
     if( !extension )
         extension = (out_type == out_binary) ? ".bas" : ".lst";
+
+    if( max_opt_len )
+    {
+        // Option for max line length, interpret differently depending on listing or BAS output.
+        switch( out_type )
+        {
+            case out_binary:
+                if( max_opt_len < 16 || max_opt_len > 255 )
+                    cmd_help(argv[0], "maximum binary line length invalid");
+                max_bin_len = max_opt_len;
+                break;
+            case out_short:
+                if( max_opt_len < 16 || max_opt_len > 511 )
+                    cmd_help(argv[0], "maximum line length invalid");
+                else if( max_opt_len > 255 )
+                    fprintf(stderr,
+                            "WARNING: lines of length of %d can't be used in original BASIC.\n",
+                            max_opt_len);
+                max_line_len = max_opt_len;
+                break;
+            default:
+                cmd_help(argv[0], "invalid option '-n' on long listing mode");
+                break;
+        }
+    }
 
     int all_ok = 1;
     for( ; optind<argc; optind++)
@@ -354,7 +380,7 @@ int main(int argc, char **argv)
             else if( out_type == out_long )
                 err = lister_list_program_long(outFile, parse_get_current_pgm(), do_conv_ascii);
             else if( out_type == out_binary )
-                err = bas_write_program(outFile, parse_get_current_pgm(), bin_variables);
+                err = bas_write_program(outFile, parse_get_current_pgm(), bin_variables, max_bin_len);
 
             // Remember if there was an error:
             all_ok = err ? 0 : all_ok;

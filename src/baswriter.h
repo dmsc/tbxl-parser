@@ -25,5 +25,5 @@ typedef struct program_struct program;
 // If 'variables' is 0, write short (one letter) variable names,
 // if it is 1, write full variable names, <0 don't write any name.
 // Returns 0 if OK.
-int bas_write_program(FILE *f, program *pgm, int variables);
+int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_len);
 
