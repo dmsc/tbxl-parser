@@ -146,7 +146,7 @@ clean:
 	rm -f $(OBJS) $(OBJS:.o=.d) $(TARGET)
 
 distclean: clean
-	rm -f $(W_PEG) $(W_INC) $(W_SRC) $(P_SRC) $(GENPEG)
+	rm -f $(W_PEG) $(W_INC) $(W_SRC) $(P_SRC) $(GENPEG) $(VERSION_H) $(VERSION_TMP)
 	-rmdir $(ODIRS)
 	-rmdir $(B)
 
