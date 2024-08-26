@@ -55,6 +55,7 @@ static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line,
     // Verify line number
     if( num < 0 || num >= 32768 )
     {
+        sb_erase(tok_line, 0, len);
         err_print(fname, file_line, "line number %d invalid\n", num);
         return 1;
     }
@@ -87,6 +88,7 @@ static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line,
     // Write the complete line
     if( len > 0xFF - 3 )
     {
+        sb_erase(tok_line, 0, len);
         err_print(fname, file_line, "line %d too long: %d\n", num, len);
         return 1;
     }
@@ -239,6 +241,8 @@ int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_le
     string_buf *bin_line = sb_new();
     // Last position where the line can be split
     unsigned last_split = 0;
+    // Error to return at end
+    unsigned error_return = 0;
     // For each line/statement:
     for(const expr *ex = pgm_get_expr(pgm); ex != 0 ; ex = ex->lft)
     {
@@ -247,7 +251,7 @@ int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_le
             // Append complete line, ignore splitting point
             int old_len = sb_len(bin_line);
             if( bas_add_line(&bw, cur_line, line_valid, bin_line, old_len, last_colon, fname, file_line) )
-                return 1;
+                error_return = 1;
             last_split = 0;
             file_line = ex->file_line;
             if( ex->num < 0 )
@@ -262,11 +266,7 @@ int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_le
                 err_print(fname, ex->file_line,
                           "line number %.0f already in use, current free number is %d\n",
                           ex->num, 1 + cur_line);
-                sb_delete(bin_line);
-                sb_delete(vnt);
-                sb_delete(vvt);
-                sb_delete(bw.toks);
-                return 1;
+                error_return = 1;
             }
             else
             {
@@ -290,13 +290,8 @@ int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_le
                 string_buf *prn = expr_print_alone(ex);
                 err_print(fname, ex->file_line, "statement too long at line %d:\n", cur_line);
                 err_print(fname, ex->file_line, "'%.*s'\n", sb_len(prn), sb_data(prn));
-                sb_delete(bin_line);
-                sb_delete(sb);
-                sb_delete(prn);
-                sb_delete(vnt);
-                sb_delete(vvt);
-                sb_delete(bw.toks);
-                return 1;
+                error_return = 1;
+                sb_clear(sb);
             }
             // Add statement
             if( sb_len(sb) )
@@ -314,21 +309,16 @@ int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_le
                 if( !last_split )
                 {
                     err_print(fname, ex->file_line,
-                            "can't split line %d to shorter size (current len %d bytes)\n",
+                            "can't split line %d to shorter size (current size %d bytes)\n",
                             cur_line, sb_len(bin_line) + 3);
-                    return 1;
+                    sb_clear(bin_line);
+                    error_return = 1;
                 }
                 else
                 {
                     if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_split,
                                 old_last_colon, fname, file_line) )
-                    {
-                        sb_delete(bin_line);
-                        sb_delete(vnt);
-                        sb_delete(vvt);
-                        sb_delete(bw.toks);
-                        return 1;
-                    }
+                        error_return = 1;
                     last_split = 0;
                     file_line = ex->file_line;
                     cur_line = cur_line + 1;
@@ -342,7 +332,7 @@ int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_le
     assert(last_split == sb_len(bin_line));
     // Append last line
     if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_split, last_colon, fname, file_line) )
-        return 1;
+        error_return = 1;
     sb_delete(bin_line);
     // Now, adds a standard immediate line: CSAVE
     static unsigned char immediate_line[] = { 0x00, 0x80, 0x06, 0x06, 0x34, 0x16 };
@@ -355,7 +345,7 @@ int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_le
         err_print(fname, 0, "VNT SIZE:%u\n", sb_len(vnt));
         err_print(fname, 0, "VVT SIZE:%u\n", sb_len(vvt));
         err_print(fname, 0, "TOK SIZE:%u\n", sb_len(bw.toks));
-        return 1;
+        error_return = 1;
     }
     // Write
     put16(f, 0);
@@ -370,7 +360,7 @@ int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_le
     sb_fwrite(bw.toks, f);
 
     // Output summary info
-    if( do_debug )
+    if( do_debug && !error_return )
     {
         fprintf(stderr,"Binary Tokenized output information:\n"
                        " Number of lines written: %u\n"
@@ -386,5 +376,5 @@ int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_le
     sb_delete(vnt);
     sb_delete(vvt);
     sb_delete(bw.toks);
-    return 0;
+    return error_return;
 }
