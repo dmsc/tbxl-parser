@@ -45,10 +45,11 @@ struct bw {
     string_buf *toks;
 };
 
-static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line, int replace_colon,
-                        const char *fname, int file_line)
+// Build a binary line from a list of concatenated statements
+static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line, unsigned len,
+                        int replace_colon, const char *fname, int file_line)
 {
-    if( !sb_len(tok_line) && !valid )
+    if( !len && !valid )
         return 0; // Skip
 
     // Verify line number
@@ -59,46 +60,56 @@ static int bas_add_line(struct bw *bw, int num, int valid, string_buf *tok_line,
     }
 
     // Check for empty lines
-    if( !sb_len(tok_line) )
+    if( !len )
     {
         // Output at least an empty comment to preserve the line number
         // as we don't know if it is used in some GOTO
         if( parser_get_dialect() == parser_dialect_turbo )
         {
             // In TurboBasic XL, it is smaller to use the '--' comment.
-            sb_put(tok_line, 5);
+            sb_put(tok_line, 1);
             sb_put(tok_line, STMT_REM_);
+            len = 2;
         }
         else
         {
-            sb_put(tok_line, 6);
+            sb_put(tok_line, 2);
             sb_put(tok_line, STMT_REM);
             sb_put(tok_line, '\x9B');
+            len = 3;
         }
     }
     // Transform last COLON to EOL if needed
     // TODO: this should be done at statement build time, here it is a hack
     else if( replace_colon )
-        sb_set_char(tok_line, -1, 0x10 + TOK_EOL);
+        sb_set_char(tok_line, len - 1, 0x10 + TOK_EOL);
 
     // Write the complete line
-    unsigned ln = sb_len(tok_line) + 3;
-    if( ln > 0xFF )
+    if( len > 0xFF - 3 )
     {
-        err_print(fname, file_line, "line %d too long\n", num);
+        err_print(fname, file_line, "line %d too long: %d\n", num, len);
         return 1;
     }
     sb_put(bw->toks, num & 0xFF);
     sb_put(bw->toks, (num >> 8)&0xFF);
-    sb_put(bw->toks, ln);
-    sb_cat(bw->toks, tok_line);
+    sb_put(bw->toks, len + 3);
 
-    if( ln > bw->max_len )
+    // Concatenate tokens:
+    const uint8_t *data = (const uint8_t *)sb_data(tok_line);
+    for(unsigned i = 0; i < len; i = i + data[i] + 1)
     {
-        bw->max_len = ln;
+        sb_put(bw->toks, data[i] + i + 4);
+        sb_write(bw->toks, &data[i + 1], data[i]);
+    }
+
+    if( len + 3 > bw->max_len )
+    {
+        bw->max_len = len + 3;
         bw->max_num = num;
     }
     bw->num_lines ++;
+    // Remove tokens from output
+    sb_erase(tok_line, 0, len);
     return 0;
 }
 
@@ -226,28 +237,19 @@ int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_le
     int file_line = 0;
     // Currently assembled line
     string_buf *bin_line = sb_new();
-    // Statements to add to the end
-    string_buf *bin_pend = sb_new();
+    // Last position where the line can be split
+    unsigned last_split = 0;
     // For each line/statement:
     for(const expr *ex = pgm_get_expr(pgm); ex != 0 ; ex = ex->lft)
     {
         if( ex->type == et_lnum )
         {
-            // Check for pending tokens
-            if( sb_len(bin_pend) )
-            {
-                if( ex->num < 0 )
-                    continue;
-                err_print(fname, ex->file_line, "can't add a line number, there are pending tokens\n");
-                continue;
-            }
-            // Append old line
+            // Append complete line, ignore splitting point
             int old_len = sb_len(bin_line);
-            if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_colon, fname, file_line) )
+            if( bas_add_line(&bw, cur_line, line_valid, bin_line, old_len, last_colon, fname, file_line) )
                 return 1;
-            sb_delete(bin_line);
+            last_split = 0;
             file_line = ex->file_line;
-            bin_line = sb_new();
             if( ex->num < 0 )
             {
                 // This is a fake DATA line.
@@ -261,7 +263,6 @@ int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_le
                           "line number %.0f already in use, current free number is %d\n",
                           ex->num, 1 + cur_line);
                 sb_delete(bin_line);
-                sb_delete(bin_pend);
                 sb_delete(vnt);
                 sb_delete(vvt);
                 sb_delete(bw.toks);
@@ -280,74 +281,69 @@ int bas_write_program(FILE *f, program *pgm, int variables, unsigned max_line_le
             int old_last_colon = last_colon;
             // Add the new data to the pending part
             string_buf *sb = expr_get_bas(ex, &last_colon, &no_split);
-            if( sb_len(sb) )
-            {
-                sb_put(bin_pend, sb_len(sb));
-                sb_cat(bin_pend, sb);
-            }
-            sb_delete(sb);
             unsigned maxlen = expr_get_bas_maxlen(ex);
             if( maxlen > max_line_len )
                 maxlen = max_line_len;
             // Check: tokens + 4 (line number (2) + length + EOL) >= max line len.
-            if( sb_len(bin_pend) + 4 > maxlen )
+            if( sb_len(sb) + 4 > maxlen )
             {
                 string_buf *prn = expr_print_alone(ex);
                 err_print(fname, ex->file_line, "statement too long at line %d:\n", cur_line);
                 err_print(fname, ex->file_line, "'%.*s'\n", sb_len(prn), sb_data(prn));
                 sb_delete(bin_line);
-                sb_delete(bin_pend);
+                sb_delete(sb);
                 sb_delete(prn);
                 sb_delete(vnt);
                 sb_delete(vvt);
                 sb_delete(bw.toks);
                 return 1;
             }
-            if( sb_len(bin_pend) )
+            // Add statement
+            if( sb_len(sb) )
             {
-                // Total length = old tokens + new tokens + 3 (line number + length)
-                if( sb_len(bin_pend) + sb_len(bin_line) + 3 > maxlen ||
-                    (expr_is_label(ex) && sb_len(bin_line)>0) )
+                sb_put(bin_line, sb_len(sb));
+                sb_cat(bin_line, sb);
+            }
+            sb_delete(sb);
+            // Total length = tokens + 3 (line number + length)
+            if( sb_len(bin_line) + 3 > maxlen ||
+                    (expr_is_label(ex) && last_split > 0) )
+            {
+                // We can't add this statement to the current line,
+                // write the old line and create a new line
+                if( !last_split )
                 {
-                    // We can't add this statement to the current line,
-                    // write the old line and create a new line
-                    if( bas_add_line(&bw, cur_line, line_valid, bin_line, old_last_colon, fname, file_line) )
+                    err_print(fname, ex->file_line,
+                            "can't split line %d to shorter size (current len %d bytes)\n",
+                            cur_line, sb_len(bin_line) + 3);
+                    return 1;
+                }
+                else
+                {
+                    if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_split,
+                                old_last_colon, fname, file_line) )
                     {
                         sb_delete(bin_line);
-                        sb_delete(bin_pend);
                         sb_delete(vnt);
                         sb_delete(vvt);
                         sb_delete(bw.toks);
                         return 1;
                     }
-                    sb_delete(bin_line);
+                    last_split = 0;
                     file_line = ex->file_line;
-                    bin_line = sb_new();
                     cur_line = cur_line + 1;
                     line_valid = 0;
                 }
-                if( !no_split && sb_len(bin_pend) )
-                {
-                    // Concatenate tokens:
-                    const unsigned char *data = (const unsigned char *)sb_data(bin_pend);
-                    const unsigned char *e = data + sb_len(bin_pend);
-                    for(const unsigned char *p = data; p < e; p = p + *p + 1)
-                    {
-                        int ln = *p;
-                        sb_put(bin_line, ln + sb_len(bin_line) + 4);
-                        sb_write(bin_line, p + 1, ln);
-                    }
-                    sb_clear(bin_pend);
-                }
             }
+            if( !no_split )
+                last_split = sb_len(bin_line);
         }
     }
-    assert(!sb_len(bin_pend));
+    assert(last_split == sb_len(bin_line));
     // Append last line
-    if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_colon, fname, file_line) )
+    if( bas_add_line(&bw, cur_line, line_valid, bin_line, last_split, last_colon, fname, file_line) )
         return 1;
     sb_delete(bin_line);
-    sb_delete(bin_pend);
     // Now, adds a standard immediate line: CSAVE
     static unsigned char immediate_line[] = { 0x00, 0x80, 0x06, 0x06, 0x34, 0x16 };
     sb_write(bw.toks, immediate_line, sizeof(immediate_line));
